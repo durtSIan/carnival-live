@@ -366,6 +366,18 @@ class PlayCricketPublicSource:
         score = str(summary_team.get("scoreText") or (f"{wickets}-{runs}" if runs is not None and wickets is not None else ""))
         previous_innings = None
         two_day_context = ""
+        if match_format.is_multi_day and current_index > 0:
+            opponent_summary = next((x for x in summary_teams if str(x.get("id") or "") != batting_id), None)
+            if opponent_summary:
+                opponent_id = str(opponent_summary.get("id") or "")
+                opponent_runs = sum(
+                    int(item.get("runsScored") or 0)
+                    for item in ordered_innings[:current_index + 1]
+                    if str(item.get("battingTeamId") or "") == opponent_id
+                )
+                previous_innings = InningsSummary(
+                    self._team_name(opponent_summary), str(opponent_summary.get("scoreText") or ""), runs=opponent_runs,
+                )
         if current_index > 0:
             previous = ordered_innings[current_index - 1]
             previous_team_id = str(previous.get("battingTeamId") or "")
@@ -383,10 +395,11 @@ class PlayCricketPublicSource:
                 str(item.get("battingTeamId") or "") == previous_team_id
                 for item in ordered_innings[:current_index]
             )
-            previous_innings = InningsSummary(
-                self._team_from_id(detail, previous_team_id), previous_score, ordinal(previous_team_innings),
-                int(previous_runs) if previous_runs is not None else None,
-            )
+            if previous_innings is None:
+                previous_innings = InningsSummary(
+                    self._team_from_id(detail, previous_team_id), previous_score, ordinal(previous_team_innings),
+                    int(previous_runs) if previous_runs is not None else None,
+                )
         if match_format.is_multi_day and current_runs is not None:
             prior = ordered_innings[:current_index]
             batting_team = self._team_from_id(detail, batting_id)

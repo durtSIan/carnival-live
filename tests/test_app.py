@@ -149,7 +149,7 @@ def test_two_day_second_innings_is_not_mistaken_for_a_limited_overs_chase():
     assert live.target is None and live.required_run_rate == ""
 
     match = Match("id", "", "Alpha", "Beta", "", "Round 1", "Two Day", "LIVE", "2026-06-20", "1:00 PM", live)
-    assert "1st innings" in match.score_line
+    assert "1st innings" not in match.score_line
     assert match.chase_line == ""
 
 

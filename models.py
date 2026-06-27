@@ -254,8 +254,6 @@ class Match:
         if not self.live:
             return ""
         parts = [self.live.batting_team]
-        if self.match_format.is_multi_day and self.live.innings_label:
-            parts.append(self.live.innings_label)
         if self.live.score:
             parts.append(self.live.score)
         if self.live.overs != "":

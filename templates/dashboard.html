@@ -42,7 +42,7 @@
         </div>{% endif %}
         {% elif match.has_scorecard %}
         <div class="score-line">
-          <div class="score-main"><span>{{ match.batting_team }}</span>{% if match.match_format.is_multi_day and match.innings_label %} <small>{{ match.innings_label }}</small>{% endif %} <b>{{ match.score }}</b> <em>({{ match.overs }})</em>{% if match.run_rate %} <small>RR={{ match.run_rate }}</small>{% endif %}{% if match.game_status %} <small class="game-status">({{ match.game_status }})</small>{% endif %}{% if match.target %} <small class="brief-target">Tar {{ match.target }}</small>{% endif %}</div>
+          <div class="score-main"><span>{{ match.batting_team }}</span> <b>{{ match.score }}</b> <em>({{ match.overs }})</em>{% if match.run_rate %} <small>RR={{ match.run_rate }}</small>{% endif %}{% if match.game_status %} <small class="game-status">({{ match.game_status }})</small>{% endif %}{% if match.target and not match.match_format.is_multi_day %} <small class="brief-target">Tar {{ match.target }}</small>{% endif %}</div>
           {% if match.previous_innings_line %}<p class="previous-innings">{{ match.previous_innings_line }}</p>{% endif %}
           {% if match.chase_line %}<div class="chase-details">{{ match.chase_line }}</div>{% endif %}
           {% if match.innings_complete %}<div class="score-badges"><small>INNINGS COMPLETE</small></div>{% endif %}
