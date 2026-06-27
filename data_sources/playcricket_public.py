@@ -202,6 +202,13 @@ class PlayCricketPublicSource:
         return clean(left) == clean(right)
 
     @staticmethod
+    def _two_day_result_context(detail: dict[str, Any]) -> str:
+        text = str((detail.get("matchSummary") or {}).get("resultText") or "").strip()
+        if re.search(r"\b(?:lead|leads|trail|trails|need|needs)\s+by\b", text, re.I):
+            return text
+        return ""
+
+    @staticmethod
     def _decimal_overs(value: Any) -> float:
         text = str(value or "").strip()
         if not text:
@@ -400,7 +407,9 @@ class PlayCricketPublicSource:
                     self._team_from_id(detail, previous_team_id), previous_score, ordinal(previous_team_innings),
                     int(previous_runs) if previous_runs is not None else None,
                 )
-        if match_format.is_multi_day and current_runs is not None:
+        if match_format.is_multi_day:
+            two_day_context = self._two_day_result_context(detail)
+        if match_format.is_multi_day and current_runs is not None and not two_day_context:
             prior = ordered_innings[:current_index]
             batting_team = self._team_from_id(detail, batting_id)
             own_prior = sum(int(item.get("runsScored") or 0) for item in prior if str(item.get("battingTeamId") or "") == batting_id)

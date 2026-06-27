@@ -496,3 +496,23 @@ def test_two_day_parser_shows_fourth_innings_runs_needed():
     live = PlayCricketPublicSource().parse_scorecard(detail, MatchFormat.from_source("Two Day"))
     assert live.target == 71
     assert live.two_day_context == "Beta need 61"
+
+
+def test_two_day_parser_prefers_source_lead_trail_text_over_calculated_need():
+    detail = {
+        "matchType": "Two Day",
+        "matchSummary": {"resultText": "Beta trails by 56", "teams": [
+            {"id": "a", "displayName": "Alpha", "scoreText": "100 & 50"},
+            {"id": "b", "displayName": "Beta", "scoreText": "80 & 4-14"},
+        ]},
+        "teams": [{"id": "a", "displayName": "Alpha"}, {"id": "b", "displayName": "Beta"}],
+        "innings": [
+            {"battingTeamId": "a", "inningsOrder": 1, "inningsCloseType": "ALL OUT", "runsScored": 100, "numberOfWicketsFallen": 10, "oversBowled": 30, "batting": [], "bowling": []},
+            {"battingTeamId": "b", "inningsOrder": 2, "inningsCloseType": "ALL OUT", "runsScored": 80, "numberOfWicketsFallen": 10, "oversBowled": 30, "batting": [], "bowling": []},
+            {"battingTeamId": "a", "inningsOrder": 3, "inningsCloseType": "ALL OUT", "runsScored": 50, "numberOfWicketsFallen": 10, "oversBowled": 20, "batting": [], "bowling": []},
+            {"battingTeamId": "b", "inningsOrder": 4, "inningsCloseType": "IN PROGRESS", "runsScored": 14, "numberOfWicketsFallen": 4, "oversBowled": 5, "batting": [], "bowling": []},
+        ],
+    }
+    live = PlayCricketPublicSource().parse_scorecard(detail, MatchFormat.from_source("Two Day"))
+    assert live.target == 71
+    assert live.two_day_context == "Beta trails by 56"
