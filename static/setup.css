@@ -61,6 +61,29 @@ button {
   font-weight: 800;
   cursor: pointer;
 }
+button:disabled {
+  cursor: default;
+  opacity: .65;
+}
+.setup-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -8px 0 22px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.primary-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 0 15px;
+  border-radius: 10px;
+  background: var(--lime);
+  color: #101820;
+  font-weight: 900;
+  text-decoration: none;
+}
 
 .search-form > div { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 section { margin-top: 28px; }

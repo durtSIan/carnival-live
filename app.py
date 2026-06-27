@@ -68,6 +68,10 @@ def favourite_grade_selection(items: list[dict[str, str]]) -> tuple[list[str], d
         grade_names[grade_id] = str(item.get("grade_name") or grade_id)
     return grade_ids[:10], grade_names
 
+def setup_redirect_target(default: str = "/setup") -> str:
+    target = request.form.get("next", "").strip()
+    return target if target.startswith("/setup") else default
+
 def create_app(service: MatchService | None = None, setup_source=None, favourite_store: FavouriteStore | None = None) -> Flask:
     app = Flask(__name__)
     source = setup_source or PlayCricketPublicSource()
@@ -121,7 +125,13 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
         except Exception:
             app.logger.exception("Could not load organisation seasons/grades")
             seasons, grades, error = [], [], "Could not load seasons and grades for this organisation."
-        return render_template("setup_organisation.html", organisation_id=organisation_id, organisation_name=name, seasons=seasons, selected_season=selected, grades=grades, error=error)
+        favourite_items = favourites.all()
+        saved_grade_ids = {str(item.get("grade_id") or "") for item in favourite_items}
+        return render_template(
+            "setup_organisation.html", organisation_id=organisation_id, organisation_name=name,
+            seasons=seasons, selected_season=selected, grades=grades, error=error,
+            favourites=favourite_items, saved_grade_ids=saved_grade_ids,
+        )
 
     @app.post("/setup/favourite")
     def save_favourite():
@@ -129,7 +139,7 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
         if not found: return redirect(url_for("setup_search", manual_error="Enter a valid Play Cricket grade ID or URL."))
         grade_id = found.group(0)
         favourites.save(grade_id, request.form.get("grade_name", "").strip() or grade_id, request.form.get("organisation_name", "").strip())
-        return redirect(url_for("dashboard"))
+        return redirect(setup_redirect_target(url_for("setup_search")))
 
     @app.post("/setup/favourite/remove")
     def remove_favourite():

@@ -13,9 +13,16 @@
       <span class="mark">CL</span>
       <div>
         <h1>{{ organisation_name }}</h1>
-        <p>Choose a current season grade, or use the association that runs this club’s competition.</p>
+        <p>Choose the current season grades you want to follow, then view scores.</p>
       </div>
     </header>
+
+    {% if favourites %}
+      <div class="setup-actions">
+        <a class="primary-action" href="{{ url_for('dashboard') }}">View scores</a>
+        <span>{{ favourites|length }} favourite{% if favourites|length != 1 %}s{% endif %} saved</span>
+      </div>
+    {% endif %}
 
     {% if error %}
       <p class="message error">{{ error }}</p>
@@ -44,11 +51,14 @@
               <input type="hidden" name="grade_id" value="{{ grade.id }}">
               <input type="hidden" name="grade_name" value="{{ grade.name }}">
               <input type="hidden" name="organisation_name" value="{{ organisation_name }}">
+              <input type="hidden" name="next" value="{{ request.full_path }}">
               <div>
                 <strong>{{ grade.name }}</strong>
-                <small>Grade</small>
+                <small>{% if grade.id in saved_grade_ids %}Saved favourite{% else %}Grade{% endif %}</small>
               </div>
-              <button>Save favourite</button>
+              <button {% if grade.id in saved_grade_ids %}disabled{% endif %}>
+                {% if grade.id in saved_grade_ids %}Saved{% else %}Add{% endif %}
+              </button>
             </form>
           {% endfor %}
         </div>

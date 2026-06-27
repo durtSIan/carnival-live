@@ -17,6 +17,13 @@
       </div>
     </header>
 
+    {% if favourites %}
+      <div class="setup-actions">
+        <a class="primary-action" href="{{ url_for('dashboard') }}">View scores</a>
+        <span>{{ favourites|length }} favourite{% if favourites|length != 1 %}s{% endif %} saved</span>
+      </div>
+    {% endif %}
+
     <form class="search-form" method="get">
       <label for="q">Club, association or competition</label>
       <div>
@@ -83,6 +90,7 @@
         <label for="grade_id">Play Cricket grade URL or grade ID</label>
         <input id="grade_id" name="grade_id" required placeholder="https://play.cricket.com.au/grade/…">
         <input name="grade_name" placeholder="Favourite name (optional)">
+        <input type="hidden" name="next" value="{{ url_for('setup_search') }}">
         {% if request.args.get('manual_error') %}
           <p class="error">{{ request.args.get('manual_error') }}</p>
         {% endif %}
