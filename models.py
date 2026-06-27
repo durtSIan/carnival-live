@@ -254,7 +254,13 @@ class Match:
     def final_result_line(self) -> str:
         if not self.result_winner:
             return self.result_text
-        line = f"{self.result_winner} def {self.result_loser}".strip()
+        qualifier = ""
+        if self.match_format.is_multi_day:
+            if self.final_result_badge == "OUTRIGHT":
+                qualifier = " outright"
+            elif self.final_result_badge == "FIRST INNINGS":
+                qualifier = " on first innings"
+        line = f"{self.result_winner} def {self.result_loser}{qualifier}".strip()
         text = self.result_text.strip()
         found = re.match(rf"^{re.escape(self.result_winner)}\s+won\s+by\s+(.+)$", text, re.I)
         if found:
@@ -270,6 +276,16 @@ class Match:
         if found:
             return f"by {found.group(1)}"
         return "by forfeit" if self.is_forfeit else ""
+
+    @property
+    def final_qualifier(self) -> str:
+        if not self.match_format.is_multi_day:
+            return ""
+        if self.final_result_badge == "OUTRIGHT":
+            return "outright"
+        if self.final_result_badge == "FIRST INNINGS":
+            return "on first innings"
+        return ""
 
     @property
     def final_result_badge(self) -> str:

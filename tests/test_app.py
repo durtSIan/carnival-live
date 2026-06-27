@@ -318,7 +318,7 @@ def test_final_card_shows_winner_margin_and_both_team_summaries():
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
     assert "Alpha <span>def</span> Beta <span>by 10 runs</span>" in body
-    assert "OUTRIGHT" in body
+    assert "outright" not in body
     assert all(name in body for name in ["A One", "A Bowl", "B One", "B Bowl"])
     assert "2-100 (20)" in body and "8-90 (20)" in body
 
@@ -332,7 +332,21 @@ def test_final_badge_shows_first_innings_result():
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
-    assert "FIRST INNINGS" in body
+    assert "Alpha <span>def</span> Beta <span>on first innings</span> <span>by 2 wickets</span>" in body
+    assert "FIRST INNINGS" not in body
+
+
+def test_two_day_final_title_shows_outright_qualifier():
+    match = Match(
+        "id", "", "Alpha", "Beta", "", "Round 1", "Two Day", "COMPLETED", "2026-06-19", "6:00 PM",
+        is_final=True, result_winner="Alpha", result_loser="Beta",
+        result_text="Alpha won by 7 wickets", result_type="WON_OUTRIGHT_WON_FIRST_INNINGS",
+    )
+    class FakeService:
+        def matches_for_date(self, *args): return [match]
+    body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
+    assert "Alpha <span>def</span> Beta <span>outright</span> <span>by 7 wickets</span>" in body
+    assert "OUTRIGHT" not in body
 
 
 def test_final_bowlers_stay_with_the_innings_they_bowled_in():
