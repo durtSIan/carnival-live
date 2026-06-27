@@ -305,7 +305,7 @@ def test_forfeit_result_gets_explicit_final_card():
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
-    assert "Alpha <span>def</span> Beta by forfeit" in body and "FORFEIT" in body
+    assert "Alpha <span>def</span> Beta <span>by forfeit</span>" in body and "FORFEIT" in body
 
 
 def test_final_card_shows_winner_margin_and_both_team_summaries():
@@ -317,7 +317,7 @@ def test_final_card_shows_winner_margin_and_both_team_summaries():
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
-    assert "Alpha <span>def</span> Beta by 10 runs" in body
+    assert "Alpha <span>def</span> Beta <span>by 10 runs</span>" in body
     assert all(name in body for name in ["A One", "A Bowl", "B One", "B Bowl"])
     assert "2-100 (20)" in body and "8-90 (20)" in body
 

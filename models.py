@@ -263,6 +263,14 @@ class Match:
         return line
 
     @property
+    def final_margin(self) -> str:
+        text = self.result_text.strip()
+        found = re.match(rf"^{re.escape(self.result_winner)}\s+won\s+by\s+(.+)$", text, re.I) if self.result_winner else None
+        if found:
+            return f"by {found.group(1)}"
+        return "by forfeit" if self.is_forfeit else ""
+
+    @property
     def score_line(self) -> str:
         if not self.live:
             return ""
