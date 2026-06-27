@@ -25,7 +25,7 @@
       {% for match in matches %}
       <article class="match-card">
         <div class="card-head">
-          <h2>{% if match.is_final and match.result_winner %}{{ match.result_winner }} <span>def</span> {{ match.result_loser }}{% if match.is_forfeit %}<small>(forfeit)</small>{% endif %}{% else %}{{ match.home_team }} <span>v</span> {{ match.away_team }}{% if match.toss_winner %}<small>(toss {{ match.toss_winner }})</small>{% endif %}{% endif %}</h2>
+          <h2>{% if match.is_final and match.result_winner %}{{ match.result_winner }} <span>def</span> {{ match.result_loser }}{% if match.is_forfeit %}<small>(forfeit)</small>{% endif %}{% else %}{{ match.home_team }} <span>v</span> {{ match.away_team }}{% if match.toss_winner %}<small>(toss {{ match.toss_winner }}{% if match.toss_decision %}, {{ match.toss_decision }}{% endif %})</small>{% endif %}{% endif %}</h2>
           <div class="meta">{% if match.grade_label %}<span class="grade-chip">{{ match.grade_label }}</span>{% endif %}<span>{{ match.round }}</span><span>{{ match.match_type }}</span><strong>{% if match.is_forfeit %}FORFEIT{% else %}{{ match.status }}{% endif %}</strong><span>{{ match.start_date }} {{ match.start_time }}</span></div>
         </div>
         {% if match.is_final %}

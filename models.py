@@ -120,6 +120,7 @@ class Match:
     is_forfeit: bool = False
     performances: list[TeamPerformance] = field(default_factory=list)
     competition_name: str = ""
+    toss_decision: str = ""
     match_format: MatchFormat = field(init=False)
 
     def __post_init__(self) -> None:

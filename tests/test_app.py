@@ -189,6 +189,25 @@ def test_dashboard_hides_internal_fields():
     assert "secret-id" not in body and "https://secret.test" not in body
 
 
+def test_toss_line_shows_inferred_batted_or_bowled_choice():
+    detail = {
+        "teams": [
+            {"id": "a", "displayName": "Alpha", "wonToss": True},
+            {"id": "b", "displayName": "Beta"},
+        ],
+        "innings": [{"battingTeamId": "b", "inningsOrder": 1}],
+        "matchSummary": {},
+    }
+    source = PlayCricketPublicSource()
+    assert source._toss_winner(detail) == "Alpha"
+    assert source._toss_decision(detail, "Alpha") == "bowled"
+    match = Match("id", "", "Alpha", "Beta", "Alpha", "Round 1", "T20", "LIVE", "2026-06-19", "6:00 PM", LiveScore("Beta", "1-37", "9.4", "3.83"), toss_decision="bowled")
+    class FakeService:
+        def matches_for_date(self, *args): return [match]
+    body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
+    assert "(toss Alpha, bowled)" in body
+
+
 def test_display_mode_selector_and_local_persistence_are_present():
     live = LiveScore(
         batting_team="Alpha", score="1-37", overs="9.4", run_rate="3.83",

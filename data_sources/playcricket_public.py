@@ -68,6 +68,7 @@ class PlayCricketPublicSource:
         )
         match.live = self.parse_scorecard(detail, match.match_format)
         match.toss_winner = self._toss_winner(detail) or match.toss_winner
+        match.toss_decision = self._toss_decision(detail, match.toss_winner)
         detail_status = str(detail.get("status") or "").upper()
         match.result_text = str((detail.get("matchSummary") or {}).get("resultText") or "")
         match.is_forfeit = "forfeit" in match.result_text.lower() or detail_status == "FORFEITED"
@@ -182,6 +183,23 @@ class PlayCricketPublicSource:
         text = str(summary.get("resultText") or "")
         found = re.match(r"^(.*?)\s+won the toss\b", text, re.I)
         return found.group(1).strip() if found else ""
+
+    def _toss_decision(self, detail: dict[str, Any], toss_winner: str) -> str:
+        if not toss_winner:
+            return ""
+        innings = detail.get("innings") or []
+        if not innings:
+            return ""
+        first = min(innings, key=lambda item: item.get("inningsOrder") or item.get("inningsNumber") or 0)
+        first_batting = self._team_from_id(detail, str(first.get("battingTeamId") or ""))
+        if not first_batting:
+            return ""
+        return "batted" if self._same_team(first_batting, toss_winner) else "bowled"
+
+    @staticmethod
+    def _same_team(left: str, right: str) -> bool:
+        clean = lambda value: re.sub(r"[^a-z0-9]+", "", value.lower())
+        return clean(left) == clean(right)
 
     @staticmethod
     def _decimal_overs(value: Any) -> float:
