@@ -16,6 +16,11 @@ class FavouriteStore:
             data = [x for x in self.all() if x.get("grade_id") != grade_id]
             self.path.parent.mkdir(parents=True, exist_ok=True)
             self.path.write_text(json.dumps([item, *data], indent=2), encoding="utf-8")
+    def remove(self, grade_id: str) -> None:
+        with self._lock:
+            data = [x for x in self.all() if x.get("grade_id") != grade_id]
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            self.path.write_text(json.dumps(data, indent=2), encoding="utf-8")
     def default_grade_id(self) -> str:
         data = self.all()
         return str(data[0].get("grade_id") or "") if data else ""

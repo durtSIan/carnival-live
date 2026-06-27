@@ -346,6 +346,10 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     })
     assert response.status_code == 302
     assert store.default_grade_id() == "213859e0-488a-40c6-a642-dcf36df09f04"
+    assert "Remove" in client.get("/setup").get_data(as_text=True)
+    removed = client.post("/setup/favourite/remove", data={"grade_id": "213859e0-488a-40c6-a642-dcf36df09f04"})
+    assert removed.status_code == 302
+    assert store.all() == []
 
 
 def test_setup_grades_sort_into_cricket_order():

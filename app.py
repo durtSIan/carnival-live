@@ -109,6 +109,13 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
         favourites.save(grade_id, request.form.get("grade_name", "").strip() or grade_id, request.form.get("organisation_name", "").strip())
         return redirect(url_for("dashboard", grade_id=grade_id))
 
+    @app.post("/setup/favourite/remove")
+    def remove_favourite():
+        found = GRADE_ID_PATTERN.search(request.form.get("grade_id", "").strip())
+        if found:
+            favourites.remove(found.group(0))
+        return redirect(url_for("setup_search"))
+
     return app
 
 
