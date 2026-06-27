@@ -117,6 +117,7 @@ class Match:
     result_winner: str = ""
     result_loser: str = ""
     result_text: str = ""
+    result_type: str = ""
     is_forfeit: bool = False
     performances: list[TeamPerformance] = field(default_factory=list)
     competition_name: str = ""
@@ -269,6 +270,15 @@ class Match:
         if found:
             return f"by {found.group(1)}"
         return "by forfeit" if self.is_forfeit else ""
+
+    @property
+    def final_result_badge(self) -> str:
+        result_type = self.result_type.upper()
+        if "OUTRIGHT" in result_type:
+            return "OUTRIGHT"
+        if "FIRST_INNINGS" in result_type:
+            return "FIRST INNINGS"
+        return ""
 
     @property
     def score_line(self) -> str:

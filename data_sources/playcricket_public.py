@@ -79,6 +79,7 @@ class PlayCricketPublicSource:
         if is_final:
             match.is_final = True
             match.result_winner, match.result_loser, match.performances = self.parse_final(detail)
+            match.result_type = self._winner_result_type(detail, match.result_winner)
         return match
 
     def parse_final(self, detail: dict[str, Any]) -> tuple[str, str, list[TeamPerformance]]:
@@ -134,6 +135,13 @@ class PlayCricketPublicSource:
             loser = next((self._team_name(team) for team in all_teams if self._team_name(team) != winner), "")
         ordered = sorted(performances.values(), key=lambda item: item.team_name != winner)
         return winner, loser, ordered
+
+    def _winner_result_type(self, detail: dict[str, Any], winner: str) -> str:
+        teams = (detail.get("matchSummary") or {}).get("teams") or []
+        winner_team = next((team for team in teams if self._team_name(team) == winner), None)
+        if not winner_team:
+            winner_team = next((team for team in teams if team.get("isWinner") is True), None)
+        return str((winner_team or {}).get("resultType") or "")
 
     @staticmethod
     def _team_name(team: dict[str, Any] | None) -> str:

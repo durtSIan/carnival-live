@@ -313,13 +313,26 @@ def test_final_card_shows_winner_margin_and_both_team_summaries():
         TeamPerformance("Alpha", "2-100", [Batter("A One", 50, 30)], [Bowler("A Bowl", 2, 10, 4)], "20"),
         TeamPerformance("Beta", "8-90", [Batter("B One", 40, 35)], [Bowler("B Bowl", 3, 20, 4)], "20"),
     ]
-    match = Match("id", "", "Alpha", "Beta", "", "Round 1", "T20", "COMPLETED", "2026-06-19", "6:00 PM", is_final=True, result_winner="Alpha", result_loser="Beta", result_text="Alpha won by 10 runs", performances=summaries)
+    match = Match("id", "", "Alpha", "Beta", "", "Round 1", "T20", "COMPLETED", "2026-06-19", "6:00 PM", is_final=True, result_winner="Alpha", result_loser="Beta", result_text="Alpha won by 10 runs", result_type="WON_OUTRIGHT_WON_FIRST_INNINGS", performances=summaries)
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
     assert "Alpha <span>def</span> Beta <span>by 10 runs</span>" in body
+    assert "OUTRIGHT" in body
     assert all(name in body for name in ["A One", "A Bowl", "B One", "B Bowl"])
     assert "2-100 (20)" in body and "8-90 (20)" in body
+
+
+def test_final_badge_shows_first_innings_result():
+    match = Match(
+        "id", "", "Alpha", "Beta", "", "Round 1", "Two Day", "COMPLETED", "2026-06-19", "6:00 PM",
+        is_final=True, result_winner="Alpha", result_loser="Beta",
+        result_text="Alpha won by 2 wickets", result_type="WON_ON_FIRST_INNINGS",
+    )
+    class FakeService:
+        def matches_for_date(self, *args): return [match]
+    body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
+    assert "FIRST INNINGS" in body
 
 
 def test_final_bowlers_stay_with_the_innings_they_bowled_in():
