@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en" data-display-mode="standard">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="30">
+  <title>Carnival Live</title>
+  <script>try{const mode=localStorage.getItem("carnivalLive.displayMode");if(["brief","standard","detailed"].includes(mode))document.documentElement.dataset.displayMode=mode}catch(e){}</script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='final.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='chase.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='forfeit.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='status.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='compact.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='display-mode.css') }}">
+  <script defer src="{{ url_for('static', filename='display-mode.js') }}"></script>
+</head>
+<body>
+  <header><span class="mark">CL</span><h1>Carnival Live</h1><label class="display-mode-picker"><span>Display</span><select id="display-mode" aria-label="Display mode"><option value="brief">Brief</option><option value="standard">Standard</option><option value="detailed">Detailed</option></select></label><a class="setup-link" href="{{ url_for('setup_search') }}">Setup</a><span class="pulse"><i></i> LIVE</span></header>
+  <main>
+    {% if error %}<div class="notice error">{{ error }}</div>{% endif %}
+    {% if not matches and not error %}<div class="notice">No live matches right now</div>{% endif %}
+    <section class="match-grid">
+      {% for match in matches %}
+      <article class="match-card">
+        <div class="card-head">
+          <h2>{% if match.is_final and match.result_winner %}{{ match.result_winner }} <span>def</span> {{ match.result_loser }}{% if match.is_forfeit %}<small>(forfeit)</small>{% endif %}{% else %}{{ match.home_team }} <span>v</span> {{ match.away_team }}{% if match.toss_winner %}<small>(toss {{ match.toss_winner }})</small>{% endif %}{% endif %}</h2>
+          <div class="meta">{% if match.grade_label %}<span class="grade-chip">{{ match.grade_label }}</span>{% endif %}<span>{{ match.round }}</span><span>{{ match.match_type }}</span><strong>{% if match.is_forfeit %}FORFEIT{% else %}{{ match.status }}{% endif %}</strong><span>{{ match.start_date }} {{ match.start_time }}</span></div>
+        </div>
+        {% if match.is_final %}
+        {% if match.is_forfeit %}<div class="forfeit-result"><strong>{{ match.result_winner }}</strong> won by forfeit</div>{% else %}<div class="final-grid">
+          {% for team in match.performances %}
+          <section class="team-final">
+            <h3><span>{{ team.team_name }}</span><strong>{{ team.score }}{% if match.match_format.is_limited_overs and team.overs != "" %} ({{ team.overs }}){% endif %}</strong></h3>
+            <div class="final-stats">
+              <div><h4>Batting</h4>{% for batter in team.batters %}<p><span>{{ batter.name }}</span><b>{{ batter.runs }}{% if batter.not_out %}*{% endif %} ({{ batter.balls }})</b></p>{% endfor %}</div>
+              <div><h4>Bowling in this innings</h4>{% for bowler in team.bowlers %}<p><span>{{ bowler.name }}</span><b>{{ bowler.wickets }}/{{ bowler.runs }} ({{ bowler.overs }})</b></p>{% endfor %}</div>
+            </div>
+          </section>
+          {% endfor %}
+        </div>{% endif %}
+        {% elif match.has_scorecard %}
+        <div class="score-line">
+          <div class="score-main"><span>{{ match.batting_team }}</span>{% if match.match_format.is_multi_day and match.innings_label %} <small>{{ match.innings_label }}</small>{% endif %} <b>{{ match.score }}</b> <em>({{ match.overs }})</em>{% if match.run_rate %} <small>RR={{ match.run_rate }}</small>{% endif %}{% if match.game_status %} <small class="game-status">({{ match.game_status }})</small>{% endif %}{% if match.target %} <small class="brief-target">Tar {{ match.target }}</small>{% endif %}</div>
+          {% if match.previous_innings_line %}<p class="previous-innings">{{ match.previous_innings_line }}</p>{% endif %}
+          {% if match.chase_line %}<div class="chase-details">{{ match.chase_line }}</div>{% endif %}
+          {% if match.innings_complete %}<div class="score-badges"><small>INNINGS COMPLETE</small></div>{% endif %}
+        </div>
+        <div class="card-sections">
+          <section class="player-section primary-player-section {% if match.innings_complete %}completed-summary-section{% else %}current-player-section{% endif %}">
+            {% if match.innings_complete %}<h3>Best batting</h3>{% endif %}
+            <div class="player-list">{% for batter in match.current_batters %}<p class="active"><span>{{ batter.name }}{% if batter.striker %}<mark>*</mark>{% endif %}</span><b>{{ batter.runs }}{% if batter.not_out %}*{% endif %} <small>({{ batter.balls }})</small></b></p>{% endfor %}</div>
+          </section>
+          <section class="player-section primary-player-section {% if match.innings_complete %}completed-summary-section{% else %}current-player-section{% endif %}">
+            {% if match.innings_complete %}<h3>Best bowling</h3>{% endif %}
+            <div class="player-list">{% for bowler in match.recent_bowlers %}<p class="{% if bowler.current %}active{% endif %}"><span>{{ bowler.name }}{% if bowler.current %}<mark>*</mark>{% endif %}</span><b>{{ bowler.wickets }}/{{ bowler.runs }} <small>({{ bowler.overs }})</small></b></p>{% endfor %}</div>
+          </section>
+          {% if not match.innings_complete and (match.top_batters or match.best_bowlers) %}
+          <section class="player-section best-section">
+            {% if match.top_batters %}<h4>Batting</h4><div class="player-list">{% for batter in match.top_batters %}<p><span>{{ batter.name }}</span><b>{{ batter.runs }} <small>({{ batter.balls }})</small></b></p>{% endfor %}</div>{% endif %}
+            {% if match.best_bowlers %}<h4>Bowling</h4><div class="player-list">{% for bowler in match.best_bowlers %}<p><span>{{ bowler.name }}</span><b>{{ bowler.wickets }}/{{ bowler.runs }} <small>({{ bowler.overs }})</small></b></p>{% endfor %}</div>{% endif %}
+          </section>
+          {% endif %}
+        </div>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </section>
+  </main>
+  <footer>Scores refresh automatically every 30 seconds</footer>
+</body>
+</html>

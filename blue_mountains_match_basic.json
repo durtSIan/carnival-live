@@ -1,0 +1,369 @@
+{
+  "grade": {
+    "id": "f61cc08d-962e-4b7c-be93-96a04bf8f4df",
+    "name": "2-Day Challenge"
+  },
+  "id": "7759f8ee-2017-44a1-972b-fa20f6ee6699",
+  "innings": [
+    {
+      "batting": [
+        {
+          "ballsFaced": 10,
+          "batInstance": 1,
+          "batOrder": 1,
+          "battingMinutes": 0,
+          "dismissalText": "b: J Blanchard",
+          "dismissalType": "Bowled",
+          "dismissalTypeId": 4,
+          "foursScored": 0,
+          "isOnNonStrike": false,
+          "isOnStrike": false,
+          "participantId": "ada61866-d16c-4f71-80f1-659fee4c6dbb",
+          "playerShortName": "M Brady",
+          "runsScored": 9,
+          "sixesScored": 0,
+          "strikeRate": "90.00"
+        },
+        {
+          "ballsFaced": 21,
+          "batInstance": 1,
+          "batOrder": 2,
+          "battingMinutes": 0,
+          "dismissalText": "not out",
+          "dismissalType": "Not Out",
+          "dismissalTypeId": 1,
+          "foursScored": 3,
+          "isOnNonStrike": true,
+          "isOnStrike": false,
+          "participantId": "556ce45f-8a90-424a-956b-8d8dcb5c2584",
+          "playerShortName": "C Cox",
+          "runsScored": 21,
+          "sixesScored": 0,
+          "strikeRate": "100.00"
+        },
+        {
+          "ballsFaced": 2,
+          "batInstance": 1,
+          "batOrder": 3,
+          "battingMinutes": 0,
+          "dismissalText": "hit wicket b: B Campbell",
+          "dismissalType": "Hit Wicket",
+          "dismissalTypeId": 7,
+          "foursScored": 0,
+          "isOnNonStrike": false,
+          "isOnStrike": false,
+          "participantId": "19da9af9-5397-44c7-bdb8-4896e2c2672f",
+          "playerShortName": "M Firoz",
+          "runsScored": 0,
+          "sixesScored": 0,
+          "strikeRate": "0.00"
+        },
+        {
+          "ballsFaced": 3,
+          "batInstance": 1,
+          "batOrder": 4,
+          "battingMinutes": 0,
+          "dismissalText": "not out",
+          "dismissalType": "Not Out",
+          "dismissalTypeId": 1,
+          "foursScored": 0,
+          "isOnNonStrike": false,
+          "isOnStrike": true,
+          "participantId": "59b8d76e-8f19-46ed-8fe6-2997940fcaed",
+          "playerShortName": "G Isbister",
+          "runsScored": 1,
+          "sixesScored": 0,
+          "strikeRate": "33.33"
+        }
+      ],
+      "battingTeamId": "00d7671e-39b4-4494-91de-7a4dede436e6",
+      "bowling": [
+        {
+          "bowlOrder": 1,
+          "economy": "5.00",
+          "isBowling": false,
+          "maidensBowled": 0,
+          "noBalls": 0,
+          "oversBowled": 3,
+          "participantId": "278fa740-2851-4d8e-ac13-84b6a0735c41",
+          "playerShortName": "J Blanchard",
+          "runsConceded": 15,
+          "wicketsTaken": 1,
+          "wideBalls": 0
+        },
+        {
+          "bowlOrder": 2,
+          "economy": "5.33",
+          "isBowling": true,
+          "maidensBowled": 0,
+          "noBalls": 0,
+          "oversBowled": 3,
+          "participantId": "395b965d-5d0e-49ee-86a0-1cef435e18d2",
+          "playerShortName": "B Campbell",
+          "runsConceded": 16,
+          "wicketsTaken": 1,
+          "wideBalls": 0
+        }
+      ],
+      "byesRuns": 0,
+      "fallOfWickets": [
+        {
+          "order": 1,
+          "participantId": "ada61866-d16c-4f71-80f1-659fee4c6dbb",
+          "playerShortName": "M Brady",
+          "runs": 14
+        },
+        {
+          "order": 2,
+          "participantId": "19da9af9-5397-44c7-bdb8-4896e2c2672f",
+          "playerShortName": "M Firoz",
+          "runs": 27
+        }
+      ],
+      "fielding": [],
+      "id": "e005f859-1a61-4dc0-8738-1fe41a243db9",
+      "inningsCloseType": "In Progress",
+      "inningsNumber": 1,
+      "inningsOrder": 1,
+      "isDeclared": false,
+      "isFollowOn": false,
+      "legByesRuns": 0,
+      "name": "1st Innings - Blue Mountains",
+      "noBalls": 0,
+      "numberOfWicketsFallen": 2,
+      "oversBowled": 6,
+      "penalties": 0,
+      "runsScored": 31,
+      "totalExtras": 0,
+      "wideBalls": 0
+    }
+  ],
+  "isBallByBall": true,
+  "matchSchedule": [
+    {
+      "matchDay": 1,
+      "startDateTime": "2026-06-18T15:30:00.0000000+10:00"
+    }
+  ],
+  "matchStreams": [],
+  "matchSummary": {
+    "resultText": "Blue Mountains won the toss and batted first",
+    "teams": [
+      {
+        "battedFirst": true,
+        "displayName": "Blue Mountains",
+        "id": "00d7671e-39b4-4494-91de-7a4dede436e6",
+        "isBatting": true,
+        "isHome": true,
+        "isWinner": false,
+        "resultType": "MATCH_IN_PROGRESS",
+        "resultTypeId": 0,
+        "scoreText": "2-31",
+        "wonToss": true
+      },
+      {
+        "battedFirst": false,
+        "displayName": "Lithgow",
+        "id": "5d51745a-a663-43f2-af5a-954300e8eabc",
+        "isBatting": false,
+        "isHome": false,
+        "isWinner": false,
+        "wonToss": false
+      }
+    ]
+  },
+  "matchType": "One Day",
+  "matchTypeId": 2,
+  "round": {
+    "id": "f5a93fe4-e987-4d88-be74-f4c30aa6689a",
+    "name": "Round 1",
+    "shortName": "R1"
+  },
+  "status": "LIVE",
+  "statusId": 2,
+  "teams": [
+    {
+      "displayName": "Blue Mountains",
+      "id": "00d7671e-39b4-4494-91de-7a4dede436e6",
+      "name": "Blue Mountains",
+      "nonPlayingMembers": [],
+      "owningOrganisation": {
+        "id": "d464ed61-6865-455f-907b-11d1360c58ca",
+        "logoUrl": "https://res.cloudinary.com/playhq/image/upload/h_256,w_256/v1/production/ca/7d261ce5-fc31-456d-94cb-72ef1676f10a/1762674474063/logo.png",
+        "name": "Lithgow Blue Mountains Cricket League",
+        "shortName": "LBMCL"
+      },
+      "players": [
+        {
+          "name": "Andrew Murison",
+          "participantId": "34d63d5e-fa7c-45bb-b073-54c943b66694",
+          "roles": [],
+          "shortName": "A Murison"
+        },
+        {
+          "name": "Chris Cox",
+          "participantId": "556ce45f-8a90-424a-956b-8d8dcb5c2584",
+          "roles": [],
+          "shortName": "C Cox"
+        },
+        {
+          "name": "Clinton Maher",
+          "participantId": "126bcdc2-4f30-409f-9b33-ffc8fc60a1ec",
+          "roles": [],
+          "shortName": "C Maher"
+        },
+        {
+          "name": "Graham Isbister",
+          "participantId": "59b8d76e-8f19-46ed-8fe6-2997940fcaed",
+          "roles": [
+            "Captain"
+          ],
+          "shortName": "G Isbister"
+        },
+        {
+          "name": "Jack Wolffs",
+          "participantId": "674b42b6-6d64-41ca-acd5-4022705766ed",
+          "roles": [],
+          "shortName": "J Wolffs"
+        },
+        {
+          "name": "Jake Romeyn",
+          "participantId": "4338c197-c860-4e41-be44-fcef9aa52ef7",
+          "roles": [],
+          "shortName": "J Romeyn"
+        },
+        {
+          "name": "James Heath",
+          "participantId": "97263452-0db4-475f-98ef-46585562a0fb",
+          "roles": [],
+          "shortName": "J Heath"
+        },
+        {
+          "name": "Matt Brady",
+          "participantId": "ada61866-d16c-4f71-80f1-659fee4c6dbb",
+          "roles": [],
+          "shortName": "M Brady"
+        },
+        {
+          "name": "Mohammed Sahil Firoz",
+          "participantId": "19da9af9-5397-44c7-bdb8-4896e2c2672f",
+          "roles": [],
+          "shortName": "M Firoz"
+        },
+        {
+          "name": "Peter Evans",
+          "participantId": "1c78e8b1-5b96-456e-9047-16fe5acc2800",
+          "roles": [],
+          "shortName": "P Evans"
+        },
+        {
+          "name": "Rishav Timilsena",
+          "participantId": "7e4e8b9b-32a2-43ad-8244-55b8d7a89543",
+          "roles": [],
+          "shortName": "R Timilsena"
+        },
+        {
+          "name": "Zac Opdam",
+          "participantId": "597bbd04-3730-4c71-91b8-a07a131d7054",
+          "roles": [],
+          "shortName": "Z Opdam"
+        }
+      ]
+    },
+    {
+      "displayName": "Lithgow",
+      "id": "5d51745a-a663-43f2-af5a-954300e8eabc",
+      "name": "Lithgow",
+      "nonPlayingMembers": [],
+      "owningOrganisation": {
+        "id": "d464ed61-6865-455f-907b-11d1360c58ca",
+        "logoUrl": "https://res.cloudinary.com/playhq/image/upload/h_256,w_256/v1/production/ca/7d261ce5-fc31-456d-94cb-72ef1676f10a/1762674474063/logo.png",
+        "name": "Lithgow Blue Mountains Cricket League",
+        "shortName": "LBMCL"
+      },
+      "players": [
+        {
+          "name": "Abdul Rehman",
+          "participantId": "b0fce8d0-b531-4e3c-8b5a-e4c308874fc2",
+          "roles": [],
+          "shortName": "A Rehman"
+        },
+        {
+          "name": "Brendan Murdoch",
+          "participantId": "71cea7c5-58b9-448a-99b5-47dc4ca44eae",
+          "roles": [],
+          "shortName": "B Murdoch"
+        },
+        {
+          "name": "Brett Campbell",
+          "participantId": "395b965d-5d0e-49ee-86a0-1cef435e18d2",
+          "roles": [],
+          "shortName": "B Campbell"
+        },
+        {
+          "name": "Hassan Haider",
+          "participantId": "a551dc15-0fdd-42b8-9b86-4f4e978ff763",
+          "roles": [],
+          "shortName": "H Haider"
+        },
+        {
+          "name": "Jake Hannus",
+          "participantId": "631a472f-e745-4c6e-8f26-2988f69f230c",
+          "roles": [],
+          "shortName": "J Hannus"
+        },
+        {
+          "name": "Jared Duff",
+          "participantId": "f0057738-d61c-468f-a0e0-7454778f50bd",
+          "roles": [],
+          "shortName": "J Duff"
+        },
+        {
+          "name": "Joshua Blanchard",
+          "participantId": "278fa740-2851-4d8e-ac13-84b6a0735c41",
+          "roles": [],
+          "shortName": "J Blanchard"
+        },
+        {
+          "name": "Justin Selman",
+          "participantId": "1bfaf1e1-29cb-4ba8-8a86-4ab47801c008",
+          "roles": [],
+          "shortName": "J Selman"
+        },
+        {
+          "name": "Matthew Tuxford",
+          "participantId": "029385b5-00ea-4791-87f4-bfe27a85a139",
+          "roles": [],
+          "shortName": "M Tuxford"
+        },
+        {
+          "name": "Mick Elliott",
+          "participantId": "e1189d6e-e30d-4b70-b2e4-cf72fd97f1b8",
+          "roles": [],
+          "shortName": "M Elliott"
+        },
+        {
+          "name": "Shorne Holt",
+          "participantId": "a2cd2901-d945-4b43-b652-1169849f91f1",
+          "roles": [],
+          "shortName": "S Holt"
+        }
+      ]
+    }
+  ],
+  "venue": {
+    "country": "Australia",
+    "id": "815a6206-be18-4090-9eba-6470b32502a6",
+    "line1": "Clarence Street",
+    "name": "Peter Carroll Field",
+    "playingSurface": {
+      "id": "8fd21f77-09f3-45fa-bab1-6020ebe7a45a",
+      "latitude": -33.714553,
+      "longitude": 150.324303,
+      "name": "Peter Carroll Field - Turf"
+    },
+    "postCode": "2780",
+    "stateName": "New South Wales",
+    "suburb": "LEURA"
+  }
+}

@@ -1,0 +1,35 @@
+.score-main {
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.score-main span {
+  display: inline;
+  margin: 0;
+  color: var(--cyan);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.score-main b { font-size: 23px; }
+.score-main em { font-size: 16px; }
+
+.score-main small {
+  color: var(--lime);
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.chase-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 9px;
+  color: var(--cyan);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.chase-details span { color: var(--ink); }
+.chase-details strong { color: var(--lime); }
