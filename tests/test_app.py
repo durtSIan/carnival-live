@@ -2,7 +2,7 @@ import copy
 import json
 from pathlib import Path
 
-from app import create_app
+from app import create_app, grade_setup_order
 from data_sources.playcricket_public import PlayCricketPublicSource
 from favourites import FavouriteStore
 from match_settings import resolve_innings_parameters
@@ -346,3 +346,25 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     })
     assert response.status_code == 302
     assert store.default_grade_id() == "213859e0-488a-40c6-a642-dcf36df09f04"
+
+
+def test_setup_grades_sort_into_cricket_order():
+    grades = [
+        {"name": "Under 11 (McDonald's)"},
+        {"name": "C Grade (Raikot Group)"},
+        {"name": "Sunday 1"},
+        {"name": "A Grade (Gatorade)"},
+        {"name": "Premier T20 (Whittles)"},
+        {"name": "Women's Div 2 (Arafura Connect)"},
+        {"name": "B Grade (DXC Technology)"},
+        {"name": "Under 16 Blue (McDonald's)"},
+        {"name": "D Grade (Raikot Group)"},
+        {"name": "E Grade (Raikot Group)"},
+    ]
+    ordered = [grade["name"] for grade in sorted(grades, key=grade_setup_order)]
+    assert ordered[:5] == [
+        "A Grade (Gatorade)", "B Grade (DXC Technology)", "C Grade (Raikot Group)",
+        "D Grade (Raikot Group)", "E Grade (Raikot Group)",
+    ]
+    assert ordered.index("Premier T20 (Whittles)") < ordered.index("Women's Div 2 (Arafura Connect)")
+    assert ordered.index("Sunday 1") < ordered.index("Under 16 Blue (McDonald's)")

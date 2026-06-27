@@ -18,6 +18,40 @@ DEFAULT_TIMEZONE = "Australia/Darwin"
 
 GRADE_ID_PATTERN = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", re.I)
 
+def grade_setup_order(grade: dict) -> tuple[int, int, str]:
+    """Put common cricket grades in a useful selection order."""
+    name = str(grade.get("name") or "").strip()
+    label = re.sub(r"\s*\([^)]*\)\s*", " ", name.upper()).strip()
+
+    letter = re.search(r"\b([A-Z])\s+GRADE\b", label)
+    if letter:
+        return (10, ord(letter.group(1)) - ord("A"), name)
+
+    ordinal = re.search(r"\b(\d+)(?:ST|ND|RD|TH)\s+GRADE\b", label)
+    if ordinal:
+        return (10, int(ordinal.group(1)), name)
+
+    division = re.search(r"\bDIV(?:ISION)?\s*(\d+)\b", label)
+    if division:
+        return (30, int(division.group(1)), name)
+
+    if "PREMIER" in label:
+        return (20, 0, name)
+    if "CLUB T20" in label:
+        return (25, 0, name)
+    if "WOMEN" in label:
+        return (30, 99, name)
+
+    sunday = re.search(r"\bSUNDAY\s*(\d+)\b", label)
+    if sunday:
+        return (40, int(sunday.group(1)), name)
+
+    junior = re.search(r"\b(?:UNDER|U)\s*(\d+)\b", label)
+    if junior:
+        return (50, 99 - int(junior.group(1)), name)
+
+    return (90, 0, name)
+
 def create_app(service: MatchService | None = None, setup_source=None, favourite_store: FavouriteStore | None = None) -> Flask:
     app = Flask(__name__)
     source = setup_source or PlayCricketPublicSource()
@@ -61,7 +95,7 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
             seasons = source.get_organisation_seasons(organisation_id)
             if not selected and seasons:
                 selected = str(next((x for x in seasons if x.get("isCurrentSeason")), seasons[0]).get("id") or "")
-            grades = source.get_organisation_grades(organisation_id, selected) if selected else []
+            grades = sorted(source.get_organisation_grades(organisation_id, selected), key=grade_setup_order) if selected else []
         except Exception:
             app.logger.exception("Could not load organisation seasons/grades")
             seasons, grades, error = [], [], "Could not load seasons and grades for this organisation."
