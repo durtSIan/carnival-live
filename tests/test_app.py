@@ -349,9 +349,9 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     assert response.headers["Location"] == "/setup/organisation/org-1?name=Darwin+Competition"
     assert store.default_grade_id() == "213859e0-488a-40c6-a642-dcf36df09f04"
     organisation_after_save = client.get("/setup/organisation/org-1?name=Darwin+Competition").get_data(as_text=True)
-    assert "Saved favourite" in organisation_after_save and "View scores" in organisation_after_save
+    assert "Saved favourite" in organisation_after_save and "Go to live scores" in organisation_after_save
     setup = client.get("/setup").get_data(as_text=True)
-    assert "Remove" in setup and "View scores" in setup
+    assert "Remove" in setup and "Go to live scores" in setup
     assert "all saved favourite grades together" in setup
     removed = client.post("/setup/favourite/remove", data={"grade_id": "213859e0-488a-40c6-a642-dcf36df09f04"})
     assert removed.status_code == 302

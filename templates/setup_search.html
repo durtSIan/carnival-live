@@ -19,7 +19,7 @@
 
     {% if favourites %}
       <div class="setup-actions">
-        <a class="primary-action" href="{{ url_for('dashboard') }}">View scores</a>
+        <a class="primary-action" href="{{ url_for('dashboard') }}">Go to live scores</a>
         <span>{{ favourites|length }} favourite{% if favourites|length != 1 %}s{% endif %} saved</span>
       </div>
     {% endif %}
