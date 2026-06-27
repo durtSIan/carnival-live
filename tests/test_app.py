@@ -247,17 +247,18 @@ def test_service_keeps_completed_but_hides_upcoming_and_other_dates():
     assert [item.status for item in visible] == ["LIVE", "COMPLETED", "FORFEITED"]
 
 
-def test_service_keeps_unfinished_two_day_matches_from_previous_start_date():
+def test_service_keeps_carried_two_day_matches_from_previous_start_date():
     carried_two_day = Match("two-day", "", "Alpha", "Beta", "", "Round 1", "Two Day", "STUMPS", "2026-06-20", "11:00 AM")
     old_completed = Match("done", "", "Alpha", "Beta", "", "Round 1", "Two Day", "COMPLETED", "2026-06-20", "11:00 AM")
+    older_completed = Match("older", "", "Alpha", "Beta", "", "Round 0", "Two Day", "COMPLETED", "2026-06-06", "11:00 AM")
     same_day_live = Match("today", "", "Alpha", "Beta", "", "Round 2", "One Day", "LIVE", "2026-06-27", "1:00 PM")
     class FakeSource:
         def get_matches(self, *args):
-            return [carried_two_day, old_completed, same_day_live]
+            return [older_completed, carried_two_day, old_completed, same_day_live]
         def add_scorecard(self, item):
             return item
     visible = MatchService(FakeSource()).matches_for_date("grade", "2026-06-27", "Australia/Darwin")
-    assert [item.match_id for item in visible] == ["two-day", "today"]
+    assert [item.match_id for item in visible] == ["two-day", "today", "done"]
 
 
 def test_multi_grade_view_keeps_only_selected_club_and_deduplicates_matches():

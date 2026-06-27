@@ -42,16 +42,25 @@ class MatchService:
 
     @staticmethod
     def _visible(matches: list[Match], selected_date: str) -> list[Match]:
-        return [m for m in matches if MatchService._is_visible_on_date(m, selected_date)]
+        carry_start_date = max(
+            (
+                m.start_date for m in matches
+                if m.match_format.is_multi_day
+                and m.start_date < selected_date
+                and m.status.upper() not in UPCOMING | HIDDEN_FINAL
+            ),
+            default="",
+        )
+        return [m for m in matches if MatchService._is_visible_on_date(m, selected_date, carry_start_date)]
 
     @staticmethod
-    def _is_visible_on_date(match: Match, selected_date: str) -> bool:
+    def _is_visible_on_date(match: Match, selected_date: str, carry_start_date: str = "") -> bool:
         status = match.status.upper()
         if status in UPCOMING | HIDDEN_FINAL:
             return False
         if match.start_date == selected_date:
             return True
-        if match.match_format.is_multi_day and match.start_date < selected_date and status not in FINAL_STATUSES:
+        if match.match_format.is_multi_day and match.start_date == carry_start_date:
             return True
         return False
 
