@@ -52,6 +52,11 @@ def grade_setup_order(grade: dict) -> tuple[int, int, str]:
 
     return (90, 0, name)
 
+def current_seasons_only(seasons: list[dict]) -> list[dict]:
+    """Prefer the current season in setup; fall back to all seasons if none are flagged."""
+    current = [season for season in seasons if season.get("isCurrentSeason")]
+    return current or seasons
+
 def create_app(service: MatchService | None = None, setup_source=None, favourite_store: FavouriteStore | None = None) -> Flask:
     app = Flask(__name__)
     source = setup_source or PlayCricketPublicSource()
@@ -92,9 +97,11 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
     def setup_organisation(organisation_id: str):
         name, selected, error = request.args.get("name", "Organisation"), request.args.get("season", ""), ""
         try:
-            seasons = source.get_organisation_seasons(organisation_id)
+            seasons = current_seasons_only(source.get_organisation_seasons(organisation_id))
             if not selected and seasons:
                 selected = str(next((x for x in seasons if x.get("isCurrentSeason")), seasons[0]).get("id") or "")
+            if selected and seasons and selected not in {str(x.get("id") or "") for x in seasons}:
+                selected = str(seasons[0].get("id") or "")
             grades = sorted(source.get_organisation_grades(organisation_id, selected), key=grade_setup_order) if selected else []
         except Exception:
             app.logger.exception("Could not load organisation seasons/grades")

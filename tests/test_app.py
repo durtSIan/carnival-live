@@ -2,7 +2,7 @@ import copy
 import json
 from pathlib import Path
 
-from app import create_app, grade_setup_order
+from app import create_app, current_seasons_only, grade_setup_order
 from data_sources.playcricket_public import PlayCricketPublicSource
 from favourites import FavouriteStore
 from match_settings import resolve_innings_parameters
@@ -372,3 +372,27 @@ def test_setup_grades_sort_into_cricket_order():
     ]
     assert ordered.index("Premier T20 (Whittles)") < ordered.index("Women's Div 2 (Arafura Connect)")
     assert ordered.index("Sunday 1") < ordered.index("Under 16 Blue (McDonald's)")
+
+
+def test_setup_shows_current_season_only_and_guides_club_results(tmp_path):
+    class FakeService:
+        def matches_for_date(self, *args): return []
+    class FakeSetupSource:
+        def search_organisations(self, query): return []
+        def get_organisation_seasons(self, organisation_id):
+            return [
+                {"id": "old", "name": "Winter 2025", "isCurrentSeason": False},
+                {"id": "current", "name": "Winter 2026", "isCurrentSeason": True},
+            ]
+        def get_organisation_grades(self, organisation_id, season_id):
+            assert season_id == "current"
+            return []
+    client = create_app(FakeService(), FakeSetupSource(), FavouriteStore(tmp_path / "favourites.json")).test_client()
+    body = client.get("/setup/organisation/org-1?name=Palmerston+Cricket+Club").get_data(as_text=True)
+    assert "Winter 2026" in body and "Winter 2025" not in body
+    assert "grades are often listed under the association" in body
+
+
+def test_current_seasons_falls_back_when_no_current_flag_exists():
+    seasons = [{"id": "one", "name": "Season One"}, {"id": "two", "name": "Season Two"}]
+    assert current_seasons_only(seasons) == seasons
