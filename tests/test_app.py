@@ -465,7 +465,7 @@ def test_two_day_previous_innings_line_includes_lead_or_chase_context():
         two_day_context="Beta trail by 47",
     )
     match = Match("id", "", "Alpha", "Beta", "", "Round 1", "Two Day", "LIVE", "2026-06-27", "1:00 PM", live)
-    assert match.previous_innings_line == "Alpha 1st innings 127"
+    assert match.previous_innings_line == "Alpha 1st innings 127 · Beta trail by 47"
 
 
 def test_two_day_parser_uses_aggregate_totals_for_third_innings_lead():
