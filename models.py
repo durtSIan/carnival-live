@@ -250,6 +250,19 @@ class Match:
         return self.live is not None
 
     @property
+    def final_result_line(self) -> str:
+        if not self.result_winner:
+            return self.result_text
+        line = f"{self.result_winner} def {self.result_loser}".strip()
+        text = self.result_text.strip()
+        found = re.match(rf"^{re.escape(self.result_winner)}\s+won\s+by\s+(.+)$", text, re.I)
+        if found:
+            line = f"{line} by {found.group(1)}"
+        elif self.is_forfeit:
+            line = f"{line} by forfeit"
+        return line
+
+    @property
     def score_line(self) -> str:
         if not self.live:
             return ""

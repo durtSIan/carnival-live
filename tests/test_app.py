@@ -305,19 +305,19 @@ def test_forfeit_result_gets_explicit_final_card():
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
-    assert "Alpha</strong> won by forfeit" in body and "FORFEIT" in body
+    assert "Alpha <span>def</span> Beta by forfeit" in body and "FORFEIT" in body
 
 
-def test_final_card_shows_winner_and_both_team_summaries():
+def test_final_card_shows_winner_margin_and_both_team_summaries():
     summaries = [
         TeamPerformance("Alpha", "2-100", [Batter("A One", 50, 30)], [Bowler("A Bowl", 2, 10, 4)], "20"),
         TeamPerformance("Beta", "8-90", [Batter("B One", 40, 35)], [Bowler("B Bowl", 3, 20, 4)], "20"),
     ]
-    match = Match("id", "", "Alpha", "Beta", "", "Round 1", "T20", "COMPLETED", "2026-06-19", "6:00 PM", is_final=True, result_winner="Alpha", result_loser="Beta", performances=summaries)
+    match = Match("id", "", "Alpha", "Beta", "", "Round 1", "T20", "COMPLETED", "2026-06-19", "6:00 PM", is_final=True, result_winner="Alpha", result_loser="Beta", result_text="Alpha won by 10 runs", performances=summaries)
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
-    assert "Alpha <span>def</span> Beta" in body
+    assert "Alpha <span>def</span> Beta by 10 runs" in body
     assert all(name in body for name in ["A One", "A Bowl", "B One", "B Bowl"])
     assert "2-100 (20)" in body and "8-90 (20)" in body
 
