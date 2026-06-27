@@ -146,7 +146,7 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
         found = GRADE_ID_PATTERN.search(request.form.get("grade_id", "").strip())
         if found:
             favourites.remove(found.group(0))
-        return redirect(url_for("setup_search"))
+        return redirect(setup_redirect_target(url_for("setup_search")))
 
     return app
 

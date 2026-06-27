@@ -350,6 +350,13 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     assert store.default_grade_id() == "213859e0-488a-40c6-a642-dcf36df09f04"
     organisation_after_save = client.get("/setup/organisation/org-1?name=Darwin+Competition").get_data(as_text=True)
     assert "Saved favourite" in organisation_after_save and "Go to live scores" in organisation_after_save
+    assert "Remove" in organisation_after_save
+    removed_from_grades = client.post("/setup/favourite/remove", data={
+        "grade_id": "213859e0-488a-40c6-a642-dcf36df09f04",
+        "next": "/setup/organisation/org-1?name=Darwin+Competition",
+    })
+    assert removed_from_grades.headers["Location"] == "/setup/organisation/org-1?name=Darwin+Competition"
+    store.save("213859e0-488a-40c6-a642-dcf36df09f04", "Women's Div 1", "Darwin Competition")
     setup = client.get("/setup").get_data(as_text=True)
     assert "Remove" in setup and "Go to live scores" in setup
     assert "all saved favourite grades together" in setup
@@ -430,3 +437,43 @@ def test_favourite_grade_selection_ignores_duplicates_and_bad_ids():
     ])
     assert ids == ["11111111-1111-1111-1111-111111111111"]
     assert names == {"11111111-1111-1111-1111-111111111111": "A Grade"}
+
+
+def test_two_day_previous_innings_line_includes_lead_or_chase_context():
+    live = LiveScore(
+        batting_team="Beta", score="2-80", overs=30, run_rate="2.67", runs=80,
+        previous_innings=InningsSummary("Alpha", "127", "1st innings", 127),
+        two_day_context="Trails by 47",
+    )
+    match = Match("id", "", "Alpha", "Beta", "", "Round 1", "Two Day", "LIVE", "2026-06-27", "1:00 PM", live)
+    assert match.previous_innings_line == "Alpha 1st innings 127 · Trails by 47"
+
+
+def test_two_day_parser_uses_aggregate_totals_for_third_innings_lead():
+    detail = {
+        "matchType": "Two Day",
+        "teams": [{"id": "a", "displayName": "Alpha"}, {"id": "b", "displayName": "Beta"}],
+        "innings": [
+            {"battingTeamId": "a", "inningsOrder": 1, "inningsCloseType": "ALL OUT", "runsScored": 100, "numberOfWicketsFallen": 10, "oversBowled": 30, "batting": [], "bowling": []},
+            {"battingTeamId": "b", "inningsOrder": 2, "inningsCloseType": "ALL OUT", "runsScored": 80, "numberOfWicketsFallen": 10, "oversBowled": 30, "batting": [], "bowling": []},
+            {"battingTeamId": "a", "inningsOrder": 3, "inningsCloseType": "IN PROGRESS", "runsScored": 30, "numberOfWicketsFallen": 1, "oversBowled": 10, "batting": [], "bowling": []},
+        ],
+    }
+    live = PlayCricketPublicSource().parse_scorecard(detail, MatchFormat.from_source("Two Day"))
+    assert live.two_day_context == "Leads by 50"
+
+
+def test_two_day_parser_shows_fourth_innings_runs_needed():
+    detail = {
+        "matchType": "Two Day",
+        "teams": [{"id": "a", "displayName": "Alpha"}, {"id": "b", "displayName": "Beta"}],
+        "innings": [
+            {"battingTeamId": "a", "inningsOrder": 1, "inningsCloseType": "ALL OUT", "runsScored": 100, "numberOfWicketsFallen": 10, "oversBowled": 30, "batting": [], "bowling": []},
+            {"battingTeamId": "b", "inningsOrder": 2, "inningsCloseType": "ALL OUT", "runsScored": 80, "numberOfWicketsFallen": 10, "oversBowled": 30, "batting": [], "bowling": []},
+            {"battingTeamId": "a", "inningsOrder": 3, "inningsCloseType": "ALL OUT", "runsScored": 50, "numberOfWicketsFallen": 10, "oversBowled": 20, "batting": [], "bowling": []},
+            {"battingTeamId": "b", "inningsOrder": 4, "inningsCloseType": "IN PROGRESS", "runsScored": 10, "numberOfWicketsFallen": 0, "oversBowled": 5, "batting": [], "bowling": []},
+        ],
+    }
+    live = PlayCricketPublicSource().parse_scorecard(detail, MatchFormat.from_source("Two Day"))
+    assert live.target == 71
+    assert live.two_day_context == "Need 61"

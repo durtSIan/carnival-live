@@ -122,6 +122,8 @@ h2 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: va
 
 .grade { justify-content: space-between; }
 .grade button { font-size: 12px; }
+.grade-actions { display: flex; gap: 8px; align-items: stretch; }
+.grade-actions form { display: flex; }
 .message {
   padding: 14px;
   border: 1px solid var(--line);
@@ -141,5 +143,6 @@ h2 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: va
   .search-form button { width: 100%; }
   .grade { align-items: flex-start; }
   .grade button { flex: none; }
+  .grade-actions { flex-direction: column; }
   .remove-button { padding: 0 10px; }
 }

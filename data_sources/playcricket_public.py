@@ -330,6 +330,7 @@ class PlayCricketPublicSource:
         unique = best[:2] if innings_complete else recent + [x for x in best if str(x.get("playerShortName") or "") not in shown][:2]
 
         runs, wickets, overs = current.get("runsScored"), current.get("numberOfWicketsFallen"), current.get("oversBowled", "")
+        current_runs = int(runs) if runs is not None else None
         decimal_overs = self._decimal_overs(overs)
         required_run_rate = ""
         runs_needed = None
@@ -346,6 +347,7 @@ class PlayCricketPublicSource:
         summary_team = next((x for x in summary_teams if str(x.get("id") or "") == batting_id), {})
         score = str(summary_team.get("scoreText") or (f"{wickets}-{runs}" if runs is not None and wickets is not None else ""))
         previous_innings = None
+        two_day_context = ""
         if current_index > 0:
             previous = ordered_innings[current_index - 1]
             previous_team_id = str(previous.get("battingTeamId") or "")
@@ -364,13 +366,30 @@ class PlayCricketPublicSource:
                 for item in ordered_innings[:current_index]
             )
             previous_innings = InningsSummary(
-                self._team_from_id(detail, previous_team_id), previous_score, ordinal(previous_team_innings)
+                self._team_from_id(detail, previous_team_id), previous_score, ordinal(previous_team_innings),
+                int(previous_runs) if previous_runs is not None else None,
             )
+        if match_format.is_multi_day and current_runs is not None:
+            prior = ordered_innings[:current_index]
+            own_prior = sum(int(item.get("runsScored") or 0) for item in prior if str(item.get("battingTeamId") or "") == batting_id)
+            opponent_prior = sum(int(item.get("runsScored") or 0) for item in prior if str(item.get("battingTeamId") or "") != batting_id)
+            if target is not None:
+                needed = max(target - current_runs, 0)
+                two_day_context = f"Need {needed}" if needed else "Target reached"
+            elif prior:
+                margin = own_prior + current_runs - opponent_prior
+                if margin > 0:
+                    two_day_context = f"Leads by {margin}"
+                elif margin < 0:
+                    two_day_context = f"Trails by {abs(margin)}"
+                else:
+                    two_day_context = "Scores level"
         return LiveScore(
             batting_team=self._team_from_id(detail, batting_id), score=score, overs=overs,
             run_rate=f"{int(runs) / decimal_overs:.2f}" if decimal_overs and runs is not None else "",
             target=target, required_run_rate=required_run_rate, runs_needed=runs_needed,
-            balls_remaining=remaining_balls, wickets=wickets,
+            balls_remaining=remaining_balls, wickets=wickets, runs=current_runs,
+            two_day_context=two_day_context,
             innings_complete=innings_complete, game_status=game_status, innings_label=innings_label,
             current_batters=current_batters,
             dismissed_batters=[] if innings_complete else (dismissed_batters if (wickets or 0) > 0 else []),

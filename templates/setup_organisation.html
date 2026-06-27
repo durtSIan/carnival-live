@@ -47,19 +47,34 @@
         <h2>Grades</h2>
         <div class="results">
           {% for grade in grades %}
-            <form class="result grade" method="post" action="{{ url_for('save_favourite') }}">
-              <input type="hidden" name="grade_id" value="{{ grade.id }}">
-              <input type="hidden" name="grade_name" value="{{ grade.name }}">
-              <input type="hidden" name="organisation_name" value="{{ organisation_name }}">
-              <input type="hidden" name="next" value="{{ request.full_path }}">
-              <div>
-                <strong>{{ grade.name }}</strong>
-                <small>{% if grade.id in saved_grade_ids %}Saved favourite{% else %}Grade{% endif %}</small>
+            {% if grade.id in saved_grade_ids %}
+              <div class="result grade">
+                <div>
+                  <strong>{{ grade.name }}</strong>
+                  <small>Saved favourite</small>
+                </div>
+                <div class="grade-actions">
+                  <button disabled>Saved</button>
+                  <form method="post" action="{{ url_for('remove_favourite') }}">
+                    <input type="hidden" name="grade_id" value="{{ grade.id }}">
+                    <input type="hidden" name="next" value="{{ request.full_path }}">
+                    <button class="remove-button">Remove</button>
+                  </form>
+                </div>
               </div>
-              <button {% if grade.id in saved_grade_ids %}disabled{% endif %}>
-                {% if grade.id in saved_grade_ids %}Saved{% else %}Add{% endif %}
-              </button>
-            </form>
+            {% else %}
+              <form class="result grade" method="post" action="{{ url_for('save_favourite') }}">
+                <input type="hidden" name="grade_id" value="{{ grade.id }}">
+                <input type="hidden" name="grade_name" value="{{ grade.name }}">
+                <input type="hidden" name="organisation_name" value="{{ organisation_name }}">
+                <input type="hidden" name="next" value="{{ request.full_path }}">
+                <div>
+                  <strong>{{ grade.name }}</strong>
+                  <small>Grade</small>
+                </div>
+                <button>Add</button>
+              </form>
+            {% endif %}
           {% endfor %}
         </div>
       </section>

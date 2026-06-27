@@ -62,6 +62,7 @@ class InningsSummary:
     team_name: str
     score: str
     innings_label: str = ""
+    runs: int | None = None
 
 
 @dataclass
@@ -75,6 +76,8 @@ class LiveScore:
     runs_needed: int | None = None
     balls_remaining: int | None = None
     wickets: int | None = None
+    runs: int | None = None
+    two_day_context: str = ""
     innings_complete: bool = False
     game_status: str = ""
     innings_label: str = ""
@@ -195,7 +198,31 @@ class Match:
         if not self.match_format.is_multi_day or not self.live or not self.live.previous_innings:
             return ""
         previous = self.live.previous_innings
-        return " ".join(part for part in (previous.team_name, previous.innings_label, previous.score) if part)
+        base = " ".join(part for part in (previous.team_name, previous.innings_label, previous.score) if part)
+        context = self.two_day_context_line
+        return f"{base} · {context}" if context else base
+
+    @property
+    def two_day_context_line(self) -> str:
+        if not self.match_format.is_multi_day or not self.live:
+            return ""
+        if self.live.two_day_context:
+            return self.live.two_day_context
+        current_runs = self.live.runs
+        if current_runs is None:
+            return ""
+        if self.live.target is not None:
+            runs_needed = max(self.live.target - current_runs, 0)
+            return f"Need {runs_needed}" if runs_needed else "Target reached"
+        previous = self.live.previous_innings
+        if not previous or previous.runs is None:
+            return ""
+        margin = current_runs - previous.runs
+        if margin > 0:
+            return f"Leads by {margin}"
+        if margin < 0:
+            return f"Trails by {abs(margin)}"
+        return "Scores level"
 
     @property
     def grade_label(self) -> str:
