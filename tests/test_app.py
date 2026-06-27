@@ -2,7 +2,7 @@ import copy
 import json
 from pathlib import Path
 
-from app import create_app, current_seasons_only, grade_setup_order
+from app import create_app, current_seasons_only, favourite_grade_selection, grade_setup_order
 from data_sources.playcricket_public import PlayCricketPublicSource
 from favourites import FavouriteStore
 from match_settings import resolve_innings_parameters
@@ -345,8 +345,11 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
         "grade_name": "Women's Div 1", "organisation_name": "Darwin Competition",
     })
     assert response.status_code == 302
+    assert response.headers["Location"] == "/"
     assert store.default_grade_id() == "213859e0-488a-40c6-a642-dcf36df09f04"
-    assert "Remove" in client.get("/setup").get_data(as_text=True)
+    setup = client.get("/setup").get_data(as_text=True)
+    assert "Remove" in setup
+    assert "all saved favourite grades together" in setup
     removed = client.post("/setup/favourite/remove", data={"grade_id": "213859e0-488a-40c6-a642-dcf36df09f04"})
     assert removed.status_code == 302
     assert store.all() == []
@@ -396,3 +399,31 @@ def test_setup_shows_current_season_only_and_guides_club_results(tmp_path):
 def test_current_seasons_falls_back_when_no_current_flag_exists():
     seasons = [{"id": "one", "name": "Season One"}, {"id": "two", "name": "Season Two"}]
     assert current_seasons_only(seasons) == seasons
+
+
+def test_dashboard_uses_all_saved_favourites_when_no_grade_is_requested(tmp_path, monkeypatch):
+    monkeypatch.delenv("CARNIVAL_GRADE_ID", raising=False)
+    store = FavouriteStore(tmp_path / "favourites.json")
+    store.save("11111111-1111-1111-1111-111111111111", "A Grade", "Darwin")
+    store.save("22222222-2222-2222-2222-222222222222", "B Grade", "Darwin")
+    class FakeService:
+        def matches_for_grades(self, grade_ids, date, timezone, club, grade_names):
+            assert grade_ids == [
+                "22222222-2222-2222-2222-222222222222",
+                "11111111-1111-1111-1111-111111111111",
+            ]
+            assert grade_names["11111111-1111-1111-1111-111111111111"] == "A Grade"
+            return []
+        def matches_for_date(self, *args):
+            raise AssertionError("single-grade dashboard should not be used")
+    assert create_app(FakeService(), favourite_store=store).test_client().get("/").status_code == 200
+
+
+def test_favourite_grade_selection_ignores_duplicates_and_bad_ids():
+    ids, names = favourite_grade_selection([
+        {"grade_id": "bad", "grade_name": "Bad"},
+        {"grade_id": "11111111-1111-1111-1111-111111111111", "grade_name": "A Grade"},
+        {"grade_id": "11111111-1111-1111-1111-111111111111", "grade_name": "Duplicate"},
+    ])
+    assert ids == ["11111111-1111-1111-1111-111111111111"]
+    assert names == {"11111111-1111-1111-1111-111111111111": "A Grade"}

@@ -59,10 +59,11 @@
     {% if favourites %}
       <section>
         <h2>Favourites</h2>
+        <p class="hint">The scores screen will search all saved favourite grades together.</p>
         <div class="results">
           {% for item in favourites %}
             <div class="favourite-row">
-              <a class="favourite" href="{{ url_for('dashboard', grade_id=item.grade_id) }}">
+              <a class="favourite" href="{{ url_for('dashboard') }}">
                 <strong>{{ item.grade_name }}</strong>
                 <small>{{ item.organisation_name }}</small>
               </a>

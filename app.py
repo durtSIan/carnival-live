@@ -57,6 +57,17 @@ def current_seasons_only(seasons: list[dict]) -> list[dict]:
     current = [season for season in seasons if season.get("isCurrentSeason")]
     return current or seasons
 
+def favourite_grade_selection(items: list[dict[str, str]]) -> tuple[list[str], dict[str, str]]:
+    grade_ids: list[str] = []
+    grade_names: dict[str, str] = {}
+    for item in items:
+        grade_id = str(item.get("grade_id") or "").strip()
+        if not GRADE_ID_PATTERN.fullmatch(grade_id) or grade_id in grade_ids:
+            continue
+        grade_ids.append(grade_id)
+        grade_names[grade_id] = str(item.get("grade_name") or grade_id)
+    return grade_ids[:10], grade_names
+
 def create_app(service: MatchService | None = None, setup_source=None, favourite_store: FavouriteStore | None = None) -> Flask:
     app = Flask(__name__)
     source = setup_source or PlayCricketPublicSource()
@@ -67,10 +78,14 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
     def dashboard():
         timezone_name = request.args.get("timezone", os.getenv("CARNIVAL_TIMEZONE", DEFAULT_TIMEZONE))
         selected_date = request.args.get("date") or datetime.now(ZoneInfo(timezone_name)).date().isoformat()
-        grade_id = request.args.get("grade_id") or os.getenv("CARNIVAL_GRADE_ID") or favourites.default_grade_id() or DEFAULT_GRADE_ID
+        requested_grade_id = request.args.get("grade_id")
+        favourite_grade_ids, favourite_grade_names = favourite_grade_selection(favourites.all())
+        grade_id = requested_grade_id or os.getenv("CARNIVAL_GRADE_ID") or favourites.default_grade_id() or DEFAULT_GRADE_ID
         grade_ids = [value for value in request.args.get("grade_ids", "").split(",") if GRADE_ID_PATTERN.fullmatch(value.strip())][:10]
         grade_labels = [value.strip() for value in request.args.get("grade_labels", "").split(",")][:len(grade_ids)]
         grade_names = dict(zip(grade_ids, grade_labels))
+        if not requested_grade_id and not grade_ids and not os.getenv("CARNIVAL_GRADE_ID") and favourite_grade_ids:
+            grade_ids, grade_names = favourite_grade_ids, favourite_grade_names
         club_name = request.args.get("club", "").strip()
         error = ""
         try:
@@ -114,7 +129,7 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
         if not found: return redirect(url_for("setup_search", manual_error="Enter a valid Play Cricket grade ID or URL."))
         grade_id = found.group(0)
         favourites.save(grade_id, request.form.get("grade_name", "").strip() or grade_id, request.form.get("organisation_name", "").strip())
-        return redirect(url_for("dashboard", grade_id=grade_id))
+        return redirect(url_for("dashboard"))
 
     @app.post("/setup/favourite/remove")
     def remove_favourite():
