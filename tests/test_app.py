@@ -443,10 +443,10 @@ def test_two_day_previous_innings_line_includes_lead_or_chase_context():
     live = LiveScore(
         batting_team="Beta", score="2-80", overs=30, run_rate="2.67", runs=80,
         previous_innings=InningsSummary("Alpha", "127", "1st innings", 127),
-        two_day_context="Trails by 47",
+        two_day_context="Beta trail by 47",
     )
     match = Match("id", "", "Alpha", "Beta", "", "Round 1", "Two Day", "LIVE", "2026-06-27", "1:00 PM", live)
-    assert match.previous_innings_line == "Alpha 1st innings 127 · Trails by 47"
+    assert match.previous_innings_line == "Alpha 1st innings 127 · Beta trail by 47"
 
 
 def test_two_day_parser_uses_aggregate_totals_for_third_innings_lead():
@@ -460,7 +460,7 @@ def test_two_day_parser_uses_aggregate_totals_for_third_innings_lead():
         ],
     }
     live = PlayCricketPublicSource().parse_scorecard(detail, MatchFormat.from_source("Two Day"))
-    assert live.two_day_context == "Leads by 50"
+    assert live.two_day_context == "Alpha lead by 50"
 
 
 def test_two_day_parser_shows_fourth_innings_runs_needed():
@@ -476,4 +476,4 @@ def test_two_day_parser_shows_fourth_innings_runs_needed():
     }
     live = PlayCricketPublicSource().parse_scorecard(detail, MatchFormat.from_source("Two Day"))
     assert live.target == 71
-    assert live.two_day_context == "Need 61"
+    assert live.two_day_context == "Beta need 61"

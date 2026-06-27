@@ -219,9 +219,9 @@ class Match:
             return ""
         margin = current_runs - previous.runs
         if margin > 0:
-            return f"Leads by {margin}"
+            return f"{self.live.batting_team} lead by {margin}"
         if margin < 0:
-            return f"Trails by {abs(margin)}"
+            return f"{self.live.batting_team} trail by {abs(margin)}"
         return "Scores level"
 
     @property

@@ -371,17 +371,18 @@ class PlayCricketPublicSource:
             )
         if match_format.is_multi_day and current_runs is not None:
             prior = ordered_innings[:current_index]
+            batting_team = self._team_from_id(detail, batting_id)
             own_prior = sum(int(item.get("runsScored") or 0) for item in prior if str(item.get("battingTeamId") or "") == batting_id)
             opponent_prior = sum(int(item.get("runsScored") or 0) for item in prior if str(item.get("battingTeamId") or "") != batting_id)
             if target is not None:
                 needed = max(target - current_runs, 0)
-                two_day_context = f"Need {needed}" if needed else "Target reached"
+                two_day_context = f"{batting_team} need {needed}" if needed else f"{batting_team} target reached"
             elif prior:
                 margin = own_prior + current_runs - opponent_prior
                 if margin > 0:
-                    two_day_context = f"Leads by {margin}"
+                    two_day_context = f"{batting_team} lead by {margin}"
                 elif margin < 0:
-                    two_day_context = f"Trails by {abs(margin)}"
+                    two_day_context = f"{batting_team} trail by {abs(margin)}"
                 else:
                     two_day_context = "Scores level"
         return LiveScore(
