@@ -199,9 +199,7 @@ class Match:
         if not self.match_format.is_multi_day or not self.live or not self.live.previous_innings:
             return ""
         previous = self.live.previous_innings
-        base = " ".join(part for part in (previous.team_name, previous.innings_label, previous.score) if part)
-        context = self.two_day_context_line
-        return f"{base} · {context}" if context else base
+        return " ".join(part for part in (previous.team_name, previous.innings_label, previous.score) if part)
 
     @property
     def two_day_context_line(self) -> str:
