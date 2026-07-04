@@ -249,8 +249,11 @@ def test_service_keeps_completed_but_hides_upcoming_and_other_dates():
 
 def test_service_keeps_carried_two_day_matches_from_previous_start_date():
     carried_two_day = Match("two-day", "", "Alpha", "Beta", "", "Round 1", "Two Day", "STUMPS", "2026-06-20", "11:00 AM")
+    carried_two_day.schedule_dates = ["2026-06-20", "2026-06-27"]
     old_completed = Match("done", "", "Alpha", "Beta", "", "Round 1", "Two Day", "COMPLETED", "2026-06-20", "11:00 AM")
+    old_completed.schedule_dates = ["2026-06-20", "2026-06-27"]
     older_completed = Match("older", "", "Alpha", "Beta", "", "Round 0", "Two Day", "COMPLETED", "2026-06-06", "11:00 AM")
+    older_completed.schedule_dates = ["2026-06-06", "2026-06-13"]
     same_day_live = Match("today", "", "Alpha", "Beta", "", "Round 2", "One Day", "LIVE", "2026-06-27", "1:00 PM")
     class FakeSource:
         def get_matches(self, *args):
@@ -259,6 +262,19 @@ def test_service_keeps_carried_two_day_matches_from_previous_start_date():
             return item
     visible = MatchService(FakeSource()).matches_for_date("grade", "2026-06-27", "Australia/Darwin")
     assert [item.match_id for item in visible] == ["two-day", "today", "done"]
+
+
+def test_service_does_not_keep_two_day_matches_after_scheduled_dates():
+    completed_last_round = Match("done", "", "Alpha", "Beta", "", "Round 1", "Two Day", "COMPLETED", "2026-06-20", "11:00 AM")
+    completed_last_round.schedule_dates = ["2026-06-20", "2026-06-27"]
+    today_live = Match("today", "", "Alpha", "Beta", "", "Round 2", "One Day", "LIVE", "2026-07-04", "1:00 PM")
+    class FakeSource:
+        def get_matches(self, *args):
+            return [completed_last_round, today_live]
+        def add_scorecard(self, item):
+            return item
+    visible = MatchService(FakeSource()).matches_for_date("grade", "2026-07-04", "Australia/Darwin")
+    assert [item.match_id for item in visible] == ["today"]
 
 
 def test_multi_grade_view_keeps_only_selected_club_and_deduplicates_matches():

@@ -159,6 +159,12 @@ class PlayCricketPublicSource:
         schedule = raw.get("matchSchedule") or []
         start = (schedule[0] if schedule else {}).get("startDateTime") or ""
         local = self._parse_datetime(start).astimezone(ZoneInfo(timezone_name)) if start else None
+        schedule_dates = []
+        for item in schedule:
+            value = str(item.get("startDateTime") or "")
+            if not value:
+                continue
+            schedule_dates.append(self._parse_datetime(value).astimezone(ZoneInfo(timezone_name)).date().isoformat())
         match_id = str(raw.get("id") or "")
         home_name, away_name = self._team_name(home), self._team_name(away)
         slug = re.sub(r"[^a-z0-9]+", "-", f"{home_name}-{away_name}".lower()).strip("-")
@@ -176,6 +182,7 @@ class PlayCricketPublicSource:
             competition_name=str((raw.get("grade") or {}).get("name") or ""),
             result_text=str(raw.get("resultText") or ""),
             is_forfeit="forfeit" in str(raw.get("resultText") or "").lower() or str(raw.get("status") or "").upper() == "FORFEITED",
+            schedule_dates=schedule_dates,
         )
 
     def _team_from_id(self, detail: dict[str, Any], team_id: str) -> str:
