@@ -323,6 +323,18 @@ def test_multi_grade_view_keeps_only_selected_club_and_deduplicates_matches():
     assert [match.grade_label for match in matches] == ["A Grade", "B Grade"]
 
 
+def test_multi_grade_club_filter_ignores_cricket_club_suffix():
+    palmerston = Match("p-c", "", "Palmerston C White", "Nightcliff C", "", "Round 10", "One Day", "LIVE", "2026-07-04", "1:00 PM")
+    unrelated = Match("other", "", "Darwin C", "PINT C Green", "", "Round 10", "One Day", "LIVE", "2026-07-04", "1:00 PM")
+    class FakeSource:
+        def get_matches(self, *_): return [palmerston, unrelated]
+        def add_scorecard(self, match): return match
+    matches = MatchService(FakeSource()).matches_for_grades(
+        ["grade-c"], "2026-07-04", "Australia/Darwin", "Palmerston Cricket Club", {"grade-c": "C Grade"},
+    )
+    assert [match.match_id for match in matches] == ["p-c"]
+
+
 def test_dashboard_routes_multi_grade_club_view():
     class FakeService:
         def matches_for_grades(self, grade_ids, date, timezone, club, grade_names):

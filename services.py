@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import requests
 
 from data_sources.base import CricketDataSource
@@ -25,20 +27,31 @@ class MatchService:
         grade_names: dict[str, str] | None = None,
     ) -> list[Match]:
         """Combine grade feeds, optionally retaining only one club's matches."""
-        club = club_name.casefold().strip()
+        club = self._normalise_club_name(club_name)
         combined: list[Match] = []
         seen: set[str] = set()
         for grade_id in grade_ids:
             for match in self._visible(self.source.get_matches(grade_id, timezone_name), selected_date):
                 if not match.competition_name and grade_names:
                     match.competition_name = grade_names.get(grade_id, "")
-                if club and club not in match.home_team.casefold() and club not in match.away_team.casefold():
+                if club and not self._team_matches_club_filter(match.home_team, club) and not self._team_matches_club_filter(match.away_team, club):
                     continue
                 if match.match_id in seen:
                     continue
                 seen.add(match.match_id)
                 combined.append(match)
         return self._with_scorecards(combined)
+
+    @staticmethod
+    def _normalise_club_name(value: str) -> str:
+        words = re.sub(r"[^a-z0-9]+", " ", value.casefold()).split()
+        generic = {"cricket", "club", "cc", "association", "competition", "league", "inc", "incorporated"}
+        return " ".join(word for word in words if word not in generic).strip()
+
+    @classmethod
+    def _team_matches_club_filter(cls, team_name: str, normalised_club: str) -> bool:
+        team = cls._normalise_club_name(team_name)
+        return bool(normalised_club and (normalised_club in team or team in normalised_club))
 
     @staticmethod
     def _visible(matches: list[Match], selected_date: str) -> list[Match]:
