@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import date
 import re
 
 
@@ -238,14 +239,27 @@ class Match:
         label = self.grade_label.upper()
         if "PREMIER" in label:
             return 0
-        letter = re.search(r"\b([A-Z])\s+GRADE\b", label)
+        letter = re.search(r"\b(?:GRADE\s+([A-Z])|([A-Z])\s+GRADE)\b", label)
         if letter:
-            return ord(letter.group(1)) - ord("A") + 1
+            return ord(letter.group(1) or letter.group(2)) - ord("A") + 1
         number = re.search(r"\b(?:GRADE|DIV(?:ISION)?)\s*(\d+)\b|\b(\d+)(?:ST|ND|RD|TH)\s+GRADE\b", label)
         if number:
             return int(number.group(1) or number.group(2))
         words = {"FIRST": 1, "SECOND": 2, "THIRD": 3, "FOURTH": 4, "FIFTH": 5}
-        return next((rank for word, rank in words.items() if f"{word} GRADE" in label), 999)
+        word_rank = next((rank for word, rank in words.items() if f"{word} GRADE" in label or f"GRADE {word}" in label), None)
+        if word_rank:
+            return word_rank
+        plain_letter = re.fullmatch(r"[A-Z]", label)
+        if plain_letter:
+            return ord(label) - ord("A") + 1
+        return 999
+
+    @property
+    def display_date(self) -> str:
+        try:
+            return date.fromisoformat(self.start_date).strftime("%d-%b-%y")
+        except ValueError:
+            return self.start_date
 
     @property
     def has_scorecard(self) -> bool:
@@ -323,5 +337,5 @@ class Match:
             return ""
         return (
             f"Target {self.live.target} | Need {self.live.runs_needed} "
-            f"off {self.live.balls_remaining} | Req={self.live.required_run_rate}"
+            f"off {self.live.balls_remaining} | RRReq={self.live.required_run_rate}"
         )

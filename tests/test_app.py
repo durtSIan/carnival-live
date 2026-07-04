@@ -84,7 +84,7 @@ def test_one_day_chase_uses_a_configured_over_limit_when_available():
     assert live.runs_needed == 80 and live.balls_remaining == 120
     assert live.required_run_rate == "4.00"
     match = Match("id", "", "Alpha", "Beta", "", "Round 1", "One Day", "LIVE", "2026-06-20", "1:00 PM", live)
-    assert match.chase_line == "Target 161 | Need 80 off 120 | Req=4.00"
+    assert match.chase_line == "Target 161 | Need 80 off 120 | RRReq=4.00"
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
@@ -162,7 +162,7 @@ def test_target_renders_immediately_after_overs():
     assert "Target 87" in body
     assert 'class="brief-target">Tar 87' in body
     assert "Alpha" in body and "RR=6.00" in body
-    assert body.index("(2)") < body.rindex("Target 87") < body.index("Need 75 off 108") < body.index("Req=4.17")
+    assert body.index("(2)") < body.rindex("Target 87") < body.index("Need 75 off 108") < body.index("RRReq=4.17")
 
 
 def test_two_day_card_keeps_previous_innings_total_beneath_toss():
@@ -233,6 +233,16 @@ def test_match_exposes_flat_source_independent_display_contract():
     match = Match("id", "url", "Alpha", "Beta", "", "Round 1", "T20", "LIVE", "2026-06-20", "1:00 PM", live, competition_name="Division 1")
     assert (match.competition_name, match.round, match.batting_team, match.score) == ("Division 1", "Round 1", "Alpha", "1-37")
     assert (match.target, match.runs_required, match.required_rate) == (80, 43, "4.30")
+    assert match.display_date == "20-Jun-26"
+
+
+def test_dashboard_uses_short_display_date():
+    match = Match("id", "", "Alpha", "Beta", "", "Round 1", "T20", "LIVE", "2026-07-04", "1:00 PM", LiveScore("Alpha", "1-37", "9.4", "3.83"))
+    class FakeService:
+        def matches_for_date(self, *args): return [match]
+    body = create_app(FakeService()).test_client().get("/?date=2026-07-04").get_data(as_text=True)
+    assert "04-Jul-26 1:00 PM" in body
+    assert "2026-07-04 1:00 PM" not in body
 
 
 def test_service_keeps_completed_but_hides_upcoming_and_other_dates():
@@ -437,17 +447,30 @@ def test_setup_grades_sort_into_cricket_order():
         {"name": "Premier T20 (Whittles)"},
         {"name": "Women's Div 2 (Arafura Connect)"},
         {"name": "B Grade (DXC Technology)"},
+        {"name": "Grade F"},
+        {"name": "Grade 2"},
+        {"name": "A"},
         {"name": "Under 16 Blue (McDonald's)"},
         {"name": "D Grade (Raikot Group)"},
         {"name": "E Grade (Raikot Group)"},
     ]
     ordered = [grade["name"] for grade in sorted(grades, key=grade_setup_order)]
-    assert ordered[:5] == [
-        "A Grade (Gatorade)", "B Grade (DXC Technology)", "C Grade (Raikot Group)",
-        "D Grade (Raikot Group)", "E Grade (Raikot Group)",
-    ]
+    assert set(ordered[:2]) == {"A Grade (Gatorade)", "A"}
+    assert ordered.index("B Grade (DXC Technology)") < ordered.index("C Grade (Raikot Group)")
+    assert ordered.index("Grade 2") < ordered.index("D Grade (Raikot Group)")
+    assert ordered.index("Grade F") > ordered.index("E Grade (Raikot Group)")
     assert ordered.index("Premier T20 (Whittles)") < ordered.index("Women's Div 2 (Arafura Connect)")
     assert ordered.index("Sunday 1") < ordered.index("Under 16 Blue (McDonald's)")
+
+
+def test_match_grade_order_handles_letters_and_numbers_both_ways():
+    grade_names = ["Grade C", "A", "2nd Grade", "Grade B", "Grade 1", "D Grade"]
+    matches = [
+        Match(name, "", "Alpha", "Beta", "", "Round 1", "One Day", "LIVE", "2026-07-04", "1:00 PM", competition_name=name)
+        for name in grade_names
+    ]
+    ordered = [match.grade_label for match in sorted(matches, key=lambda item: item.grade_order)]
+    assert ordered == ["A", "Grade 1", "2nd Grade", "Grade B", "Grade C", "D Grade"]
 
 
 def test_setup_shows_current_season_only_and_guides_club_results(tmp_path):

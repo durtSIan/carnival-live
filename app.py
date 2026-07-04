@@ -23,13 +23,13 @@ def grade_setup_order(grade: dict) -> tuple[int, int, str]:
     name = str(grade.get("name") or "").strip()
     label = re.sub(r"\s*\([^)]*\)\s*", " ", name.upper()).strip()
 
-    letter = re.search(r"\b([A-Z])\s+GRADE\b", label)
+    letter = re.search(r"\b(?:GRADE\s+([A-Z])|([A-Z])\s+GRADE)\b", label)
     if letter:
-        return (10, ord(letter.group(1)) - ord("A"), name)
+        return (10, ord(letter.group(1) or letter.group(2)) - ord("A"), name)
 
-    ordinal = re.search(r"\b(\d+)(?:ST|ND|RD|TH)\s+GRADE\b", label)
-    if ordinal:
-        return (10, int(ordinal.group(1)), name)
+    number = re.search(r"\b(?:GRADE\s*(\d+)|(\d+)(?:ST|ND|RD|TH)\s+GRADE)\b", label)
+    if number:
+        return (10, int(number.group(1) or number.group(2)), name)
 
     division = re.search(r"\bDIV(?:ISION)?\s*(\d+)\b", label)
     if division:
@@ -41,6 +41,10 @@ def grade_setup_order(grade: dict) -> tuple[int, int, str]:
         return (25, 0, name)
     if "WOMEN" in label:
         return (30, 99, name)
+
+    plain_letter = re.fullmatch(r"[A-Z]", label)
+    if plain_letter:
+        return (10, ord(label) - ord("A"), name)
 
     sunday = re.search(r"\bSUNDAY\s*(\d+)\b", label)
     if sunday:
