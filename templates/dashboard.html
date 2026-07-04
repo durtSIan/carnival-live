@@ -22,7 +22,14 @@
     {% if error %}<div class="notice error">{{ error }}</div>{% endif %}
     {% if not matches and not error %}<div class="notice">No live matches right now</div>{% endif %}
     <section class="match-grid">
+      {% set grade_group = namespace(name=None) %}
       {% for match in matches %}
+      {% if match.grade_label and match.grade_label != grade_group.name %}
+      {% set grade_group.name = match.grade_label %}
+      <div class="grade-divider" role="separator" aria-label="{{ match.grade_label }}">
+        <span>{{ match.grade_label }}</span>
+      </div>
+      {% endif %}
       <article class="match-card">
         <div class="card-head">
           <h2>{% if match.is_final and match.result_winner %}{{ match.result_winner }} <span>def</span> {{ match.result_loser }}{% if match.final_qualifier %} <span>{{ match.final_qualifier }}</span>{% endif %}{% if match.final_margin %} <span>{{ match.final_margin }}</span>{% endif %}{% else %}{{ match.home_team }} <span>v</span> {{ match.away_team }}{% if match.toss_winner %}<small>(toss {{ match.toss_winner }}{% if match.toss_decision %}, {{ match.toss_decision }}{% endif %})</small>{% endif %}{% endif %}</h2>

@@ -189,6 +189,25 @@ def test_dashboard_hides_internal_fields():
     assert "secret-id" not in body and "https://secret.test" not in body
 
 
+def test_dashboard_adds_grade_dividers_when_grade_changes():
+    a_grade = Match(
+        "a", "", "Alpha", "Beta", "", "Round 1", "One Day", "LIVE",
+        "2026-07-04", "1:00 PM", LiveScore("Alpha", "1-37", "9.4", "3.83"),
+        competition_name="A Grade",
+    )
+    b_grade = Match(
+        "b", "", "Gamma", "Delta", "", "Round 1", "One Day", "LIVE",
+        "2026-07-04", "1:00 PM", LiveScore("Gamma", "2-50", "12", "4.17"),
+        competition_name="B Grade",
+    )
+    class FakeService:
+        def matches_for_date(self, *args): return [a_grade, b_grade]
+    body = create_app(FakeService()).test_client().get("/?date=2026-07-04").get_data(as_text=True)
+    assert body.count('class="grade-divider"') == 2
+    assert body.index("A Grade") < body.index("Alpha")
+    assert body.index("B Grade") < body.index("Gamma")
+
+
 def test_toss_line_shows_inferred_batted_or_bowled_choice():
     detail = {
         "teams": [
