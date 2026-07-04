@@ -22,24 +22,35 @@
       <span class="mark">CL</span>
       <div>
         <h1>Find your cricket</h1>
-        <p>Search for a club, association or competition.</p>
+        <p>Build a live feed for the clubs and grades you want to follow.</p>
       </div>
     </header>
 
-    {% if favourites %}
-      <div class="setup-actions">
-        <a class="primary-action" href="{{ url_for('dashboard') }}">Go to live scores</a>
-        <span>{{ favourites|length }} favourite{% if favourites|length != 1 %}s{% endif %} saved</span>
-      </div>
-    {% endif %}
-
-    <form class="search-form" method="get">
-      <label for="q">Club, association or competition</label>
+    <section class="feed-summary">
       <div>
-        <input id="q" name="q" value="{{ query }}" minlength="3" placeholder="e.g. Darwin Cricket" autofocus>
-        <button>Search</button>
+        <h2>Your live feed</h2>
+        {% if favourites %}
+          <p>{{ favourites|length }} grade{% if favourites|length != 1 %}s{% endif %}{% if club_filters %} · {{ club_filters|length }} club/team filter{% if club_filters|length != 1 %}s{% endif %}{% endif %}</p>
+        {% else %}
+          <p>No grades saved yet. Search below to add clubs, associations or competitions.</p>
+        {% endif %}
       </div>
-    </form>
+      {% if favourites %}
+        <a class="primary-action" href="{{ url_for('dashboard') }}">View live scores</a>
+      {% endif %}
+    </section>
+
+    <section class="add-feed">
+      <h2>Add to your feed</h2>
+      <p class="hint">Search a club to follow its teams, or search an association/competition to choose grades.</p>
+      <form class="search-form" method="get">
+        <label for="q">Club, association or competition</label>
+        <div>
+          <input id="q" name="q" value="{{ query }}" minlength="3" placeholder="e.g. Darwin Cricket" autofocus>
+          <button>Search</button>
+        </div>
+      </form>
+    </section>
 
     {% if error %}
       <p class="message error">{{ error }}</p>
@@ -72,11 +83,15 @@
       </section>
     {% endif %}
 
-    {% if favourites %}
+    {% if favourites or club_filters %}
       <section>
-        <h2>Favourites</h2>
+        <h2>Saved clubs / teams</h2>
         <p class="hint">
-          The scores screen will search all saved favourite grades together{% if club_filters %}, filtered to {{ club_filter }}{% endif %}.
+          {% if club_filters %}
+            Live scores will only show matches involving these clubs or teams.
+          {% else %}
+            No club filter is active, so all matches in the saved grades will show.
+          {% endif %}
         </p>
         <form class="feed-filter-form" method="post" action="{{ url_for('save_feed_filter') }}">
           <label for="club_filter">Add club/team filter</label>
@@ -84,10 +99,9 @@
             <input id="club_filter" name="club_filter" placeholder="e.g. Palmerston or PINT">
             <button>Add filter</button>
             {% if club_filters %}
-              <button class="remove-button" name="club_filter" value="">Clear</button>
+              <button class="remove-button" name="club_filter" value="">Clear all</button>
             {% endif %}
           </div>
-          <small>Leave blank to show every match in your saved grades.</small>
         </form>
         {% if club_filters %}
           <div class="filter-list" aria-label="Saved club filters">
@@ -100,6 +114,13 @@
             {% endfor %}
           </div>
         {% endif %}
+      </section>
+    {% endif %}
+
+    {% if favourites %}
+      <section>
+        <h2>Saved grades</h2>
+        <p class="hint">The scores screen will search all saved favourite grades together{% if club_filters %}, filtered to {{ club_filter }}{% endif %}.</p>
         <div class="results">
           {% for item in favourites %}
             <div class="favourite-row">

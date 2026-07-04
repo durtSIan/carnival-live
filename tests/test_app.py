@@ -497,7 +497,9 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     assert removed_from_grades.headers["Location"] == "/setup/organisation/org-1?name=Darwin+Competition"
     store.save("213859e0-488a-40c6-a642-dcf36df09f04", "Women's Div 1", "Darwin Competition")
     setup = client.get("/setup").get_data(as_text=True)
-    assert "Remove" in setup and "Go to live scores" in setup
+    assert "Remove" in setup and "View live scores" in setup
+    assert "Your live feed" in setup and "Add to your feed" in setup
+    assert "Saved clubs / teams" in setup and "Saved grades" in setup
     assert "all saved favourite grades together" in setup
     assert "Advanced: enter grade URL or ID" not in setup
     assert "Add club/team filter" in setup
