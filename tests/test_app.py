@@ -2,7 +2,7 @@ import copy
 import json
 from pathlib import Path
 
-from app import create_app, current_seasons_only, favourite_grade_selection, grade_setup_order
+from app import club_team_grade_options, create_app, current_seasons_only, favourite_grade_selection, grade_setup_order
 from data_sources.playcricket_public import PlayCricketPublicSource
 from favourites import FavouriteStore
 from match_settings import resolve_innings_parameters
@@ -452,6 +452,7 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     setup = client.get("/setup").get_data(as_text=True)
     assert "Remove" in setup and "Go to live scores" in setup
     assert "all saved favourite grades together" in setup
+    assert "Advanced: enter grade URL or ID" not in setup
     assert "Optional club/team filter" in setup
     filter_response = client.post("/setup/feed-filter", data={"club_filter": "Palmerston"})
     assert filter_response.status_code == 302
@@ -514,6 +515,8 @@ def test_setup_shows_current_season_only_and_guides_club_results(tmp_path):
         def get_organisation_grades(self, organisation_id, season_id):
             assert season_id == "current"
             return []
+        def get_organisation_teams(self, organisation_id, season_id):
+            return []
     client = create_app(FakeService(), FakeSetupSource(), FavouriteStore(tmp_path / "favourites.json")).test_client()
     body = client.get("/setup/organisation/org-1?name=Palmerston+Cricket+Club").get_data(as_text=True)
     assert "Winter 2026" in body and "Winter 2025" not in body
@@ -521,6 +524,59 @@ def test_setup_shows_current_season_only_and_guides_club_results(tmp_path):
     assert "Save this club/team as your filter" in body
     response = client.post("/setup/feed-filter", data={"club_filter": "Palmerston Cricket Club"})
     assert response.status_code == 302
+
+
+def test_setup_club_page_shows_team_grades_and_sets_filter(tmp_path):
+    grade_id = "11111111-1111-1111-1111-111111111111"
+    class FakeService:
+        def matches_for_date(self, *args): return []
+    class FakeSetupSource:
+        def search_organisations(self, query): return []
+        def get_organisation_seasons(self, organisation_id):
+            return [{"id": "current", "name": "Winter 2026", "isCurrentSeason": True}]
+        def get_organisation_grades(self, organisation_id, season_id):
+            return []
+        def get_organisation_teams(self, organisation_id, season_id):
+            return [
+                {"id": "team-1", "name": "A Grade", "grade": {
+                    "id": grade_id, "name": "A Grade",
+                    "owningOrganisation": {"name": "Darwin & Districts Cricket Competition"},
+                }},
+                {"id": "team-2", "name": "A Grade White", "grade": {
+                    "id": grade_id, "name": "A Grade",
+                    "owningOrganisation": {"name": "Darwin & Districts Cricket Competition"},
+                }},
+            ]
+    store = FavouriteStore(tmp_path / "favourites.json")
+    client = create_app(FakeService(), FakeSetupSource(), store).test_client()
+    body = client.get("/setup/organisation/org-1?name=Darwin+Cricket+Club").get_data(as_text=True)
+    assert "Club teams found" in body
+    assert "Darwin &amp; Districts Cricket Competition" in body
+    assert "A Grade, A Grade White" in body
+    response = client.post("/setup/favourite", data={
+        "grade_id": grade_id,
+        "grade_name": "A Grade",
+        "organisation_name": "Darwin & Districts Cricket Competition",
+        "club_filter": "Darwin Cricket Club",
+    })
+    assert response.status_code == 302
+    assert store.default_grade_id() == grade_id
+    assert store.club_filter() == "Darwin Cricket Club"
+
+
+def test_club_team_grade_options_collapses_duplicate_teams_by_grade():
+    grade_id = "11111111-1111-1111-1111-111111111111"
+    options = club_team_grade_options([
+        {"name": "C Grade", "grade": {"id": grade_id, "name": "C Grade", "owningOrganisation": {"name": "Assoc"}}},
+        {"name": "C Grade White", "grade": {"id": grade_id, "name": "C Grade", "owningOrganisation": {"name": "Assoc"}}},
+        {"name": "Bad", "grade": {"id": "bad", "name": "Bad"}},
+    ])
+    assert options == [{
+        "id": grade_id,
+        "name": "C Grade",
+        "owning_organisation": "Assoc",
+        "teams": "C Grade, C Grade White",
+    }]
 
 
 def test_current_seasons_falls_back_when_no_current_flag_exists():

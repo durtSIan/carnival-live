@@ -97,19 +97,6 @@
       </section>
     {% endif %}
 
-    <details class="advanced" {% if request.args.get('manual_error') %}open{% endif %}>
-      <summary>Advanced: enter grade URL or ID</summary>
-      <form method="post" action="{{ url_for('save_favourite') }}">
-        <label for="grade_id">Play Cricket grade URL or grade ID</label>
-        <input id="grade_id" name="grade_id" required placeholder="https://play.cricket.com.au/grade/…">
-        <input name="grade_name" placeholder="Favourite name (optional)">
-        <input type="hidden" name="next" value="{{ url_for('setup_search') }}">
-        {% if request.args.get('manual_error') %}
-          <p class="error">{{ request.args.get('manual_error') }}</p>
-        {% endif %}
-        <button>Save grade</button>
-      </form>
-    </details>
   </main>
 </body>
 </html>

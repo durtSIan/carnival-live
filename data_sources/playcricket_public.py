@@ -57,6 +57,11 @@ class PlayCricketPublicSource:
         data = self._get(f"/fixturesladders/organisations/{organisation_id}/grades", seasonId=season_id)
         return data.get("grades") if isinstance(data.get("grades"), list) else []
 
+    def get_organisation_teams(self, organisation_id: str, season_id: str = "") -> list[dict[str, Any]]:
+        params = {"seasonId": season_id} if season_id else {}
+        data = self._get(f"/fixturesladders/organisations/{organisation_id}/teams", **params)
+        return data.get("teams") if isinstance(data.get("teams"), list) else []
+
     def add_scorecard(self, match: Match) -> Match:
         detail = self._get(
             f"/scores/matches/{match.match_id}",

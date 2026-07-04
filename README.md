@@ -13,7 +13,7 @@ python app.py
 
 Open <http://127.0.0.1:5000>. The screen refreshes every 30 seconds.
 
-Open <http://127.0.0.1:5000/setup> to search Play Cricket organisations, choose a season and grade, and save favourite grades. The public Play Cricket search endpoint currently searches organisations (clubs, associations and competitions); grade discovery follows organisation -> season -> grade. Manual grade URL/ID entry is available under Advanced.
+Open <http://127.0.0.1:5000/setup> to search Play Cricket organisations and save a feed. Association and competition results show their current season grades. Club results use the public teams endpoint to find the grades and competitions the club's teams are attached to, then save those grades with an optional club/team filter.
 
 The default grade is `213859e0-488a-40c6-a642-dcf36df09f04` and the default timezone is `Australia/Darwin`. They can be changed with environment variables:
 

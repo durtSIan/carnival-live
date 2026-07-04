@@ -89,6 +89,45 @@
           {% endfor %}
         </div>
       </section>
+    {% elif club_team_grades %}
+      <section>
+        <h2>Club teams found</h2>
+        <p class="hint">These teams are listed under their association or competition grades. Add the grades you want, and {{ organisation_name }} will be saved as the filter.</p>
+        <div class="results">
+          {% for grade in club_team_grades %}
+            {% if grade.id in saved_grade_ids %}
+              <div class="result grade team-grade">
+                <div>
+                  <strong>{{ grade.name }}</strong>
+                  <small>{{ grade.owning_organisation }}{% if grade.teams %} · {{ grade.teams }}{% endif %}</small>
+                  <small>Saved favourite</small>
+                </div>
+                <div class="grade-actions">
+                  <button disabled>Saved</button>
+                  <form method="post" action="{{ url_for('remove_favourite') }}">
+                    <input type="hidden" name="grade_id" value="{{ grade.id }}">
+                    <input type="hidden" name="next" value="{{ request.full_path }}">
+                    <button class="remove-button">Remove</button>
+                  </form>
+                </div>
+              </div>
+            {% else %}
+              <form class="result grade team-grade" method="post" action="{{ url_for('save_favourite') }}">
+                <input type="hidden" name="grade_id" value="{{ grade.id }}">
+                <input type="hidden" name="grade_name" value="{{ grade.name }}">
+                <input type="hidden" name="organisation_name" value="{{ grade.owning_organisation }}">
+                <input type="hidden" name="club_filter" value="{{ organisation_name }}">
+                <input type="hidden" name="next" value="{{ request.full_path }}">
+                <div>
+                  <strong>{{ grade.name }}</strong>
+                  <small>{{ grade.owning_organisation }}{% if grade.teams %} · {{ grade.teams }}{% endif %}</small>
+                </div>
+                <button>Add</button>
+              </form>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </section>
     {% elif seasons and not error %}
       <div class="message">
         <p>No grades were returned for the current season.</p>
