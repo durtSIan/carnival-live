@@ -498,6 +498,7 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     store.save("213859e0-488a-40c6-a642-dcf36df09f04", "Women's Div 1", "Darwin Competition")
     setup = client.get("/setup").get_data(as_text=True)
     assert "Remove" in setup and "View live scores" in setup
+    assert "Set up your live feed" in setup
     assert "Your live feed" in setup and "Add to your feed" in setup
     assert "Saved clubs / teams" in setup and "Saved grades" in setup
     assert "all saved favourite grades together" in setup
