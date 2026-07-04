@@ -1,0 +1,20 @@
+{
+  "name": "Carnival Live",
+  "short_name": "Carnival Live",
+  "description": "Compact live cricket scores for clubs, carnivals and selectors.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#08101b",
+  "theme_color": "#0a1320",
+  "categories": ["sports", "utilities"],
+  "icons": [
+    {
+      "src": "/static/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

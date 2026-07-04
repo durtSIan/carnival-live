@@ -15,6 +15,11 @@ Open <http://127.0.0.1:5000>. The screen refreshes every 30 seconds.
 
 Open <http://127.0.0.1:5000/setup> to search Play Cricket organisations and save a feed. Association and competition results show their current season grades. Club results use the public teams endpoint to find the grades and competitions the club's teams are attached to, then save those grades with an optional club/team filter.
 
+The app includes basic PWA support for phones: a web app manifest, install icon,
+iPhone home-screen metadata, safe-area spacing, and a small offline fallback. On
+an HTTPS deployment such as Render, users can add Carnival Live to their phone
+home screen from the browser share/menu options.
+
 The default grade is `213859e0-488a-40c6-a642-dcf36df09f04` and the default timezone is `Australia/Darwin`. They can be changed with environment variables:
 
 ```powershell

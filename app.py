@@ -5,7 +5,7 @@ import re
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, redirect, render_template, request, send_from_directory, url_for
 
 from data_sources import PlayCricketPublicSource
 from favourites import FavouriteStore
@@ -204,6 +204,10 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
     def remove_feed_filter():
         favourites.remove_club_filter(request.form.get("club_filter", ""))
         return redirect(setup_redirect_target(url_for("setup_search")))
+
+    @app.get("/service-worker.js")
+    def service_worker():
+        return send_from_directory(app.static_folder, "service-worker.js", mimetype="text/javascript")
 
     return app
 

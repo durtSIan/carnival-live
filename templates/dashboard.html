@@ -4,7 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="refresh" content="30">
+  <meta name="theme-color" content="#0a1320">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Carnival Live">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Carnival Live</title>
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+  <link rel="icon" href="{{ url_for('static', filename='icon.svg') }}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.svg') }}">
   <script>try{const mode=localStorage.getItem("carnivalLive.displayMode");if(["brief","standard","detailed"].includes(mode))document.documentElement.dataset.displayMode=mode}catch(e){}</script>
   <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='final.css') }}">
@@ -15,6 +23,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='compact.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='display-mode.css') }}">
   <script defer src="{{ url_for('static', filename='display-mode.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='pwa.js') }}"></script>
 </head>
 <body>
   <header><span class="mark">CL</span><h1>Carnival Live</h1><label class="display-mode-picker"><span>Display</span><select id="display-mode" aria-label="Display mode"><option value="brief">Brief</option><option value="standard">Standard</option><option value="detailed">Detailed</option></select></label><a class="setup-link" href="{{ url_for('setup_search') }}">Setup</a><span class="pulse"><i></i> LIVE</span></header>

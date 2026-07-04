@@ -247,6 +247,27 @@ def test_display_mode_selector_and_local_persistence_are_present():
     assert 'data-display-mode="brief"' in styles and 'data-display-mode="standard"' in styles
 
 
+def test_pwa_manifest_metadata_and_service_worker_are_present():
+    class FakeService:
+        def matches_for_date(self, *args): return []
+    client = create_app(FakeService()).test_client()
+    dashboard = client.get("/").get_data(as_text=True)
+    setup = client.get("/setup").get_data(as_text=True)
+    assert 'rel="manifest"' in dashboard and 'manifest.webmanifest' in dashboard
+    assert 'apple-mobile-web-app-capable' in dashboard
+    assert 'pwa.js' in dashboard
+    assert 'rel="manifest"' in setup and 'pwa.js' in setup
+
+    manifest = client.get("/static/manifest.webmanifest")
+    assert manifest.status_code == 200
+    assert manifest.json["display"] == "standalone"
+    assert manifest.json["start_url"] == "/"
+
+    worker = client.get("/service-worker.js")
+    assert worker.status_code == 200
+    assert b"carnival-live-v1" in worker.data
+
+
 def test_match_exposes_flat_source_independent_display_contract():
     live = LiveScore(batting_team="Alpha", score="1-37", overs="9.4", run_rate="3.83", target=80, required_run_rate="4.30", runs_needed=43, balls_remaining=60)
     match = Match("id", "url", "Alpha", "Beta", "", "Round 1", "T20", "LIVE", "2026-06-20", "1:00 PM", live, competition_name="Division 1")

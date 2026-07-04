@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Carnival Live">
+  <rect width="512" height="512" rx="112" fill="#b6f13e"/>
+  <circle cx="406" cy="106" r="34" fill="#08101b" opacity=".18"/>
+  <path d="M116 348c72-92 162-154 280-190" fill="none" stroke="#08101b" stroke-width="34" stroke-linecap="round"/>
+  <path d="M150 160h212c22 0 40 18 40 40v108c0 22-18 40-40 40H150c-22 0-40-18-40-40V200c0-22 18-40 40-40Z" fill="#08101b"/>
+  <text x="256" y="288" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="116" font-weight="900" fill="#f5f7fb">CL</text>
+</svg>
