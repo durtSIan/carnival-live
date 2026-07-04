@@ -99,7 +99,7 @@ h2 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: va
   background: #0f1927;
 }
 .feed-filter-form.compact { margin: -10px 0 22px; }
-.feed-filter-form > div { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.feed-filter-form > div { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
 .feed-filter-form label { margin: 0; }
 .feed-filter-form small { color: var(--muted); font-size: 12px; }
 .results { display: flex; flex-direction: column; gap: 8px; }

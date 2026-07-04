@@ -27,6 +27,9 @@
         <div>
           <input id="club_filter" name="club_filter" value="{{ club_filter }}" placeholder="e.g. Palmerston">
           <button>Save filter</button>
+          {% if club_filter %}
+            <button class="remove-button" name="club_filter" value="">Clear</button>
+          {% endif %}
         </div>
         <input type="hidden" name="next" value="{{ request.full_path }}">
       </form>

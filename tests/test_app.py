@@ -457,7 +457,10 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     assert filter_response.status_code == 302
     assert store.club_filter() == "Palmerston"
     setup_filtered = client.get("/setup").get_data(as_text=True)
-    assert "filtered to Palmerston" in setup_filtered
+    assert "filtered to Palmerston" in setup_filtered and "Clear" in setup_filtered
+    clear_response = client.post("/setup/feed-filter", data={"club_filter": ""})
+    assert clear_response.status_code == 302
+    assert store.club_filter() == ""
     removed = client.post("/setup/favourite/remove", data={"grade_id": "213859e0-488a-40c6-a642-dcf36df09f04"})
     assert removed.status_code == 302
     assert store.all() == []
