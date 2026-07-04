@@ -92,9 +92,11 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
         grade_ids = [value for value in request.args.get("grade_ids", "").split(",") if GRADE_ID_PATTERN.fullmatch(value.strip())][:10]
         grade_labels = [value.strip() for value in request.args.get("grade_labels", "").split(",")][:len(grade_ids)]
         grade_names = dict(zip(grade_ids, grade_labels))
+        using_saved_favourites = False
         if not requested_grade_id and not grade_ids and not os.getenv("CARNIVAL_GRADE_ID") and favourite_grade_ids:
             grade_ids, grade_names = favourite_grade_ids, favourite_grade_names
-        club_name = request.args.get("club", "").strip()
+            using_saved_favourites = True
+        club_name = request.args.get("club", "").strip() or (favourites.club_filter() if using_saved_favourites else "")
         error = ""
         try:
             matches = (
@@ -114,7 +116,10 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
             except Exception:
                 app.logger.exception("Play Cricket organisation search failed")
                 error = "Search is temporarily unavailable. You can still use advanced grade entry."
-        return render_template("setup_search.html", query=query, results=results, favourites=favourites.all(), error=error)
+        return render_template(
+            "setup_search.html", query=query, results=results, favourites=favourites.all(),
+            club_filter=favourites.club_filter(), error=error,
+        )
 
     @app.get("/setup/organisation/<organisation_id>")
     def setup_organisation(organisation_id: str):
@@ -134,7 +139,7 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
         return render_template(
             "setup_organisation.html", organisation_id=organisation_id, organisation_name=name,
             seasons=seasons, selected_season=selected, grades=grades, error=error,
-            favourites=favourite_items, saved_grade_ids=saved_grade_ids,
+            favourites=favourite_items, saved_grade_ids=saved_grade_ids, club_filter=favourites.club_filter(),
         )
 
     @app.post("/setup/favourite")
@@ -150,6 +155,11 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
         found = GRADE_ID_PATTERN.search(request.form.get("grade_id", "").strip())
         if found:
             favourites.remove(found.group(0))
+        return redirect(setup_redirect_target(url_for("setup_search")))
+
+    @app.post("/setup/feed-filter")
+    def save_feed_filter():
+        favourites.set_club_filter(request.form.get("club_filter", ""))
         return redirect(setup_redirect_target(url_for("setup_search")))
 
     return app

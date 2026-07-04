@@ -22,6 +22,14 @@
         <a class="primary-action" href="{{ url_for('dashboard') }}">Go to live scores</a>
         <span>{{ favourites|length }} favourite{% if favourites|length != 1 %}s{% endif %} saved</span>
       </div>
+      <form class="feed-filter-form compact" method="post" action="{{ url_for('save_feed_filter') }}">
+        <label for="club_filter">Optional club/team filter</label>
+        <div>
+          <input id="club_filter" name="club_filter" value="{{ club_filter }}" placeholder="e.g. Palmerston">
+          <button>Save filter</button>
+        </div>
+        <input type="hidden" name="next" value="{{ request.full_path }}">
+      </form>
     {% endif %}
 
     {% if error %}
@@ -82,6 +90,14 @@
       <div class="message">
         <p>No grades were returned for the current season.</p>
         <p>For clubs, grades are often listed under the association or competition instead. Try searching for the association, then choose the grades and filter by this club.</p>
+        <form class="feed-filter-form" method="post" action="{{ url_for('save_feed_filter') }}">
+          <label for="club_filter_empty">Save this club/team as your filter</label>
+          <div>
+            <input id="club_filter_empty" name="club_filter" value="{{ organisation_name }}">
+            <button>Save filter</button>
+          </div>
+          <input type="hidden" name="next" value="{{ url_for('setup_search') }}">
+        </form>
       </div>
     {% endif %}
   </main>

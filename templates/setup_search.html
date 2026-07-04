@@ -66,7 +66,17 @@
     {% if favourites %}
       <section>
         <h2>Favourites</h2>
-        <p class="hint">The scores screen will search all saved favourite grades together.</p>
+        <p class="hint">
+          The scores screen will search all saved favourite grades together{% if club_filter %}, filtered to {{ club_filter }}{% endif %}.
+        </p>
+        <form class="feed-filter-form" method="post" action="{{ url_for('save_feed_filter') }}">
+          <label for="club_filter">Optional club/team filter</label>
+          <div>
+            <input id="club_filter" name="club_filter" value="{{ club_filter }}" placeholder="e.g. Palmerston">
+            <button>Save filter</button>
+          </div>
+          <small>Leave blank to show every match in your saved grades.</small>
+        </form>
         <div class="results">
           {% for item in favourites %}
             <div class="favourite-row">

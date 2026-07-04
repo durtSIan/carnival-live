@@ -452,6 +452,12 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     setup = client.get("/setup").get_data(as_text=True)
     assert "Remove" in setup and "Go to live scores" in setup
     assert "all saved favourite grades together" in setup
+    assert "Optional club/team filter" in setup
+    filter_response = client.post("/setup/feed-filter", data={"club_filter": "Palmerston"})
+    assert filter_response.status_code == 302
+    assert store.club_filter() == "Palmerston"
+    setup_filtered = client.get("/setup").get_data(as_text=True)
+    assert "filtered to Palmerston" in setup_filtered
     removed = client.post("/setup/favourite/remove", data={"grade_id": "213859e0-488a-40c6-a642-dcf36df09f04"})
     assert removed.status_code == 302
     assert store.all() == []
@@ -509,6 +515,9 @@ def test_setup_shows_current_season_only_and_guides_club_results(tmp_path):
     body = client.get("/setup/organisation/org-1?name=Palmerston+Cricket+Club").get_data(as_text=True)
     assert "Winter 2026" in body and "Winter 2025" not in body
     assert "grades are often listed under the association" in body
+    assert "Save this club/team as your filter" in body
+    response = client.post("/setup/feed-filter", data={"club_filter": "Palmerston Cricket Club"})
+    assert response.status_code == 302
 
 
 def test_current_seasons_falls_back_when_no_current_flag_exists():
@@ -521,12 +530,14 @@ def test_dashboard_uses_all_saved_favourites_when_no_grade_is_requested(tmp_path
     store = FavouriteStore(tmp_path / "favourites.json")
     store.save("11111111-1111-1111-1111-111111111111", "A Grade", "Darwin")
     store.save("22222222-2222-2222-2222-222222222222", "B Grade", "Darwin")
+    store.set_club_filter("Palmerston")
     class FakeService:
         def matches_for_grades(self, grade_ids, date, timezone, club, grade_names):
             assert grade_ids == [
                 "22222222-2222-2222-2222-222222222222",
                 "11111111-1111-1111-1111-111111111111",
             ]
+            assert club == "Palmerston"
             assert grade_names["11111111-1111-1111-1111-111111111111"] == "A Grade"
             return []
         def matches_for_date(self, *args):
