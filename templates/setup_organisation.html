@@ -23,16 +23,28 @@
         <span>{{ favourites|length }} favourite{% if favourites|length != 1 %}s{% endif %} saved</span>
       </div>
       <form class="feed-filter-form compact" method="post" action="{{ url_for('save_feed_filter') }}">
-        <label for="club_filter">Optional club/team filter</label>
+        <label for="club_filter">Add club/team filter</label>
         <div>
-          <input id="club_filter" name="club_filter" value="{{ club_filter }}" placeholder="e.g. Palmerston">
-          <button>Save filter</button>
-          {% if club_filter %}
+          <input id="club_filter" name="club_filter" placeholder="e.g. Palmerston or PINT">
+          <button>Add filter</button>
+          {% if club_filters %}
             <button class="remove-button" name="club_filter" value="">Clear</button>
           {% endif %}
         </div>
         <input type="hidden" name="next" value="{{ request.full_path }}">
       </form>
+      {% if club_filters %}
+        <div class="filter-list compact" aria-label="Saved club filters">
+          {% for filter in club_filters %}
+            <form method="post" action="{{ url_for('remove_feed_filter') }}">
+              <span>{{ filter }}</span>
+              <input type="hidden" name="club_filter" value="{{ filter }}">
+              <input type="hidden" name="next" value="{{ request.full_path }}">
+              <button class="remove-button" aria-label="Remove {{ filter }}">Remove</button>
+            </form>
+          {% endfor %}
+        </div>
+      {% endif %}
     {% endif %}
 
     {% if error %}

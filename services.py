@@ -23,24 +23,36 @@ class MatchService:
         return self._with_scorecards(visible)
 
     def matches_for_grades(
-        self, grade_ids: list[str], selected_date: str, timezone_name: str, club_name: str = "",
+        self, grade_ids: list[str], selected_date: str, timezone_name: str, club_name: str | list[str] = "",
         grade_names: dict[str, str] | None = None,
     ) -> list[Match]:
         """Combine grade feeds, optionally retaining only one club's matches."""
-        club = self._normalise_club_name(club_name)
+        clubs = self._normalise_club_filters(club_name)
         combined: list[Match] = []
         seen: set[str] = set()
         for grade_id in grade_ids:
             for match in self._visible(self.source.get_matches(grade_id, timezone_name), selected_date):
                 if not match.competition_name and grade_names:
                     match.competition_name = grade_names.get(grade_id, "")
-                if club and not self._team_matches_club_filter(match.home_team, club) and not self._team_matches_club_filter(match.away_team, club):
+                if clubs and not any(
+                    self._team_matches_club_filter(match.home_team, club) or self._team_matches_club_filter(match.away_team, club)
+                    for club in clubs
+                ):
                     continue
                 if match.match_id in seen:
                     continue
                 seen.add(match.match_id)
                 combined.append(match)
         return self._with_scorecards(combined)
+
+    @classmethod
+    def _normalise_club_filters(cls, value: str | list[str]) -> list[str]:
+        if isinstance(value, list):
+            raw_values = value
+        else:
+            raw_values = re.split(r"[,|]", value)
+        filters = [cls._normalise_club_name(item) for item in raw_values]
+        return [item for item in dict.fromkeys(filters) if item]
 
     @staticmethod
     def _normalise_club_name(value: str) -> str:

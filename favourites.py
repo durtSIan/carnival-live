@@ -6,12 +6,17 @@ from threading import Lock
 class FavouriteStore:
     def __init__(self, path: str | Path): self.path, self._lock = Path(path), Lock()
     def _read(self) -> dict:
-        if not self.path.exists(): return {"grades": [], "club_filter": ""}
+        if not self.path.exists(): return {"grades": [], "club_filters": []}
         try: data = json.loads(self.path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError): return {"grades": [], "club_filter": ""}
+        except (OSError, json.JSONDecodeError): return {"grades": [], "club_filters": []}
         if isinstance(data, list):
-            return {"grades": data, "club_filter": ""}
-        return data if isinstance(data, dict) else {"grades": [], "club_filter": ""}
+            return {"grades": data, "club_filters": []}
+        if not isinstance(data, dict):
+            return {"grades": [], "club_filters": []}
+        if "club_filters" not in data:
+            club_filter = str(data.get("club_filter") or "").strip()
+            data["club_filters"] = [club_filter] if club_filter else []
+        return data
     def _write(self, data: dict) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.path.write_text(json.dumps(data, indent=2), encoding="utf-8")
@@ -20,7 +25,12 @@ class FavouriteStore:
         grades = data.get("grades")
         return grades if isinstance(grades, list) else []
     def club_filter(self) -> str:
-        return str(self._read().get("club_filter") or "").strip()
+        return ", ".join(self.club_filters())
+    def club_filters(self) -> list[str]:
+        filters = self._read().get("club_filters")
+        if not isinstance(filters, list):
+            return []
+        return [str(item).strip() for item in filters if str(item).strip()]
     def save(self, grade_id: str, grade_name: str, organisation_name: str = "") -> None:
         item = {"grade_id": grade_id, "grade_name": grade_name or grade_id, "organisation_name": organisation_name}
         with self._lock:
@@ -36,7 +46,28 @@ class FavouriteStore:
     def set_club_filter(self, club_filter: str) -> None:
         with self._lock:
             data = self._read()
-            data["club_filter"] = club_filter.strip()
+            values = [item.strip() for item in club_filter.split(",") if item.strip()]
+            data["club_filters"] = list(dict.fromkeys(values))
+            data.pop("club_filter", None)
+            self._write(data)
+    def add_club_filter(self, club_filter: str) -> None:
+        value = club_filter.strip()
+        if not value:
+            return
+        with self._lock:
+            data = self._read()
+            filters = self.club_filters()
+            if value not in filters:
+                filters.append(value)
+            data["club_filters"] = filters
+            data.pop("club_filter", None)
+            self._write(data)
+    def remove_club_filter(self, club_filter: str) -> None:
+        value = club_filter.strip()
+        with self._lock:
+            data = self._read()
+            data["club_filters"] = [item for item in self.club_filters() if item != value]
+            data.pop("club_filter", None)
             self._write(data)
     def default_grade_id(self) -> str:
         data = self.all()

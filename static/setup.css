@@ -102,6 +102,25 @@ h2 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: va
 .feed-filter-form > div { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; }
 .feed-filter-form label { margin: 0; }
 .feed-filter-form small { color: var(--muted); font-size: 12px; }
+.filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -6px 0 14px;
+}
+.filter-list.compact { margin: -12px 0 22px; }
+.filter-list form {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px 6px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #101a28;
+  color: var(--ink);
+  font-size: 13px;
+}
+.filter-list .remove-button { min-height: 30px; border-radius: 999px; }
 .results { display: flex; flex-direction: column; gap: 8px; }
 .result, .favourite {
   display: flex;

@@ -67,19 +67,30 @@
       <section>
         <h2>Favourites</h2>
         <p class="hint">
-          The scores screen will search all saved favourite grades together{% if club_filter %}, filtered to {{ club_filter }}{% endif %}.
+          The scores screen will search all saved favourite grades together{% if club_filters %}, filtered to {{ club_filter }}{% endif %}.
         </p>
         <form class="feed-filter-form" method="post" action="{{ url_for('save_feed_filter') }}">
-          <label for="club_filter">Optional club/team filter</label>
+          <label for="club_filter">Add club/team filter</label>
           <div>
-            <input id="club_filter" name="club_filter" value="{{ club_filter }}" placeholder="e.g. Palmerston">
-            <button>Save filter</button>
-            {% if club_filter %}
+            <input id="club_filter" name="club_filter" placeholder="e.g. Palmerston or PINT">
+            <button>Add filter</button>
+            {% if club_filters %}
               <button class="remove-button" name="club_filter" value="">Clear</button>
             {% endif %}
           </div>
           <small>Leave blank to show every match in your saved grades.</small>
         </form>
+        {% if club_filters %}
+          <div class="filter-list" aria-label="Saved club filters">
+            {% for filter in club_filters %}
+              <form method="post" action="{{ url_for('remove_feed_filter') }}">
+                <span>{{ filter }}</span>
+                <input type="hidden" name="club_filter" value="{{ filter }}">
+                <button class="remove-button" aria-label="Remove {{ filter }}">Remove</button>
+              </form>
+            {% endfor %}
+          </div>
+        {% endif %}
         <div class="results">
           {% for item in favourites %}
             <div class="favourite-row">

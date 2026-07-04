@@ -335,6 +335,20 @@ def test_multi_grade_club_filter_ignores_cricket_club_suffix():
     assert [match.match_id for match in matches] == ["p-c"]
 
 
+def test_multi_grade_club_filter_accepts_multiple_clubs():
+    palmerston = Match("p-c", "", "Palmerston C White", "Nightcliff C", "", "Round 10", "One Day", "LIVE", "2026-07-04", "1:00 PM")
+    pint = Match("pint-c", "", "Darwin C", "PINT C Green", "", "Round 10", "One Day", "LIVE", "2026-07-04", "1:00 PM")
+    unrelated = Match("other", "", "Darwin C", "Nightcliff C", "", "Round 10", "One Day", "LIVE", "2026-07-04", "1:00 PM")
+    class FakeSource:
+        def get_matches(self, *_): return [palmerston, pint, unrelated]
+        def add_scorecard(self, match): return match
+    matches = MatchService(FakeSource()).matches_for_grades(
+        ["grade-c"], "2026-07-04", "Australia/Darwin",
+        ["Palmerston Cricket Club", "PINT Cricket Club"], {"grade-c": "C Grade"},
+    )
+    assert [match.match_id for match in matches] == ["p-c", "pint-c"]
+
+
 def test_dashboard_routes_multi_grade_club_view():
     class FakeService:
         def matches_for_grades(self, grade_ids, date, timezone, club, grade_names):
@@ -465,12 +479,14 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     assert "Remove" in setup and "Go to live scores" in setup
     assert "all saved favourite grades together" in setup
     assert "Advanced: enter grade URL or ID" not in setup
-    assert "Optional club/team filter" in setup
+    assert "Add club/team filter" in setup
     filter_response = client.post("/setup/feed-filter", data={"club_filter": "Palmerston"})
     assert filter_response.status_code == 302
     assert store.club_filter() == "Palmerston"
+    client.post("/setup/feed-filter", data={"club_filter": "PINT Cricket Club"})
+    assert store.club_filters() == ["Palmerston", "PINT Cricket Club"]
     setup_filtered = client.get("/setup").get_data(as_text=True)
-    assert "filtered to Palmerston" in setup_filtered and "Clear" in setup_filtered
+    assert "filtered to Palmerston, PINT Cricket Club" in setup_filtered and "Clear" in setup_filtered
     clear_response = client.post("/setup/feed-filter", data={"club_filter": ""})
     assert clear_response.status_code == 302
     assert store.club_filter() == ""
@@ -502,6 +518,18 @@ def test_setup_grades_sort_into_cricket_order():
     assert ordered.index("Grade F") > ordered.index("E Grade (Raikot Group)")
     assert ordered.index("Premier T20 (Whittles)") < ordered.index("Women's Div 2 (Arafura Connect)")
     assert ordered.index("Sunday 1") < ordered.index("Under 16 Blue (McDonald's)")
+
+
+def test_setup_favourites_render_in_cricket_grade_order(tmp_path):
+    store = FavouriteStore(tmp_path / "favourites.json")
+    store.save("44444444-4444-4444-4444-444444444444", "D Grade", "Darwin")
+    store.save("22222222-2222-2222-2222-222222222222", "B Grade", "Darwin")
+    store.save("33333333-3333-3333-3333-333333333333", "C Grade", "Darwin")
+    store.save("11111111-1111-1111-1111-111111111111", "A Grade", "Darwin")
+    class FakeService:
+        def matches_for_date(self, *args): return []
+    body = create_app(FakeService(), favourite_store=store).test_client().get("/setup").get_data(as_text=True)
+    assert body.index("A Grade") < body.index("B Grade") < body.index("C Grade") < body.index("D Grade")
 
 
 def test_match_grade_order_handles_letters_and_numbers_both_ways():
@@ -573,7 +601,7 @@ def test_setup_club_page_shows_team_grades_and_sets_filter(tmp_path):
     })
     assert response.status_code == 302
     assert store.default_grade_id() == grade_id
-    assert store.club_filter() == "Darwin Cricket Club"
+    assert store.club_filters() == ["Darwin Cricket Club"]
 
 
 def test_club_team_grade_options_collapses_duplicate_teams_by_grade():
@@ -605,10 +633,10 @@ def test_dashboard_uses_all_saved_favourites_when_no_grade_is_requested(tmp_path
     class FakeService:
         def matches_for_grades(self, grade_ids, date, timezone, club, grade_names):
             assert grade_ids == [
-                "22222222-2222-2222-2222-222222222222",
                 "11111111-1111-1111-1111-111111111111",
+                "22222222-2222-2222-2222-222222222222",
             ]
-            assert club == "Palmerston"
+            assert club == ["Palmerston"]
             assert grade_names["11111111-1111-1111-1111-111111111111"] == "A Grade"
             return []
         def matches_for_date(self, *args):
