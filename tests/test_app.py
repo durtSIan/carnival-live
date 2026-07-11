@@ -462,6 +462,36 @@ def test_final_bowlers_stay_with_the_innings_they_bowled_in():
     assert by_team["Beta"].bowlers[0].name == "A Bowler"
 
 
+def test_two_day_final_ignores_unplayed_end_of_match_innings():
+    detail = {
+        "status": "COMPLETED",
+        "matchType": "Two Day",
+        "teams": [{"id": "a", "displayName": "Darwin"}, {"id": "b", "displayName": "Waratah Warriors"}],
+        "matchSummary": {"resultText": "Darwin won by 38 runs", "teams": [
+            {"id": "a", "displayName": "Darwin", "isWinner": True, "scoreText": "233 & 0-0"},
+            {"id": "b", "displayName": "Waratah Warriors", "isWinner": False, "scoreText": "195"},
+        ]},
+        "innings": [
+            {"battingTeamId": "a", "inningsOrder": 1, "inningsCloseType": "All Out", "runsScored": 233, "numberOfWicketsFallen": 10, "oversBowled": 80.5,
+             "batting": [{"playerShortName": "Real Darwin Batter", "runsScored": 49, "ballsFaced": 162}],
+             "bowling": [{"playerShortName": "Waratah Bowler", "wicketsTaken": 3, "runsConceded": 58, "oversBowled": 17.5}]},
+            {"battingTeamId": "b", "inningsOrder": 2, "inningsCloseType": "All Out", "runsScored": 195, "numberOfWicketsFallen": 10, "oversBowled": 69.4,
+             "batting": [{"playerShortName": "Waratah Batter", "runsScored": 58, "ballsFaced": 56}],
+             "bowling": [{"playerShortName": "Darwin Bowler", "wicketsTaken": 5, "runsConceded": 68, "oversBowled": 29.4}]},
+            {"battingTeamId": "a", "inningsOrder": 3, "inningsCloseType": "End of Match", "runsScored": 0, "numberOfWicketsFallen": 0, "oversBowled": 0,
+             "batting": [{"playerShortName": "Phantom Opener", "runsScored": 0, "ballsFaced": 0, "dismissalType": "Not Out"}],
+             "bowling": []},
+        ],
+    }
+    winner, _, summaries = PlayCricketPublicSource().parse_final(detail)
+    by_team = {summary.team_name: summary for summary in summaries}
+    assert winner == "Darwin"
+    assert by_team["Darwin"].score == "233"
+    assert by_team["Darwin"].batters[0].name == "Real Darwin Batter"
+    assert by_team["Waratah Warriors"].score == "195"
+    assert by_team["Waratah Warriors"].bowlers[0].name == "Darwin Bowler"
+
+
 def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     class FakeService:
         def matches_for_date(self, *args): return []

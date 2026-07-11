@@ -93,13 +93,21 @@ class PlayCricketPublicSource:
         all_teams = summary_teams or detail_teams
         team_ids = [str(team.get("id") or "") for team in all_teams]
         names = {str(team.get("id") or ""): self._team_name(team) for team in detail_teams + summary_teams}
-        scores = {str(team.get("id") or ""): str(team.get("scoreText") or "") for team in summary_teams}
+        innings = detail.get("innings") or []
+        played_innings = [innings_item for innings_item in innings if not self._is_unplayed_end_of_match_innings(innings_item)]
+        scores = {
+            str(team.get("id") or ""): (
+                self._score_from_played_innings(str(team.get("id") or ""), played_innings)
+                or str(team.get("scoreText") or "")
+            )
+            for team in summary_teams
+        }
         performances = {
             team_id: TeamPerformance(team_name=names.get(team_id, ""), score=scores.get(team_id, ""))
             for team_id in team_ids
         }
 
-        for innings in detail.get("innings") or []:
+        for innings in played_innings:
             batting_id = str(innings.get("battingTeamId") or "")
             if batting_id not in performances:
                 performances[batting_id] = TeamPerformance(names.get(batting_id, ""))
@@ -140,6 +148,33 @@ class PlayCricketPublicSource:
             loser = next((self._team_name(team) for team in all_teams if self._team_name(team) != winner), "")
         ordered = sorted(performances.values(), key=lambda item: item.team_name != winner)
         return winner, loser, ordered
+
+    @staticmethod
+    def _is_unplayed_end_of_match_innings(innings: dict[str, Any]) -> bool:
+        close_type = str(innings.get("inningsCloseType") or "").upper()
+        if close_type != "END OF MATCH":
+            return False
+        return (
+            (innings.get("runsScored") or 0) == 0
+            and (innings.get("numberOfWicketsFallen") or 0) == 0
+            and PlayCricketPublicSource._decimal_overs(innings.get("oversBowled")) == 0
+            and not (innings.get("bowling") or [])
+        )
+
+    @staticmethod
+    def _score_from_played_innings(team_id: str, innings: list[dict[str, Any]]) -> str:
+        team_innings = sorted(
+            [item for item in innings if str(item.get("battingTeamId") or "") == team_id],
+            key=lambda item: item.get("inningsOrder") or item.get("inningsNumber") or 0,
+        )
+        scores = []
+        for item in team_innings:
+            runs = item.get("runsScored")
+            wickets = item.get("numberOfWicketsFallen")
+            if runs is None:
+                continue
+            scores.append(str(runs) if wickets is None or int(wickets or 0) >= 10 else f"{wickets}-{runs}")
+        return " & ".join(scores)
 
     def _winner_result_type(self, detail: dict[str, Any], winner: str) -> str:
         teams = (detail.get("matchSummary") or {}).get("teams") or []
