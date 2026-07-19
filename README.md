@@ -1,87 +1,79 @@
 # Carnival Live
 
-A compact Flask dashboard for live Play Cricket scores. The dashboard shows only games on the selected date that are currently active; upcoming and completed games are excluded.
+Carnival Live is a mobile-friendly Flask dashboard that displays live scores from multiple cricket matches in one place.
 
-## Run
+It is designed for cricket carnivals, representative competitions and club rounds where several matches may be running at the same time. Users can select an association, competition, grade or club and save a preferred match feed.
+
+The dashboard shows games on the selected date that are currently active. Upcoming and completed games are excluded from the main live display.
+
+## Live application
+
+Carnival Live is deployed on Render:
+
+<https://carnival-live.onrender.com>
+
+The Render service may take a short time to start if it has been inactive.
+
+## Features
+
+Carnival Live can display:
+
+- teams and match status
+- current score, wickets and overs
+- run rate
+- batters at the crease
+- striker
+- current bowlers
+- toss information
+- leading batting and bowling performances
+- multiple live matches in one dashboard
+- association, competition, grade and club feeds
+- saved feed preferences
+- a phone-friendly Progressive Web App layout
+
+The main screen intentionally omits venue, match ID, URL, match text, debug output and ball-by-ball data. `match_id` and `playcricket_url` remain available in the internal `Match` model for a future detail page.
+
+## OpenAI Build Week
+
+Carnival Live was developed and improved using OpenAI Codex with GPT-5.6.
+
+Codex assisted with:
+
+- planning and organising the Python and Flask application
+- investigating the Play Cricket public score data
+- processing JSON returned by the score endpoints
+- identifying matches, innings, batters, bowlers and match states
+- handling live, upcoming, completed and abandoned matches
+- building association, competition, grade and club selection
+- improving the phone-friendly layout
+- diagnosing incorrect scores and missing information
+- creating automated tests for different match situations
+- improving error handling
+- preparing the project for GitHub and Render deployment
+
+GPT-5.6 was used through Codex to review code, investigate problems, suggest changes and help turn the original idea into a working application.
+
+The running application does not currently call an AI model. Codex and GPT-5.6 were used during the design, development, debugging and testing of Carnival Live.
+
+## Technology
+
+- Python
+- Flask
+- HTML
+- CSS
+- JavaScript
+- JSON
+- Play Cricket public score data
+- Gunicorn
+- Render
+- GitHub
+
+## Run locally
+
+Open PowerShell and run:
 
 ```powershell
 cd C:\Users\Strudwick\carnival_live
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python app.py
-```
-
-Open <http://127.0.0.1:5000>. The screen refreshes every 30 seconds.
-
-Open <http://127.0.0.1:5000/setup> to search Play Cricket organisations and save a feed. Association and competition results show their current season grades. Club results use the public teams endpoint to find the grades and competitions the club's teams are attached to, then save those grades with an optional club/team filter.
-
-The app includes basic PWA support for phones: a web app manifest, install icon,
-iPhone home-screen metadata, safe-area spacing, and a small offline fallback. On
-an HTTPS deployment such as Render, users can add Carnival Live to their phone
-home screen from the browser share/menu options.
-
-The default grade is `213859e0-488a-40c6-a642-dcf36df09f04` and the default timezone is `Australia/Darwin`. They can be changed with environment variables:
-
-```powershell
-$env:CARNIVAL_GRADE_ID="your-grade-id"
-$env:CARNIVAL_TIMEZONE="Australia/Sydney"
-python app.py
-```
-
-For historical testing, use query parameters such as:
-
-```text
-http://127.0.0.1:5000/?date=2026-06-19&grade_id=213859e0-488a-40c6-a642-dcf36df09f04
-```
-
-## Deploy to Render
-
-This project includes `render.yaml`, so Render can create a Python web service from the GitHub repo.
-
-Suggested first deploy:
-
-1. Push this folder to a GitHub repo, for example `carnival-live`.
-2. In Render, choose **New -> Blueprint** or **New -> Web Service**.
-3. Connect the GitHub repo.
-4. If using a manual web service setup, use:
-
-```text
-Build command: pip install -r requirements.txt
-Start command: gunicorn "app:create_app()"
-```
-
-Render will provide an HTTPS URL such as:
-
-```text
-https://carnival-live.onrender.com
-```
-
-## Architecture
-
-- `data_sources/playcricket_public.py` fetches and maps the public Play Cricket API.
-- `models.py` defines the source-independent display model.
-- `services.py` filters dates/statuses and enriches visible games with scorecards.
-- `app.py`, `templates/`, and `static/` are the Flask display layer.
-
-A future PlayHQ adapter can implement `CricketDataSource` without changing the dashboard.
-
-### PlayHQ scorer innings parameters
-
-`match_settings.py` resolves over limits from scorer events supplied in chronological order:
-
-1. The latest `ADJUST_PARAMETERS.payload.overLimit` wins.
-2. Otherwise use `GAME_TYPE_SETTINGS.payload.scoringSettings.overs`.
-3. Otherwise use a grade/app/manual configured limit.
-
-A custom target is accepted only from `ADJUST_PARAMETERS` when
-`isCustomScoredOverridingTarget` is true and `targetScore` is valid. `oversBowled`
-is progress only and is never treated as the innings limit. DLS/par is not
-calculated locally; it must come directly from an authoritative data source.
-
-## Test
-
-```powershell
-python -m pytest -q
-```
-
-The main screen intentionally omits venue, match ID, URL, match text, debug output, and ball-by-ball data. `match_id` and `playcricket_url` remain available in the internal `Match` model for a later detail page.
