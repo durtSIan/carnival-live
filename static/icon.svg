@@ -1,7 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Carnival Live">
-  <rect width="512" height="512" rx="112" fill="#b6f13e"/>
-  <circle cx="406" cy="106" r="34" fill="#08101b" opacity=".18"/>
-  <path d="M116 348c72-92 162-154 280-190" fill="none" stroke="#08101b" stroke-width="34" stroke-linecap="round"/>
-  <path d="M150 160h212c22 0 40 18 40 40v108c0 22-18 40-40 40H150c-22 0-40-18-40-40V200c0-22 18-40 40-40Z" fill="#08101b"/>
-  <text x="256" y="288" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="116" font-weight="900" fill="#f5f7fb">CL</text>
+  <defs>
+    <linearGradient id="lime" x1="70" y1="42" x2="448" y2="470" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c7ff37"/>
+      <stop offset=".58" stop-color="#aaf22b"/>
+      <stop offset="1" stop-color="#7fdc24"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="140" y1="128" x2="392" y2="384" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#13243a"/>
+      <stop offset="1" stop-color="#07111f"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#07111f" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#lime)"/>
+  <path d="M102 343c76-91 171-152 289-189" fill="none" stroke="#07111f" stroke-width="30" stroke-linecap="round" opacity=".16"/>
+  <circle cx="400" cy="111" r="42" fill="#07111f" opacity=".16"/>
+  <path d="M383 78c-8 17-7 45 3 68M419 83c-12 13-20 37-18 64" fill="none" stroke="#07111f" stroke-width="9" stroke-linecap="round" opacity=".34"/>
+  <rect x="93" y="151" width="326" height="230" rx="54" fill="url(#panel)" filter="url(#shadow)"/>
+  <rect x="119" y="181" width="274" height="44" rx="22" fill="#263a55"/>
+  <circle cx="148" cy="203" r="9" fill="#33e7ff"/>
+  <circle cx="178" cy="203" r="9" fill="#aaff2f"/>
+  <circle cx="208" cy="203" r="9" fill="#f5f7fb"/>
+  <text x="256" y="319" text-anchor="middle" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="132" font-weight="950" letter-spacing="-10" fill="#f5f7fb">CL</text>
+  <path d="M137 352h238" stroke="#33e7ff" stroke-width="12" stroke-linecap="round" opacity=".88"/>
 </svg>
