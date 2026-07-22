@@ -29,7 +29,7 @@
   <header><span class="mark">CL</span><h1>Carnival Live</h1><label class="display-mode-picker"><span>Display</span><select id="display-mode" aria-label="Display mode"><option value="brief">Brief</option><option value="standard">Standard</option><option value="detailed">Detailed</option></select></label><a class="setup-link" href="{{ url_for('setup_search') }}">{% if has_saved_feed %}Edit Feed{% else %}Set up feed{% endif %}</a><span class="pulse"><i></i> LIVE</span></header>
   <main>
     {% if error %}<div class="notice error">{{ error }}</div>{% endif %}
-    {% if not matches and not error %}<div class="notice">No live matches right now</div>{% endif %}
+    {% if not matches and not error %}<div class="notice">No live matches yet. Scores will display when matches start.</div>{% endif %}
     <section class="match-grid">
       {% set grade_group = namespace(name=None) %}
       {% for match in matches %}

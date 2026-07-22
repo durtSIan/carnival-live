@@ -134,7 +134,7 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
             )
         except Exception as exc:
             app.logger.exception("Could not load live cricket data")
-            matches, error = [], "Live scores are temporarily unavailable. Retrying shortly."
+            matches, error = [], None
         return render_template(
             "dashboard.html", matches=matches, selected_date=selected_date, error=error,
             has_saved_feed=bool(favourite_grade_ids),
