@@ -556,12 +556,27 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     assert store.club_filters() == ["Palmerston", "PINT Cricket Club"]
     setup_filtered = client.get("/setup").get_data(as_text=True)
     assert "filtered to Palmerston, PINT Cricket Club" in setup_filtered and "Clear" in setup_filtered
+    assert "Clubs / teams" in setup_filtered
+    assert "Palmerston" in setup_filtered and "PINT Cricket Club" in setup_filtered
+    assert "Competitions" in setup_filtered and "Darwin Competition" in setup_filtered
     clear_response = client.post("/setup/feed-filter", data={"club_filter": ""})
     assert clear_response.status_code == 302
     assert store.club_filter() == ""
     removed = client.post("/setup/favourite/remove", data={"grade_id": "213859e0-488a-40c6-a642-dcf36df09f04"})
     assert removed.status_code == 302
     assert store.all() == []
+
+
+def test_setup_summary_shows_club_filter_without_saved_grades(tmp_path):
+    class FakeService:
+        def matches_for_date(self, *args): return []
+
+    store = FavouriteStore(tmp_path / "favourites.json")
+    store.add_club_filter("Darwin Cricket Club")
+    body = create_app(FakeService(), favourite_store=store).test_client().get("/setup").get_data(as_text=True)
+    assert "Your live feed" in body
+    assert "Clubs / teams" in body and "Darwin Cricket Club" in body
+    assert "No clubs, competitions or grades saved yet" not in body
 
 
 def test_setup_grades_sort_into_cricket_order():

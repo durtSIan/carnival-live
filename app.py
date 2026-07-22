@@ -100,6 +100,15 @@ def favourite_grade_selection(items: list[dict[str, str]]) -> tuple[list[str], d
 def sorted_favourite_items(items: list[dict[str, str]]) -> list[dict[str, str]]:
     return sorted(items, key=lambda item: grade_setup_order({"name": item.get("grade_name") or ""}))
 
+def favourite_organisation_names(items: list[dict[str, str]]) -> list[str]:
+    """Return each saved competition/association name once, preserving feed order."""
+    names: list[str] = []
+    for item in items:
+        name = str(item.get("organisation_name") or "").strip()
+        if name and name not in names:
+            names.append(name)
+    return names
+
 def setup_redirect_target(default: str = "/setup") -> str:
     target = request.form.get("next", "").strip()
     return target if target.startswith("/setup") else default
@@ -148,8 +157,10 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
             except Exception:
                 app.logger.exception("Play Cricket organisation search failed")
                 error = "Search is temporarily unavailable. You can still use advanced grade entry."
+        favourite_items = sorted_favourite_items(favourites.all())
         return render_template(
-            "setup_search.html", query=query, results=results, favourites=sorted_favourite_items(favourites.all()),
+            "setup_search.html", query=query, results=results, favourites=favourite_items,
+            favourite_organisations=favourite_organisation_names(favourite_items),
             club_filter=favourites.club_filter(), club_filters=favourites.club_filters(), error=error,
         )
 

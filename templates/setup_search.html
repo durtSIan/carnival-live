@@ -27,12 +27,33 @@
     </header>
 
     <section class="feed-summary">
-      <div>
+      <div class="feed-overview">
         <h2>Your live feed</h2>
-        {% if favourites %}
-          <p>{{ favourites|length }} grade{% if favourites|length != 1 %}s{% endif %}{% if club_filters %} · {{ club_filters|length }} club/team filter{% if club_filters|length != 1 %}s{% endif %}{% endif %}</p>
+        {% if favourites or club_filters %}
+          <p>{{ favourites|length }} grade{% if favourites|length != 1 %}s{% endif %}{% if favourite_organisations %} · {{ favourite_organisations|length }} competition{% if favourite_organisations|length != 1 %}s{% endif %}{% endif %}{% if club_filters %} · {{ club_filters|length }} club/team filter{% if club_filters|length != 1 %}s{% endif %}{% endif %}</p>
         {% else %}
-          <p>No grades saved yet. Search below to add clubs, associations or competitions.</p>
+          <p>No clubs, competitions or grades saved yet. Search below to build your feed.</p>
+        {% endif %}
+
+        {% if club_filters or favourite_organisations %}
+          <div class="feed-selections">
+            {% if club_filters %}
+              <div class="feed-selection">
+                <span>Clubs / teams</span>
+                <div class="feed-chips">
+                  {% for name in club_filters %}<b>{{ name }}</b>{% endfor %}
+                </div>
+              </div>
+            {% endif %}
+            {% if favourite_organisations %}
+              <div class="feed-selection">
+                <span>Competitions</span>
+                <div class="feed-chips">
+                  {% for name in favourite_organisations %}<b>{{ name }}</b>{% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          </div>
         {% endif %}
       </div>
       {% if favourites %}
