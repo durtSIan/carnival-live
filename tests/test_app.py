@@ -208,6 +208,21 @@ def test_dashboard_adds_grade_dividers_when_grade_changes():
     assert body.index("B Grade") < body.index("Gamma")
 
 
+def test_dashboard_setup_link_reflects_saved_feed_state(tmp_path, monkeypatch):
+    monkeypatch.delenv("CARNIVAL_GRADE_ID", raising=False)
+    class FakeService:
+        def matches_for_date(self, *args): return []
+        def matches_for_grades(self, *args): return []
+    empty_store = FavouriteStore(tmp_path / "empty.json")
+    empty_body = create_app(FakeService(), favourite_store=empty_store).test_client().get("/").get_data(as_text=True)
+    assert "Set up feed" in empty_body and "Edit Feed" not in empty_body
+
+    saved_store = FavouriteStore(tmp_path / "saved.json")
+    saved_store.save("11111111-1111-1111-1111-111111111111", "A Grade", "Darwin")
+    saved_body = create_app(FakeService(), favourite_store=saved_store).test_client().get("/").get_data(as_text=True)
+    assert "Edit Feed" in saved_body and "Set up feed" not in saved_body
+
+
 def test_toss_line_shows_inferred_batted_or_bowled_choice():
     detail = {
         "teams": [
