@@ -14,6 +14,12 @@ Match detail with scorecard:
 https://grassrootsapiproxy.cricket.com.au/scores/matches/{match_id}?responseModifier=includeScorecard&jsconfig=eccn:true
 ```
 
+Grade detail, including the source grade name and owning organisation logo:
+
+```text
+https://grassrootsapiproxy.cricket.com.au/fixturesladders/grades/{grade_id}?jsconfig=eccn:true
+```
+
 Ball-by-ball was found but is not needed for Carnival Live v0.13.
 
 ## Current useful fields from scorecard endpoint
@@ -52,6 +58,44 @@ For the real CCNSW Carnival Live app, use the official PlayHQ API with:
 tenant: ca
 credentials: CCNSW PlayHQ Client ID
 ```
+
+## Confirmed One Day over-limit enrichment
+
+The PlayHQ V2 public game summary exposes the configured innings limit as:
+
+```text
+data.periods[].teams[].statistics[
+  { "type": "OVER_LIMIT", "value": 45 }
+]
+```
+
+Official public endpoints used:
+
+```text
+GET https://api.playhq.com/v1/organisations/{id}/seasons
+GET https://api.playhq.com/v1/seasons/{id}/grades
+GET https://api.playhq.com/v2/grades/{id}/games
+GET https://api.playhq.com/v2/games/{id}/summary
+```
+
+Headers:
+
+```text
+x-api-key: configured PlayHQ public API key
+x-phq-tenant: ca
+```
+
+Play Cricket and PlayHQ use different IDs. Carnival Live maps them by:
+
+1. reading the grade name and owning organisation logo from Play Cricket;
+2. extracting the PlayHQ organisation UUID from the Cloudinary logo path;
+3. matching the active PlayHQ season and grade by name;
+4. matching the game by team names and scheduled date;
+5. reading `OVER_LIMIT` from the current batting period.
+
+This was verified end-to-end on 24 July 2026 with the Interstate O50 Quad
+Series Challenge (Mackay). The completed NSW O50 v Victoria Over 50 Men game
+returned an authoritative limit of 45 overs for both innings.
 
 ## Architecture decision
 

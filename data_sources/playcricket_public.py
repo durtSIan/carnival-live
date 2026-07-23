@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 from datetime import datetime
 from typing import Any
@@ -7,6 +8,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 
+from data_sources.playhq_public import PlayHQPublicEnricher
 from models import Batter, Bowler, InningsSummary, LiveScore, Match, MatchFormat, TeamPerformance
 from match_settings import resolve_innings_parameters
 
@@ -16,9 +18,18 @@ class PlayCricketPublicSource:
 
     base_url = "https://grassrootsapiproxy.cricket.com.au"
 
-    def __init__(self, session: requests.Session | None = None, timeout: int = 30):
+    def __init__(
+        self,
+        session: requests.Session | None = None,
+        timeout: int = 30,
+        playhq: PlayHQPublicEnricher | None = None,
+    ):
         self.session = session or requests.Session()
         self.timeout = timeout
+        api_key = os.getenv("PLAYHQ_API_KEY", "")
+        self.playhq = playhq or (PlayHQPublicEnricher(api_key) if api_key else None)
+        self._grade_context: dict[str, tuple[str, str, str]] = {}
+        self._grade_details: dict[str, dict[str, Any]] = {}
 
     def _get(self, path: str, **params: str) -> dict[str, Any]:
         response = self.session.get(
@@ -43,7 +54,24 @@ class PlayCricketPublicSource:
         rows = data.get("matches")
         if not isinstance(rows, list):
             raise ValueError("Play Cricket response did not include a matches list.")
-        return [self._map_match(row, timezone_name) for row in rows]
+        grade = self._grade_details.get(grade_id)
+        if grade is None:
+            try:
+                grade = self._get(f"/fixturesladders/grades/{grade_id}")
+            except (requests.RequestException, ValueError):
+                grade = {}
+            self._grade_details[grade_id] = grade
+        grade_name = str(grade.get("name") or "")
+        organisation = grade.get("owningOrganisation") or {}
+        organisation_id = PlayHQPublicEnricher.organisation_id_from_logo(
+            str(organisation.get("logoUrl") or "")
+        )
+        matches = [self._map_match(row, timezone_name) for row in rows]
+        for match in matches:
+            if grade_name:
+                match.competition_name = grade_name
+            self._grade_context[match.match_id] = (grade_name, organisation_id, timezone_name)
+        return matches
 
     def search_organisations(self, search_text: str, limit: int = 25) -> list[dict[str, Any]]:
         data = self._get("/orgsproducts/organisation/search", searchString=search_text.strip(), limit=str(limit))
@@ -72,6 +100,7 @@ class PlayCricketPublicSource:
             self._explicit_overs_limit(detail),
         )
         match.live = self.parse_scorecard(detail, match.match_format)
+        self._enrich_over_limit(match)
         match.toss_winner = self._toss_winner(detail) or match.toss_winner
         match.toss_decision = self._toss_decision(detail, match.toss_winner)
         detail_status = str(detail.get("status") or "").upper()
@@ -86,6 +115,52 @@ class PlayCricketPublicSource:
             match.result_winner, match.result_loser, match.performances = self.parse_final(detail)
             match.result_type = self._winner_result_type(detail, match.result_winner)
         return match
+
+    def _enrich_over_limit(self, match: Match) -> None:
+        if not self.playhq or not self.playhq.available or not match.live:
+            return
+        grade_name, organisation_id, timezone_name = self._grade_context.get(
+            match.match_id, (match.competition_name, "", "Australia/Darwin")
+        )
+        if not grade_name or not organisation_id:
+            return
+        try:
+            over_limit = self.playhq.current_over_limit(
+                organisation_id=organisation_id,
+                grade_name=grade_name,
+                home_team=match.home_team,
+                away_team=match.away_team,
+                batting_team=match.live.batting_team,
+                start_date=match.start_date,
+                timezone_name=timezone_name,
+            )
+        except (requests.RequestException, ValueError, KeyError):
+            return
+        if over_limit is None:
+            return
+        self._apply_over_limit(match, over_limit, "playhq_public")
+
+    @classmethod
+    def _apply_over_limit(cls, match: Match, over_limit: int, source: str) -> None:
+        if not match.live or over_limit <= 0:
+            return
+        match.match_format = MatchFormat.from_source(match.match_type, over_limit)
+        match.live.current_over_limit = over_limit
+        match.live.over_limit_source = source
+        if (
+            not match.match_format.is_limited_overs
+            or match.live.target is None
+            or match.live.runs is None
+        ):
+            return
+        remaining_balls = max(over_limit * 6 - cls._balls_bowled(match.live.overs), 0)
+        runs_needed = max(match.live.target - match.live.runs, 0)
+        match.live.runs_needed = runs_needed
+        match.live.balls_remaining = remaining_balls
+        match.live.required_run_rate = (
+            f"{runs_needed / (remaining_balls / 6):.2f}" if remaining_balls else ""
+        )
+        match.live.chase_metrics_confident = remaining_balls > 0
 
     def parse_final(self, detail: dict[str, Any]) -> tuple[str, str, list[TeamPerformance]]:
         summary_teams = (detail.get("matchSummary") or {}).get("teams") or []

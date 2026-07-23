@@ -64,6 +64,30 @@ The running application does not currently call an AI model. Codex and GPT-5.6 w
 - JavaScript
 - JSON
 - Play Cricket public score data
+- optional PlayHQ public API over-limit enrichment
 - Gunicorn
 - Render
 - GitHub
+
+## Optional PlayHQ over-limit enrichment
+
+Play Cricket remains the primary source for live matches and scorecards. If a
+PlayHQ public API key is configured, Carnival Live also resolves the matching
+PlayHQ game and reads the authoritative `OVER_LIMIT` statistic for the current
+batting innings.
+
+This allows One Day run chases to show:
+
+```text
+Target 226 | Need 126 off 150 | RRReq=5.04
+```
+
+Set the API key as an environment variable:
+
+```text
+PLAYHQ_API_KEY
+```
+
+The PlayHQ tenant defaults to Cricket Australia (`ca`). If enrichment cannot be
+resolved, the app continues using the Play Cricket feed and does not guess the
+One Day over limit.

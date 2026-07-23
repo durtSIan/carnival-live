@@ -4,6 +4,7 @@ from pathlib import Path
 
 from app import club_team_grade_options, create_app, current_seasons_only, favourite_grade_selection, grade_setup_order
 from data_sources.playcricket_public import PlayCricketPublicSource
+from data_sources.playhq_public import PlayHQPublicEnricher
 from favourites import FavouriteStore
 from match_settings import resolve_innings_parameters
 from models import Batter, Bowler, InningsSummary, LiveScore, Match, MatchFormat, TeamPerformance
@@ -89,6 +90,83 @@ def test_one_day_chase_uses_a_configured_over_limit_when_available():
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
     assert "1st innings" not in body
+
+
+def test_playhq_public_summary_resolves_authoritative_over_limit():
+    responses = {
+        "/v1/organisations/org-id/seasons": {
+            "data": [{"id": "season-id", "status": "ACTIVE"}],
+        },
+        "/v1/seasons/season-id/grades": {
+            "data": [{"id": "grade-id", "name": "Interstate O50 Quad Series Challenge (Mackay)"}],
+        },
+        "/v2/grades/grade-id/games": {
+            "teams": [
+                {"id": "nsw", "name": "NSW O50"},
+                {"id": "mackay", "name": "Mackay Masters O50"},
+            ],
+            "rounds": [{"games": [{
+                "id": "game-id",
+                "schedule": [{"dateTime": "2026-07-24T00:00:00.000Z"}],
+                "teams": [{"id": "nsw"}, {"id": "mackay"}],
+            }]}],
+        },
+        "/v2/games/game-id/summary": {
+            "data": {
+                "teams": [
+                    {"id": "nsw", "name": "NSW O50"},
+                    {"id": "mackay", "name": "Mackay Masters O50"},
+                ],
+                "periods": [{
+                    "teams": [{
+                        "id": "nsw",
+                        "discipline": "BATTING",
+                        "statistics": [
+                            {"type": "OVER_LIMIT", "value": 45},
+                            {"type": "TOTAL_OVERS", "value": 12.3},
+                        ],
+                    }],
+                }],
+            },
+        },
+    }
+
+    class Response:
+        def __init__(self, data): self.data = data
+        def raise_for_status(self): return None
+        def json(self): return self.data
+
+    class Session:
+        def get(self, url, **kwargs):
+            path = url.removeprefix("https://api.playhq.com")
+            return Response(responses[path])
+
+    enricher = PlayHQPublicEnricher("api-key", session=Session())
+    assert enricher.current_over_limit(
+        organisation_id="org-id",
+        grade_name="Interstate O50 Quad Series Challenge (Mackay)",
+        home_team="Mackay Masters O50",
+        away_team="NSW O50",
+        batting_team="NSW O50",
+        start_date="2026-07-24",
+        timezone_name="Australia/Brisbane",
+    ) == 45
+
+
+def test_playhq_public_over_limit_enables_one_day_required_rate():
+    live = LiveScore(
+        batting_team="NSW O50", score="2-100", overs="20", run_rate="5.00",
+        target=226, runs=100,
+    )
+    match = Match(
+        "id", "", "Mackay Masters O50", "NSW O50", "", "Round 2", "One Day",
+        "LIVE", "2026-07-24", "10:00 AM", live,
+    )
+    PlayCricketPublicSource._apply_over_limit(match, 45, "playhq_public")
+    assert match.match_format.overs_limit == 45
+    assert (live.current_over_limit, live.over_limit_source) == (45, "playhq_public")
+    assert (live.runs_needed, live.balls_remaining, live.required_run_rate) == (126, 150, "5.04")
+    assert match.chase_line == "Target 226 | Need 126 off 150 | RRReq=5.04"
 
 
 def test_playhq_event_settings_use_latest_adjustment_then_defaults():
