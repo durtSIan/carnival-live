@@ -189,6 +189,18 @@ def test_dashboard_hides_internal_fields():
     assert "secret-id" not in body and "https://secret.test" not in body
 
 
+def test_dashboard_hides_empty_overs_brackets_before_play_starts():
+    match = Match(
+        "id", "", "Alpha", "Beta", "", "Round 1", "T20", "LIVE",
+        "2026-06-19", "6:00 PM", LiveScore("Alpha", "0-0", "", ""),
+    )
+    class FakeService:
+        def matches_for_date(self, *args): return [match]
+    body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
+    assert "0-0" in body
+    assert "<em>()</em>" not in body
+
+
 def test_dashboard_adds_grade_dividers_when_grade_changes():
     a_grade = Match(
         "a", "", "Alpha", "Beta", "", "Round 1", "One Day", "LIVE",
