@@ -60,7 +60,7 @@
       <p class="message error">{{ error }}</p>
     {% endif %}
 
-    {% if seasons %}
+    {% if seasons|length > 1 %}
       <form class="season-form" method="get">
         <input type="hidden" name="name" value="{{ organisation_name }}">
         <label for="season">Season</label>

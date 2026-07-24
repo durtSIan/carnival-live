@@ -613,7 +613,8 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     search = client.get("/setup?q=Darwin").get_data(as_text=True)
     assert "Darwin Competition" in search
     organisation = client.get("/setup/organisation/org-1?name=Darwin+Competition").get_data(as_text=True)
-    assert "Winter 2026" in organisation and "Women&#39;s Div 1" in organisation
+    assert "Winter 2026" not in organisation and "Women&#39;s Div 1" in organisation
+    assert 'name="season"' not in organisation
     response = client.post("/setup/favourite", data={
         "grade_id": "https://play.cricket.com.au/grade/213859e0-488a-40c6-a642-dcf36df09f04/womens-div-1",
         "grade_name": "Women's Div 1", "organisation_name": "Darwin Competition",
@@ -751,7 +752,8 @@ def test_setup_shows_current_season_only_and_guides_club_results(tmp_path):
             return []
     client = create_app(FakeService(), FakeSetupSource(), FavouriteStore(tmp_path / "favourites.json")).test_client()
     body = client.get("/setup/organisation/org-1?name=Palmerston+Cricket+Club").get_data(as_text=True)
-    assert "Winter 2026" in body and "Winter 2025" not in body
+    assert "Winter 2026" not in body and "Winter 2025" not in body
+    assert 'name="season"' not in body
     assert "grades are often listed under the association" in body
     assert "Save this club/team as your filter" in body
     response = client.post("/setup/feed-filter", data={"club_filter": "Palmerston Cricket Club"})
