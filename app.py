@@ -152,11 +152,13 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
     @app.get("/setup")
     def setup_search():
         query, results, error = request.args.get("q", "").strip(), [], ""
-        if len(query) >= 3:
+        if len(query) > 20:
+            error = "Search names must be 20 characters or fewer."
+        elif len(query) >= 3:
             try: results = source.search_organisations(query)
             except Exception:
                 app.logger.exception("Play Cricket organisation search failed")
-                error = "Search is temporarily unavailable. You can still use advanced grade entry."
+                error = "Search is temporarily unavailable. Please try again shortly."
         favourite_items = sorted_favourite_items(favourites.all())
         return render_template(
             "setup_search.html", query=query, results=results, favourites=favourite_items,

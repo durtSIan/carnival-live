@@ -657,6 +657,24 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     assert store.all() == []
 
 
+def test_setup_search_explains_play_cricket_twenty_character_limit(tmp_path):
+    class FakeService:
+        def matches_for_date(self, *args): return []
+
+    class FakeSetupSource:
+        def search_organisations(self, query):
+            raise AssertionError("An over-length query should not reach Play Cricket")
+
+    client = create_app(
+        FakeService(), FakeSetupSource(), FavouriteStore(tmp_path / "favourites.json")
+    ).test_client()
+    body = client.get("/setup?q=Cricket+Australia+Masters").get_data(as_text=True)
+    assert "Search names must be 20 characters or fewer." in body
+    assert 'maxlength="20"' in body
+    assert "Use between 3 and 20 characters." in body
+    assert "advanced grade entry" not in body
+
+
 def test_setup_summary_shows_club_filter_without_saved_grades(tmp_path):
     class FakeService:
         def matches_for_date(self, *args): return []

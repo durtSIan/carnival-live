@@ -140,6 +140,7 @@ button:disabled {
 }
 .add-feed h2 { margin-top: 0; }
 .search-form > div { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.input-help { display: block; margin-top: 7px; color: var(--muted); font-size: 12px; }
 section { margin-top: 28px; }
 h2 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .hint { margin: -12px 0 12px; color: var(--muted); font-size: 13px; line-height: 1.4; }

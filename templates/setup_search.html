@@ -67,9 +67,10 @@
       <form class="search-form" method="get">
         <label for="q">Club, association or competition</label>
         <div>
-          <input id="q" name="q" value="{{ query }}" minlength="3" placeholder="e.g. Darwin Cricket" autofocus>
+          <input id="q" name="q" value="{{ query }}" minlength="3" maxlength="20" aria-describedby="search-help" placeholder="e.g. Darwin Cricket" autofocus>
           <button>Search</button>
         </div>
+        <small id="search-help" class="input-help">Use between 3 and 20 characters.</small>
       </form>
     </section>
 
