@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import re
+import time
 from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -35,6 +36,7 @@ class PlayCricketPublicSource:
         self._grade_context: dict[str, tuple[str, str, str]] = {}
         self._grade_details: dict[str, dict[str, Any]] = {}
         self._match_grade_ids: dict[str, str] = {}
+        self._recent_bowler_cache: dict[str, tuple[float, dict[int, list[str]]]] = {}
 
     def _get(self, path: str, **params: str) -> dict[str, Any]:
         response = self.session.get(
@@ -107,7 +109,8 @@ class PlayCricketPublicSource:
             match.match_type or str(detail.get("matchType") or ""),
             explicit_limit or grade_limit,
         )
-        match.live = self.parse_scorecard(detail, match.match_format)
+        recent_bowlers = self._recent_bowlers_by_innings(match.match_id, detail)
+        match.live = self.parse_scorecard(detail, match.match_format, recent_bowlers)
         self._enrich_over_limit(match)
         match.toss_winner = self._toss_winner(detail) or match.toss_winner
         match.toss_decision = self._toss_decision(detail, match.toss_winner)
@@ -123,6 +126,51 @@ class PlayCricketPublicSource:
             match.result_winner, match.result_loser, match.performances = self.parse_final(detail)
             match.result_type = self._winner_result_type(detail, match.result_winner)
         return match
+
+    def _recent_bowlers_by_innings(
+        self, match_id: str, detail: dict[str, Any]
+    ) -> dict[int, list[str]]:
+        """Return bowlers from the latest two overs, without exposing ball data."""
+        if str(detail.get("status") or "").upper() != "LIVE":
+            return {}
+
+        cached = self._recent_bowler_cache.get(match_id)
+        now = time.monotonic()
+        if cached and cached[0] > now:
+            return cached[1]
+
+        try:
+            ball_data = self._get(f"/scores/matches/{match_id}/balls")
+        except (requests.RequestException, ValueError):
+            return {}
+
+        result: dict[int, list[str]] = {}
+        for innings in ball_data.get("innings") or []:
+            innings_order = int(
+                innings.get("inningsOrder") or innings.get("inningsNumber") or 0
+            )
+            overs: list[tuple[Any, str]] = []
+            for ball in innings.get("balls") or []:
+                bowler = str(ball.get("bowlerShortName") or "").strip()
+                over_number = ball.get("overNumber")
+                if not bowler or over_number is None:
+                    continue
+                if not overs or overs[-1] != (over_number, bowler):
+                    overs.append((over_number, bowler))
+            names: list[str] = []
+            for _, bowler in reversed(overs):
+                if bowler not in names:
+                    names.append(bowler)
+                if len(names) == 2:
+                    break
+            if innings_order and names:
+                result[innings_order] = names
+
+        # The upstream response itself is cached for 60 seconds. Keeping only
+        # these names for 55 seconds avoids downloading a full ball history for
+        # every viewer while still following normal over changes promptly.
+        self._recent_bowler_cache[match_id] = (now + 55, result)
+        return result
 
     def _enrich_over_limit(self, match: Match) -> None:
         if not self.playhq or not self.playhq.available or not match.live:
@@ -419,7 +467,12 @@ class PlayCricketPublicSource:
             overs=row.get("oversBowled", ""), current=bool(row.get("isBowling")),
         )
 
-    def parse_scorecard(self, detail: dict[str, Any], match_format: MatchFormat | None = None) -> LiveScore:
+    def parse_scorecard(
+        self,
+        detail: dict[str, Any],
+        match_format: MatchFormat | None = None,
+        recent_bowlers_by_innings: dict[int, list[str]] | None = None,
+    ) -> LiveScore:
         innings = detail.get("innings") or []
         if not innings:
             return LiveScore(game_status=self._game_status(detail))
@@ -496,7 +549,20 @@ class PlayCricketPublicSource:
         used = [x for x in bowling if self._decimal_overs(x.get("oversBowled")) > 0]
         current_bowler = next((x for x in used if x.get("isBowling") is True), None)
         ordered = sorted(used, key=lambda x: x.get("bowlOrder") or 0, reverse=True)
-        recent = ([current_bowler] if current_bowler else []) + [x for x in ordered if x is not current_bowler]
+        rows_by_name = {
+            str(row.get("playerShortName") or "").strip(): row for row in used
+        }
+        ball_feed_names = (recent_bowlers_by_innings or {}).get(
+            int(current.get("inningsOrder") or current.get("inningsNumber") or 0), []
+        )
+        ball_feed_rows = [
+            rows_by_name[name] for name in ball_feed_names if name in rows_by_name
+        ]
+        recent = (
+            ([current_bowler] if current_bowler else [])
+            + [row for row in ball_feed_rows if row is not current_bowler]
+            + [row for row in ordered if row is not current_bowler and row not in ball_feed_rows]
+        )
         recent = recent[:2]
         shown = {str(x.get("playerShortName") or "") for x in recent}
         best = sorted(used, key=lambda x: (x.get("wicketsTaken") or 0, -(x.get("runsConceded") or 0), self._decimal_overs(x.get("oversBowled"))), reverse=True)

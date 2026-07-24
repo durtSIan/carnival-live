@@ -21,6 +21,26 @@ def test_scorecard_parser_formats_cricket_values():
     assert live.run_rate
 
 
+def test_recent_bowler_uses_previous_over_not_bowler_introduction_order():
+    detail = json.loads((Path(__file__).parents[1] / "blue_mountains_match_with_scorecard.json").read_text())
+    innings = detail["innings"][-1]
+    innings["inningsOrder"] = 2
+    innings["inningsCloseType"] = "In Progress"
+    innings["bowling"] = [
+        {"playerShortName": "D Newham", "bowlOrder": 3, "oversBowled": 6, "wicketsTaken": 2, "runsConceded": 35},
+        {"playerShortName": "S Broes", "bowlOrder": 6, "oversBowled": 5, "wicketsTaken": 1, "runsConceded": 34},
+        {"playerShortName": "D Turner", "bowlOrder": 7, "oversBowled": 2.2, "wicketsTaken": 1, "runsConceded": 12, "isBowling": True},
+    ]
+
+    live = PlayCricketPublicSource().parse_scorecard(
+        detail,
+        recent_bowlers_by_innings={2: ["D Turner", "D Newham"]},
+    )
+
+    assert [bowler.name for bowler in live.bowlers[:2]] == ["D Turner", "D Newham"]
+    assert live.bowlers[0].current is True
+
+
 def test_closed_innings_shows_only_top_two_batters_and_bowlers():
     detail = json.loads((Path(__file__).parents[1] / "blue_mountains_match_with_scorecard.json").read_text())
     detail["innings"][-1]["inningsCloseType"] = "ALL OUT"
