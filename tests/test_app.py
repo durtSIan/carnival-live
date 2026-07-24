@@ -509,6 +509,35 @@ def test_multi_grade_club_filter_accepts_multiple_clubs():
     assert [match.match_id for match in matches] == ["p-c", "pint-c"]
 
 
+def test_club_filter_does_not_hide_an_unrelated_carnival_grade():
+    pint = Match(
+        "pint-a", "", "PINT A", "Darwin A", "", "Round 1", "One Day",
+        "LIVE", "2026-07-24", "1:00 PM",
+    )
+    unrelated_darwin = Match(
+        "darwin-a", "", "Nightcliff A", "Darwin A", "", "Round 1", "One Day",
+        "LIVE", "2026-07-24", "1:00 PM",
+    )
+    masters = Match(
+        "masters", "", "NSW O50", "Victoria Over 50 Men", "", "Round 2", "One Day",
+        "LIVE", "2026-07-24", "10:00 AM",
+    )
+
+    class FakeSource:
+        def get_matches(self, grade_id, *_):
+            return [pint, unrelated_darwin] if grade_id == "darwin-grade" else [masters]
+        def add_scorecard(self, match): return match
+
+    matches = MatchService(FakeSource()).matches_for_grades(
+        ["darwin-grade", "masters-grade"], "2026-07-24", "Australia/Darwin",
+        ["PINT Cricket Club"],
+        {"darwin-grade": "A Grade", "masters-grade": "Interstate O50"},
+    )
+
+    assert {match.match_id for match in matches} == {"pint-a", "masters"}
+    assert "darwin-a" not in {match.match_id for match in matches}
+
+
 def test_dashboard_routes_multi_grade_club_view():
     class FakeService:
         def matches_for_grades(self, grade_ids, date, timezone, club, grade_names):
@@ -680,7 +709,7 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     client.post("/setup/feed-filter", data={"club_filter": "PINT Cricket Club"})
     assert store.club_filters() == ["Palmerston", "PINT Cricket Club"]
     setup_filtered = client.get("/setup").get_data(as_text=True)
-    assert "filtered to Palmerston, PINT Cricket Club" in setup_filtered and "Clear" in setup_filtered
+    assert "club/team filters applied only to relevant grades" in setup_filtered and "Clear" in setup_filtered
     assert "Clubs / teams" in setup_filtered
     assert "Palmerston" in setup_filtered and "PINT Cricket Club" in setup_filtered
     assert "Competitions" in setup_filtered and "Darwin Competition" in setup_filtered

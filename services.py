@@ -31,12 +31,22 @@ class MatchService:
         combined: list[Match] = []
         seen: set[str] = set()
         for grade_id in grade_ids:
-            for match in self._visible(self.source.get_matches(grade_id, timezone_name), selected_date):
+            grade_matches = self.source.get_matches(grade_id, timezone_name)
+            grade_clubs = [
+                club
+                for club in clubs
+                if any(
+                    self._team_matches_club_filter(match.home_team, club)
+                    or self._team_matches_club_filter(match.away_team, club)
+                    for match in grade_matches
+                )
+            ]
+            for match in self._visible(grade_matches, selected_date):
                 if not match.competition_name and grade_names:
                     match.competition_name = grade_names.get(grade_id, "")
-                if clubs and not any(
+                if grade_clubs and not any(
                     self._team_matches_club_filter(match.home_team, club) or self._team_matches_club_filter(match.away_team, club)
-                    for club in clubs
+                    for club in grade_clubs
                 ):
                     continue
                 if match.match_id in seen:

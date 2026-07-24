@@ -114,7 +114,7 @@
         <h2>Saved clubs / teams</h2>
         <p class="hint">
           {% if club_filters %}
-            Live scores will only show matches involving these clubs or teams.
+            These filters apply to grades where the club or team participates. Other saved competitions remain visible.
           {% else %}
             No club filter is active, so all matches in the saved grades will show.
           {% endif %}
@@ -146,7 +146,7 @@
     {% if favourites %}
       <section>
         <h2>Saved grades</h2>
-        <p class="hint">The scores screen will search all saved favourite grades together{% if club_filters %}, filtered to {{ club_filter }}{% endif %}.</p>
+        <p class="hint">The scores screen will search all saved favourite grades together{% if club_filters %}, with club/team filters applied only to relevant grades{% endif %}.</p>
         <div class="results">
           {% for item in favourites %}
             <div class="favourite-row">
