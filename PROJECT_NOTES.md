@@ -1,5 +1,44 @@
 # Carnival Live Project Notes
 
+## Three-month real-user readiness roadmap (July–October 2026)
+
+The immediate priority is live-game testing: refine the cricket logic, confirm
+source-data behaviour, and make Brief, Standard and Detailed cards clear on a
+phone. Keep the existing Render service as the working simulation while this
+continues.
+
+### Phase 1 — Live display and cricket logic
+
+- [ ] Continue testing live, innings-break, chase and completed-game states.
+- [ ] Confirm One Day `over_limit`, adjusted-over and target behaviour.
+- [ ] Refine phone/PWA layout from scorer, coach, administrator and parent feedback.
+- [ ] Record ambiguous source values without presenting guesses as facts.
+
+### Phase 2 — Multiple users and shared data
+
+- [ ] Store each phone's selected clubs, competitions, grades and display mode
+      separately. The current server-side favourites file is shared and
+      ephemeral, so it is not suitable for public users.
+- [ ] Cache match lists by grade and date.
+- [ ] Cache scorecards by match for approximately 20–30 seconds.
+- [ ] Ensure concurrent requests for the same uncached item cause only one
+      upstream fetch.
+- [ ] Serve different user feeds by assembling results from the shared cache.
+- [ ] Configure and test concurrent web workers.
+
+### Phase 3 — Production readiness
+
+- [ ] Load-test representative feeds with 50, 100 and several hundred viewers.
+- [ ] Measure response time, error rate, memory, CPU and upstream API traffic.
+- [ ] Choose an always-on paid production instance based on measurements.
+- [ ] Add health monitoring, structured logs and upstream-failure reporting.
+- [ ] Run a controlled pilot with a small group of clubs or carnival users.
+- [ ] Expand gradually after reviewing pilot performance and feedback.
+
+Architecture principle: cache by grade and match, not by user. Many different
+personal feeds can then reuse the same Play Cricket result without multiplying
+upstream calls.
+
 ## Proven public testing endpoints
 
 Grade match list:
