@@ -322,6 +322,26 @@ def test_target_renders_immediately_after_overs():
     assert body.index("(2)") < body.rindex("Target 87") < body.index("Need 75 off 108") < body.index("RRReq=4.17")
 
 
+def test_target_remains_during_live_end_of_innings_wait():
+    live = LiveScore(
+        batting_team="Mackay Masters O50", score="9-261", overs=45,
+        run_rate="5.80", target=278, runs_needed=17, balls_remaining=0,
+        innings_complete=True, chase_metrics_confident=True,
+    )
+    match = Match(
+        "id", "", "Mackay Masters O50", "NSW O50", "", "Round 2",
+        "One Day", "LIVE", "2026-07-24", "9:30 AM", live,
+    )
+
+    assert match.chase_line == "Target 278"
+    class FakeService:
+        def matches_for_date(self, *args): return [match]
+    body = create_app(FakeService()).test_client().get("/?date=2026-07-24").get_data(as_text=True)
+    assert 'class="brief-target">Tar 278' in body
+    assert '<div class="chase-details">Target 278</div>' in body
+    assert "INNINGS COMPLETE" in body
+
+
 def test_two_day_card_keeps_previous_innings_total_beneath_toss():
     live = LiveScore(
         batting_team="Waratah Warriors", score="0-0", overs="0.2", run_rate="0.00",

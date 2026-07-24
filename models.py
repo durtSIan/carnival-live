@@ -332,9 +332,9 @@ class Match:
         if not self.live.chase_metrics_confident:
             return f"Target {self.live.target}"
         if self.live.runs_needed is None:
-            return ""
+            return f"Target {self.live.target}"
         if self.live.balls_remaining is None or not self.live.required_run_rate:
-            return ""
+            return f"Target {self.live.target}"
         return (
             f"Target {self.live.target}  |  Need {self.live.runs_needed} "
             f"off {self.live.balls_remaining}  |  RRReq={self.live.required_run_rate}"
