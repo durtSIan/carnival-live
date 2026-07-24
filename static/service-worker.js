@@ -1,4 +1,4 @@
-const CACHE_NAME = "carnival-live-v2";
+const CACHE_NAME = "carnival-live-v3";
 const APP_SHELL = [
   "/static/offline.html",
   "/static/icon.svg",
@@ -44,7 +44,15 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin === self.location.origin && url.pathname.startsWith("/static/")) {
     event.respondWith(
-      caches.match(request).then((cached) => cached || fetch(request))
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
   }
 });

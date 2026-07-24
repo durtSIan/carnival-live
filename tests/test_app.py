@@ -434,7 +434,9 @@ def test_pwa_manifest_metadata_and_service_worker_are_present():
 
     worker = client.get("/service-worker.js")
     assert worker.status_code == 200
-    assert b"carnival-live-v2" in worker.data
+    assert b"carnival-live-v3" in worker.data
+    assert b"fetch(request)" in worker.data
+    assert b".catch(() => caches.match(request))" in worker.data
 
 
 def test_match_exposes_flat_source_independent_display_contract():
