@@ -28,7 +28,7 @@ Carnival Live can display:
 - leading batting and bowling performances
 - multiple live matches in one dashboard
 - association, competition, grade and club feeds
-- saved feed preferences
+- per-browser saved feed preferences using a signed, one-year cookie
 - a phone-friendly Progressive Web App layout
 
 The main screen intentionally omits venue, match ID, URL, match text, debug output and ball-by-ball data. `match_id` and `playcricket_url` remain available in the internal `Match` model for a future detail page.
@@ -54,6 +54,20 @@ Codex assisted with:
 GPT-5.6 was used through Codex to review code, investigate problems, suggest changes and help turn the original idea into a working application.
 
 The running application does not currently call an AI model. Codex and GPT-5.6 were used during the design, development, debugging and testing of Carnival Live.
+
+## Personal feeds
+
+Each browser or installed PWA stores its own favourite grades and club/team
+filters in a signed cookie. A phone, one computer and another computer can
+therefore follow different feeds without accounts or passwords.
+
+Selections are specific to that browser. Clearing its site data removes the
+feed, and selections do not automatically transfer to another device. Shared
+named feed links are planned as a later optional feature.
+
+Production deployments must provide a stable `CARNIVAL_SECRET_KEY`. Render
+generates this value from `render.yaml`. HTTPS deployments also set
+`CARNIVAL_SECURE_COOKIES=true`.
 
 ## Technology
 

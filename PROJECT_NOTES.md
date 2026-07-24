@@ -16,9 +16,8 @@ continues.
 
 ### Phase 2 — Multiple users and shared data
 
-- [ ] Store each phone's selected clubs, competitions, grades and display mode
-      separately. The current server-side favourites file is shared and
-      ephemeral, so it is not suitable for public users.
+- [x] Store each phone's selected clubs, competitions and grades separately in
+      a signed, one-year browser cookie. Display mode remains in local storage.
 - [ ] Cache match lists by grade and date.
 - [ ] Cache scorecards by match for approximately 20–30 seconds.
 - [ ] Ensure concurrent requests for the same uncached item cause only one

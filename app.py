@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from flask import Flask, redirect, render_template, request, send_from_directory, url_for
 
 from data_sources import PlayCricketPublicSource
-from favourites import FavouriteStore
+from favourites import FavouriteStore, SessionFavouriteStore
 from services import MatchService
 
 
@@ -115,9 +115,16 @@ def setup_redirect_target(default: str = "/setup") -> str:
 
 def create_app(service: MatchService | None = None, setup_source=None, favourite_store: FavouriteStore | None = None) -> Flask:
     app = Flask(__name__)
+    app.config.update(
+        SECRET_KEY=os.getenv("CARNIVAL_SECRET_KEY", "carnival-live-development-cookie-key"),
+        PERMANENT_SESSION_LIFETIME=timedelta(days=365),
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=os.getenv("CARNIVAL_SECURE_COOKIES", "").lower() in {"1", "true", "yes"},
+    )
     source = setup_source or PlayCricketPublicSource()
     match_service = service or MatchService(source)
-    favourites = favourite_store or FavouriteStore(app.instance_path + "/favourites.json")
+    favourites = favourite_store or SessionFavouriteStore()
 
     @app.get("/")
     def dashboard():

@@ -756,6 +756,41 @@ def test_setup_summary_shows_club_filter_without_saved_grades(tmp_path):
     assert "No clubs, competitions or grades saved yet" not in body
 
 
+def test_default_personal_feeds_are_isolated_between_browsers(monkeypatch):
+    monkeypatch.delenv("CARNIVAL_GRADE_ID", raising=False)
+    monkeypatch.setenv("CARNIVAL_SECURE_COOKIES", "false")
+
+    class FakeService:
+        def matches_for_date(self, *args): return []
+        def matches_for_grades(self, *args): return []
+
+    app = create_app(FakeService())
+    ians_browser = app.test_client()
+    wifes_browser = app.test_client()
+    grade_id = "11111111-1111-1111-1111-111111111111"
+
+    saved = ians_browser.post("/setup/favourite", data={
+        "grade_id": grade_id,
+        "grade_name": "Ian's A Grade",
+        "organisation_name": "Ian's Competition",
+    })
+    ians_browser.post("/setup/feed-filter", data={"club_filter": "Ian's Club"})
+
+    cookie = saved.headers.get("Set-Cookie", "")
+    assert "session=" in cookie
+    assert "HttpOnly" in cookie and "SameSite=Lax" in cookie and "Expires=" in cookie
+
+    ians_setup = ians_browser.get("/setup").get_data(as_text=True)
+    wifes_setup = wifes_browser.get("/setup").get_data(as_text=True)
+    assert "Ian&#39;s A Grade" in ians_setup and "Ian&#39;s Club" in ians_setup
+    assert "Ian&#39;s A Grade" not in wifes_setup and "Ian&#39;s Club" not in wifes_setup
+
+    ians_dashboard = ians_browser.get("/").get_data(as_text=True)
+    wifes_dashboard = wifes_browser.get("/").get_data(as_text=True)
+    assert "Edit Feed" in ians_dashboard
+    assert "Set up feed" in wifes_dashboard
+
+
 def test_setup_grades_sort_into_cricket_order():
     grades = [
         {"name": "Under 11 (McDonald's)"},

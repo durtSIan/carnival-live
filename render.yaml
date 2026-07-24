@@ -8,3 +8,7 @@ services:
     envVars:
       - key: CARNIVAL_TIMEZONE
         value: Australia/Darwin
+      - key: CARNIVAL_SECRET_KEY
+        generateValue: true
+      - key: CARNIVAL_SECURE_COOKIES
+        value: "true"

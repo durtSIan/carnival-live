@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 from threading import Lock
 
+
 class FavouriteStore:
     def __init__(self, path: str | Path): self.path, self._lock = Path(path), Lock()
     def _read(self) -> dict:
@@ -72,3 +73,36 @@ class FavouriteStore:
     def default_grade_id(self) -> str:
         data = self.all()
         return str(data[0].get("grade_id") or "") if data else ""
+
+
+class SessionFavouriteStore(FavouriteStore):
+    """Store one anonymous user's feed in Flask's signed session cookie."""
+
+    def __init__(self, session_key: str = "carnival_live_feed"):
+        self.session_key = session_key
+        self._lock = Lock()
+
+    def _read(self) -> dict:
+        from flask import session
+
+        data = session.get(self.session_key)
+        if not isinstance(data, dict):
+            return {"grades": [], "club_filters": []}
+        grades = data.get("grades")
+        filters = data.get("club_filters")
+        return {
+            "grades": grades if isinstance(grades, list) else [],
+            "club_filters": filters if isinstance(filters, list) else [],
+        }
+
+    def _write(self, data: dict) -> None:
+        from flask import session
+
+        session[self.session_key] = {
+            "grades": data.get("grades") if isinstance(data.get("grades"), list) else [],
+            "club_filters": (
+                data.get("club_filters") if isinstance(data.get("club_filters"), list) else []
+            ),
+        }
+        session.permanent = True
+        session.modified = True
