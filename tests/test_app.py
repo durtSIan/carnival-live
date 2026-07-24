@@ -116,7 +116,7 @@ def test_one_day_chase_uses_a_configured_over_limit_when_available():
     assert live.runs_needed == 80 and live.balls_remaining == 120
     assert live.required_run_rate == "4.00"
     match = Match("id", "", "Alpha", "Beta", "", "Round 1", "One Day", "LIVE", "2026-06-20", "1:00 PM", live)
-    assert match.chase_line == "Target 161 | Need 80 off 120 | RRReq=4.00"
+    assert match.chase_line == "Target 161  |  Need 80 off 120  |  RRReq=4.00"
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
@@ -225,7 +225,7 @@ def test_playhq_public_over_limit_enables_one_day_required_rate():
     assert match.match_format.overs_limit == 45
     assert (live.current_over_limit, live.over_limit_source) == (45, "playhq_public")
     assert (live.runs_needed, live.balls_remaining, live.required_run_rate) == (126, 150, "5.04")
-    assert match.chase_line == "Target 226 | Need 126 off 150 | RRReq=5.04"
+    assert match.chase_line == "Target 226  |  Need 126 off 150  |  RRReq=5.04"
 
 
 def test_playhq_event_settings_use_latest_adjustment_then_defaults():

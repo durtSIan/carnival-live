@@ -336,6 +336,6 @@ class Match:
         if self.live.balls_remaining is None or not self.live.required_run_rate:
             return ""
         return (
-            f"Target {self.live.target} | Need {self.live.runs_needed} "
-            f"off {self.live.balls_remaining} | RRReq={self.live.required_run_rate}"
+            f"Target {self.live.target}  |  Need {self.live.runs_needed} "
+            f"off {self.live.balls_remaining}  |  RRReq={self.live.required_run_rate}"
         )

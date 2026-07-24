@@ -22,13 +22,11 @@
 }
 
 .chase-details {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 12px;
   margin-top: 9px;
   color: var(--cyan);
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 400;
+  white-space: pre-wrap;
 }
 
 .chase-details span { color: var(--ink); }
