@@ -395,6 +395,7 @@ def test_dashboard_adds_grade_dividers_when_grade_changes():
     assert body.count('class="grade-divider"') == 2
     assert body.index("A Grade") < body.index("Alpha")
     assert body.index("B Grade") < body.index("Gamma")
+    assert "grade-chip" not in body
 
 
 def test_dashboard_setup_link_reflects_saved_feed_state(tmp_path, monkeypatch):
@@ -429,6 +430,7 @@ def test_toss_line_shows_inferred_batted_or_bowled_choice():
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
     assert "(toss Alpha, bowled)" in body
+    assert body.index("Round 1") < body.index("(toss Alpha, bowled)")
 
 
 def test_display_mode_selector_and_local_persistence_are_present():
