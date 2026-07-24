@@ -203,7 +203,7 @@ class PlayCricketPublicSource:
             performances[batting_id].batters = [
                 Batter(
                     str(row.get("playerShortName") or ""), row.get("runsScored"), row.get("ballsFaced"),
-                    not_out=str(row.get("dismissalType") or row.get("dismissalText") or "").lower() == "not out",
+                    not_out=self._is_batter_not_out(row),
                 )
                 for row in batting
             ]
@@ -379,6 +379,13 @@ class PlayCricketPublicSource:
         return None
 
     @staticmethod
+    def _is_batter_not_out(row: dict[str, Any]) -> bool:
+        dismissal = str(
+            row.get("dismissalType") or row.get("dismissalText") or ""
+        ).strip().lower()
+        return bool(re.search(r"\bnot\s+out\b", dismissal)) or dismissal == "retired hurt"
+
+    @staticmethod
     def _game_status(detail: dict[str, Any], innings: dict[str, Any] | None = None) -> str:
         candidates = [
             str((innings or {}).get("inningsCloseType") or ""),
@@ -455,9 +462,6 @@ class PlayCricketPublicSource:
         batting = current.get("batting") or []
         bowling = current.get("bowling") or []
 
-        def is_not_out(row: dict[str, Any]) -> bool:
-            return str(row.get("dismissalType") or row.get("dismissalText") or "").lower() == "not out"
-
         if innings_complete:
             display_batters = sorted(
                 batting,
@@ -467,7 +471,7 @@ class PlayCricketPublicSource:
         else:
             display_batters = [x for x in batting if x.get("isOnStrike") or x.get("isOnNonStrike")]
             if len(display_batters) < 2:
-                display_batters = [x for x in batting if is_not_out(x)]
+                display_batters = [x for x in batting if self._is_batter_not_out(x)]
             # Keep the two batters in batting-order order. The browser preserves
             # their screen slots between refreshes; strike only moves the marker.
             display_batters.sort(key=lambda x: x.get("batOrder") or 999)
@@ -476,12 +480,16 @@ class PlayCricketPublicSource:
             Batter(
                 str(x.get("playerShortName") or ""), x.get("runsScored"), x.get("ballsFaced"),
                 bool(x.get("isOnStrike")) if not innings_complete else False,
-                is_not_out(x),
+                self._is_batter_not_out(x),
             )
             for x in display_batters
         ]
 
-        dismissed = [x for x in batting if (x.get("dismissalType") or x.get("dismissalText")) and str(x.get("dismissalType") or x.get("dismissalText")).lower() != "not out"]
+        dismissed = [
+            x for x in batting
+            if (x.get("dismissalType") or x.get("dismissalText"))
+            and not self._is_batter_not_out(x)
+        ]
         dismissed.sort(key=lambda x: (x.get("runsScored") or 0, -(x.get("ballsFaced") or 9999)), reverse=True)
         dismissed_batters = [Batter(str(x.get("playerShortName") or ""), x.get("runsScored"), x.get("ballsFaced")) for x in dismissed[:2]]
 

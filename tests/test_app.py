@@ -33,6 +33,35 @@ def test_closed_innings_shows_only_top_two_batters_and_bowlers():
     assert live.dismissed_batters == []
 
 
+def test_retired_not_out_batters_keep_their_asterisks():
+    detail = json.loads((Path(__file__).parents[1] / "blue_mountains_match_with_scorecard.json").read_text())
+    innings = detail["innings"][-1]
+    innings["inningsCloseType"] = "In Progress"
+    innings["oversBowled"] = 45
+    innings["batting"] = [
+        {
+            "playerShortName": "D Brown", "runsScored": 50, "ballsFaced": 62,
+            "dismissalType": "Retired Not Out", "dismissalText": "retired not out",
+        },
+        {
+            "playerShortName": "W Livermore", "runsScored": 50, "ballsFaced": 48,
+            "dismissalType": "Retired Not Out", "dismissalText": "retired not out",
+        },
+        {
+            "playerShortName": "N Croft", "runsScored": 49, "ballsFaced": 52,
+            "dismissalType": "Bowled", "dismissalText": "b: D Zeller",
+        },
+    ]
+
+    source = PlayCricketPublicSource()
+    live = source.parse_scorecard(detail, MatchFormat.from_source("One Day", 45))
+    assert live.innings_complete is True
+    assert {batter.name for batter in live.current_batters} == {"D Brown", "W Livermore"}
+    assert all(batter.not_out for batter in live.current_batters)
+    assert source._is_batter_not_out({"dismissalType": "Retired Hurt"}) is True
+    assert source._is_batter_not_out({"dismissalType": "Retired Out"}) is False
+
+
 def test_t20_quota_marks_innings_complete_when_feed_lags():
     detail = json.loads((Path(__file__).parents[1] / "blue_mountains_match_with_scorecard.json").read_text())
     detail["matchType"] = "T20"
