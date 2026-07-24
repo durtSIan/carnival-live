@@ -84,6 +84,10 @@
     {% if results %}
       <section>
         <h2>Search results</h2>
+        <p class="hint">
+          Showing {{ results|length }} result{% if results|length != 1 %}s{% endif %}.
+          {% if results|length >= 100 %}Only the first 100 are shown. Enter a more specific club, association or competition name.{% endif %}
+        </p>
         <div class="results">
           {% for item in results %}
             <a class="result" href="{{ url_for('setup_organisation', organisation_id=item.organisationGuid, name=item.name) }}">

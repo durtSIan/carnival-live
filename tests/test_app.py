@@ -710,6 +710,40 @@ def test_setup_search_explains_play_cricket_twenty_character_limit(tmp_path):
     assert "advanced grade entry" not in body
 
 
+def test_play_cricket_search_requests_up_to_one_hundred_results():
+    class Response:
+        def raise_for_status(self): return None
+        def json(self): return {"organisations": [{"organisationGuid": "org-1", "name": "Example"}]}
+
+    class Session:
+        def get(self, url, **kwargs):
+            assert kwargs["params"]["searchString"] == "Example"
+            assert kwargs["params"]["limit"] == "100"
+            return Response()
+
+    results = PlayCricketPublicSource(session=Session()).search_organisations("Example")
+    assert results == [{"organisationGuid": "org-1", "name": "Example"}]
+
+
+def test_setup_search_explains_when_first_hundred_results_are_shown(tmp_path):
+    class FakeService:
+        def matches_for_date(self, *args): return []
+
+    class FakeSetupSource:
+        def search_organisations(self, query):
+            return [
+                {"organisationGuid": f"org-{index}", "name": f"Cricket {index}"}
+                for index in range(100)
+            ]
+
+    body = create_app(
+        FakeService(), FakeSetupSource(), FavouriteStore(tmp_path / "favourites.json")
+    ).test_client().get("/setup?q=cricket").get_data(as_text=True)
+    assert "Showing 100 results." in body
+    assert "Only the first 100 are shown." in body
+    assert "Enter a more specific club, association or competition name." in body
+
+
 def test_setup_summary_shows_club_filter_without_saved_grades(tmp_path):
     class FakeService:
         def matches_for_date(self, *args): return []

@@ -79,7 +79,7 @@ class PlayCricketPublicSource:
             self._match_grade_ids[match.match_id] = grade_id
         return matches
 
-    def search_organisations(self, search_text: str, limit: int = 25) -> list[dict[str, Any]]:
+    def search_organisations(self, search_text: str, limit: int = 100) -> list[dict[str, Any]]:
         data = self._get("/orgsproducts/organisation/search", searchString=search_text.strip(), limit=str(limit))
         return data.get("organisations") if isinstance(data.get("organisations"), list) else []
 
