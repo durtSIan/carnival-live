@@ -6,7 +6,7 @@ from app import club_team_grade_options, create_app, current_seasons_only, favou
 from data_sources.playcricket_public import PlayCricketPublicSource
 from data_sources.playhq_public import PlayHQPublicEnricher
 from favourites import FavouriteStore
-from match_settings import resolve_innings_parameters
+from match_settings import CONFIRMED_GRADE_OVER_LIMITS, resolve_innings_parameters
 from models import Batter, Bowler, InningsSummary, LiveScore, Match, MatchFormat, TeamPerformance
 from services import MatchService
 
@@ -92,6 +92,34 @@ def test_one_day_chase_uses_a_configured_over_limit_when_available():
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
     assert "1st innings" not in body
+
+
+def test_confirmed_masters_grade_limit_drives_live_chase_fallback():
+    grade_id = "c88db389-74bb-4711-b9e2-3399d9c1b6b9"
+    assert CONFIRMED_GRADE_OVER_LIMITS[grade_id] == 45
+
+    detail = json.loads((Path(__file__).parents[1] / "blue_mountains_match_with_scorecard.json").read_text())
+    first = detail["innings"][-1]
+    first.update(inningsOrder=1, inningsNumber=1, inningsCloseType="All Out", runsScored=220, oversBowled=44.2)
+    second = copy.deepcopy(first)
+    second.update(inningsOrder=2, inningsNumber=1, inningsCloseType="In Progress", runsScored=100, oversBowled=20)
+    detail["matchType"] = "One Day"
+    detail["innings"] = [first, second]
+
+    source = PlayCricketPublicSource(playhq=None)
+    source.playhq = None
+    source._match_grade_ids["masters-match"] = grade_id
+    source._get = lambda *args, **kwargs: detail
+    match = Match(
+        "masters-match", "", "Alpha", "Beta", "", "Round 2", "One Day",
+        "LIVE", "2026-07-24", "10:00 AM",
+    )
+    source.add_scorecard(match)
+
+    assert match.match_format.overs_limit == 45
+    assert (match.live.current_over_limit, match.live.over_limit_source) == (45, "configuration")
+    assert (match.live.target, match.live.runs_needed) == (221, 121)
+    assert (match.live.balls_remaining, match.live.required_run_rate) == (150, "4.84")
 
 
 def test_playhq_public_summary_resolves_authoritative_over_limit():

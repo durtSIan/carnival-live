@@ -10,7 +10,7 @@ import requests
 
 from data_sources.playhq_public import PlayHQPublicEnricher
 from models import Batter, Bowler, InningsSummary, LiveScore, Match, MatchFormat, TeamPerformance
-from match_settings import resolve_innings_parameters
+from match_settings import CONFIRMED_GRADE_OVER_LIMITS, resolve_innings_parameters
 
 
 class PlayCricketPublicSource:
@@ -23,13 +23,18 @@ class PlayCricketPublicSource:
         session: requests.Session | None = None,
         timeout: int = 30,
         playhq: PlayHQPublicEnricher | None = None,
+        grade_over_limits: dict[str, int] | None = None,
     ):
         self.session = session or requests.Session()
         self.timeout = timeout
         api_key = os.getenv("PLAYHQ_API_KEY", "")
         self.playhq = playhq or (PlayHQPublicEnricher(api_key) if api_key else None)
+        self.grade_over_limits = dict(
+            CONFIRMED_GRADE_OVER_LIMITS if grade_over_limits is None else grade_over_limits
+        )
         self._grade_context: dict[str, tuple[str, str, str]] = {}
         self._grade_details: dict[str, dict[str, Any]] = {}
+        self._match_grade_ids: dict[str, str] = {}
 
     def _get(self, path: str, **params: str) -> dict[str, Any]:
         response = self.session.get(
@@ -71,6 +76,7 @@ class PlayCricketPublicSource:
             if grade_name:
                 match.competition_name = grade_name
             self._grade_context[match.match_id] = (grade_name, organisation_id, timezone_name)
+            self._match_grade_ids[match.match_id] = grade_id
         return matches
 
     def search_organisations(self, search_text: str, limit: int = 25) -> list[dict[str, Any]]:
@@ -95,9 +101,11 @@ class PlayCricketPublicSource:
             f"/scores/matches/{match.match_id}",
             responseModifier="includeScorecard",
         )
+        explicit_limit = self._explicit_overs_limit(detail)
+        grade_limit = self.grade_over_limits.get(self._match_grade_ids.get(match.match_id, ""))
         match.match_format = MatchFormat.from_source(
             match.match_type or str(detail.get("matchType") or ""),
-            self._explicit_overs_limit(detail),
+            explicit_limit or grade_limit,
         )
         match.live = self.parse_scorecard(detail, match.match_format)
         self._enrich_over_limit(match)

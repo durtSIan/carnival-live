@@ -4,6 +4,12 @@ from dataclasses import dataclass
 from typing import Any, Iterable
 
 
+CONFIRMED_GRADE_OVER_LIMITS = {
+    # Interstate O50 Quad Series Challenge (Mackay), confirmed for 24 July 2026.
+    "c88db389-74bb-4711-b9e2-3399d9c1b6b9": 45,
+}
+
+
 @dataclass(frozen=True)
 class InningsParameters:
     over_limit: int | None = None
