@@ -413,6 +413,7 @@ def test_display_mode_selector_and_local_persistence_are_present():
     assert "carnivalLive.batterSlots" in batter_script and "sessionStorage" in batter_script
     assert "carnivalLive.displayMode" in script
     assert 'data-display-mode="brief"' in styles and 'data-display-mode="standard"' in styles
+    assert ".brief-target{display:inline;margin-left:7px;color:var(--ink);font-size:14px;font-weight:800}" in styles
 
 
 def test_pwa_manifest_metadata_and_service_worker_are_present():

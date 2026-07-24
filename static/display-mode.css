@@ -6,7 +6,7 @@ html[data-display-mode="brief"] .final-stats{display:none}
 html[data-display-mode="brief"] .chase-details,
 html[data-display-mode="brief"] .score-badges{display:none}
 .brief-target{display:none}
-html[data-display-mode="brief"] .brief-target{display:inline;margin-left:7px;color:var(--ink);font-size:12px;font-weight:800}
+html[data-display-mode="brief"] .brief-target{display:inline;margin-left:7px;color:var(--ink);font-size:14px;font-weight:800}
 html[data-display-mode="standard"] .best-section,
 html[data-display-mode="standard"] .completed-summary-section,
 html[data-display-mode="standard"] .final-stats{display:none}
