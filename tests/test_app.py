@@ -15,6 +15,8 @@ def test_scorecard_parser_formats_cricket_values():
     detail = json.loads((Path(__file__).parents[1] / "blue_mountains_match_with_scorecard.json").read_text())
     live = PlayCricketPublicSource().parse_scorecard(detail)
     assert live.current_batters
+    assert [b.name for b in live.current_batters] == ["C Cox", "G Isbister"]
+    assert [b.striker for b in live.current_batters] == [False, True]
     assert len({b.name for b in live.bowlers}) == len(live.bowlers)
     assert live.run_rate
 
@@ -345,9 +347,13 @@ def test_display_mode_selector_and_local_persistence_are_present():
     body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
     assert all(f'value="{mode}"' in body for mode in ("brief", "standard", "detailed"))
     assert "current-player-section" in body and "best-section" in body
+    assert "batter-order.js" in body and "data-batter-order-key" in body
+    assert 'data-batter-name="Current One"' in body
     root = Path(__file__).parents[1]
+    batter_script = (root / "static" / "batter-order.js").read_text()
     script = (root / "static" / "display-mode.js").read_text()
     styles = (root / "static" / "display-mode.css").read_text()
+    assert "carnivalLive.batterSlots" in batter_script and "sessionStorage" in batter_script
     assert "carnivalLive.displayMode" in script
     assert 'data-display-mode="brief"' in styles and 'data-display-mode="standard"' in styles
 
@@ -370,7 +376,7 @@ def test_pwa_manifest_metadata_and_service_worker_are_present():
 
     worker = client.get("/service-worker.js")
     assert worker.status_code == 200
-    assert b"carnival-live-v1" in worker.data
+    assert b"carnival-live-v2" in worker.data
 
 
 def test_match_exposes_flat_source_independent_display_contract():

@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='compact.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='display-mode.css') }}">
   <script defer src="{{ url_for('static', filename='display-mode.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='batter-order.js') }}"></script>
   <script defer src="{{ url_for('static', filename='pwa.js') }}"></script>
 </head>
 <body>
@@ -66,7 +67,7 @@
         <div class="card-sections">
           <section class="player-section primary-player-section {% if match.innings_complete %}completed-summary-section{% else %}current-player-section{% endif %}">
             {% if match.innings_complete %}<h3>Best batting</h3>{% endif %}
-            <div class="player-list">{% for batter in match.current_batters %}<p class="active"><span>{{ batter.name }}{% if batter.striker %}<mark>*</mark>{% endif %}</span><b>{{ batter.runs }}{% if batter.not_out %}*{% endif %} <small>({{ batter.balls }})</small></b></p>{% endfor %}</div>
+            <div class="player-list{% if not match.innings_complete %} batter-list{% endif %}"{% if not match.innings_complete %} data-batter-order-key="{{ match.home_team }}:{{ match.away_team }}:{{ match.start_date }}:{{ match.start_time }}:{{ match.batting_team }}:{{ match.innings_label }}"{% endif %}>{% for batter in match.current_batters %}<p class="active"{% if not match.innings_complete %} data-batter-name="{{ batter.name }}"{% endif %}><span>{{ batter.name }}{% if batter.striker %}<mark>*</mark>{% endif %}</span><b>{{ batter.runs }}{% if batter.not_out %}*{% endif %} <small>({{ batter.balls }})</small></b></p>{% endfor %}</div>
           </section>
           <section class="player-section primary-player-section {% if match.innings_complete %}completed-summary-section{% else %}current-player-section{% endif %}">
             {% if match.innings_complete %}<h3>Best bowling</h3>{% endif %}

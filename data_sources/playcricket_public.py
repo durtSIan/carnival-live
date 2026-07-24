@@ -460,7 +460,9 @@ class PlayCricketPublicSource:
             display_batters = [x for x in batting if x.get("isOnStrike") or x.get("isOnNonStrike")]
             if len(display_batters) < 2:
                 display_batters = [x for x in batting if is_not_out(x)]
-            display_batters.sort(key=lambda x: (not x.get("isOnStrike", False), x.get("batOrder") or 999))
+            # Keep the two batters in batting-order order. The browser preserves
+            # their screen slots between refreshes; strike only moves the marker.
+            display_batters.sort(key=lambda x: x.get("batOrder") or 999)
             display_batters = display_batters[:2]
         current_batters = [
             Batter(
