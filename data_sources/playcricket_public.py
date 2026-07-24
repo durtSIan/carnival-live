@@ -109,8 +109,11 @@ class PlayCricketPublicSource:
             match.match_type or str(detail.get("matchType") or ""),
             explicit_limit or grade_limit,
         )
-        recent_bowlers = self._recent_bowlers_by_innings(match.match_id, detail)
-        match.live = self.parse_scorecard(detail, match.match_format, recent_bowlers)
+        # Do not download the full ball history inside a dashboard request.
+        # On a multi-match feed this can hold Render's single free worker long
+        # enough for the whole application to time out. The aggregate
+        # scorecard remains the reliable, lightweight live source.
+        match.live = self.parse_scorecard(detail, match.match_format)
         self._enrich_over_limit(match)
         match.toss_winner = self._toss_winner(detail) or match.toss_winner
         match.toss_decision = self._toss_decision(detail, match.toss_winner)
