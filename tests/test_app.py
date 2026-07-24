@@ -671,7 +671,7 @@ def test_setup_search_explains_play_cricket_twenty_character_limit(tmp_path):
     body = client.get("/setup?q=Cricket+Australia+Masters").get_data(as_text=True)
     assert "Search names must be 20 characters or fewer." in body
     assert 'maxlength="20"' in body
-    assert "Use between 3 and 20 characters." in body
+    assert "Enter between 3 and 20 characters for search." in body
     assert "advanced grade entry" not in body
 
 

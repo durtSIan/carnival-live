@@ -66,11 +66,11 @@
       <p class="hint">Search a club to follow its teams, or search an association/competition to choose grades.</p>
       <form class="search-form" method="get">
         <label for="q">Club, association or competition</label>
+        <small id="search-help" class="input-help">Enter between 3 and 20 characters for search.</small>
         <div>
           <input id="q" name="q" value="{{ query }}" minlength="3" maxlength="20" aria-describedby="search-help" placeholder="e.g. Darwin Cricket" autofocus>
           <button>Search</button>
         </div>
-        <small id="search-help" class="input-help">Use between 3 and 20 characters.</small>
       </form>
     </section>
 
