@@ -98,18 +98,18 @@ def favourite_grade_selection(items: list[dict[str, str]]) -> tuple[list[str], d
     return grade_ids[:10], grade_names
 
 def favourite_grade_scopes(items: list[dict[str, str]]) -> dict[str, list[str] | None]:
-    """Map each saved grade to all matches or to additive club-only matches."""
+    """Map explicit scopes; omit legacy grades so old club filtering survives."""
     scopes: dict[str, list[str] | None] = {}
     for item in sorted_favourite_items(items):
         grade_id = str(item.get("grade_id") or "").strip()
         if not GRADE_ID_PATTERN.fullmatch(grade_id):
             continue
         club_name = str(item.get("club_name") or "").strip()
-        if not club_name:
+        if not club_name and str(item.get("scope") or "") == "all":
             scopes[grade_id] = None
-        elif grade_id not in scopes:
+        elif club_name and grade_id not in scopes:
             scopes[grade_id] = [club_name]
-        elif scopes[grade_id] is not None and club_name not in scopes[grade_id]:
+        elif club_name and scopes.get(grade_id) is not None and club_name not in scopes[grade_id]:
             scopes[grade_id].append(club_name)
     return scopes
 
@@ -159,7 +159,9 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
             grade_ids, grade_names = favourite_grade_ids, favourite_grade_names
             using_saved_favourites = True
         requested_club = request.args.get("club", "").strip()
-        club_name = requested_club
+        club_name = requested_club or (
+            favourites.club_filters() if using_saved_favourites else ""
+        )
         error = ""
         try:
             if grade_ids:

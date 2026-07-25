@@ -609,6 +609,7 @@ def test_club_filter_does_not_hide_an_unrelated_carnival_grade():
         ["darwin-grade", "masters-grade"], "2026-07-24", "Australia/Darwin",
         ["PINT Cricket Club"],
         {"darwin-grade": "A Grade", "masters-grade": "Interstate O50"},
+        {},
     )
 
     assert {match.match_id for match in matches} == {"pint-a", "masters"}
@@ -1091,7 +1092,10 @@ def test_favourite_grade_selection_ignores_duplicates_and_bad_ids():
 
 def test_favourite_grade_scopes_allow_all_matches_and_club_only_matches():
     scopes = favourite_grade_scopes([
-        {"grade_id": "11111111-1111-1111-1111-111111111111", "grade_name": "A Grade"},
+        {
+            "grade_id": "11111111-1111-1111-1111-111111111111",
+            "grade_name": "A Grade", "scope": "all",
+        },
         {
             "grade_id": "22222222-2222-2222-2222-222222222222",
             "grade_name": "C Grade", "club_name": "PINT Cricket Club",
@@ -1107,6 +1111,12 @@ def test_favourite_grade_scopes_allow_all_matches_and_club_only_matches():
             "PINT Cricket Club", "Palmerston Cricket Club",
         ],
     }
+    assert favourite_grade_scopes([
+        {
+            "grade_id": "33333333-3333-3333-3333-333333333333",
+            "grade_name": "Legacy D Grade",
+        },
+    ]) == {}
 
 
 def test_two_day_previous_innings_line_includes_lead_or_chase_context():

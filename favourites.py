@@ -40,6 +40,11 @@ class FavouriteStore:
         club_name = club_name.strip()
         if club_name:
             item["club_name"] = club_name
+        else:
+            # New direct grade selections are explicitly grade-wide. Older
+            # cookie entries have no scope field and retain legacy club-filter
+            # behaviour during migration.
+            item["scope"] = "all"
         with self._lock:
             data = self._read()
             grades = [

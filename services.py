@@ -33,7 +33,7 @@ class MatchService:
         seen: set[str] = set()
         for grade_id in grade_ids:
             grade_matches = self.source.get_matches(grade_id, timezone_name)
-            if grade_clubs is not None:
+            if grade_clubs is not None and grade_id in grade_clubs:
                 saved_scope = grade_clubs.get(grade_id)
                 clubs_for_grade = (
                     [] if saved_scope is None
@@ -41,6 +41,10 @@ class MatchService:
                 )
                 filter_this_grade = saved_scope is not None
             else:
+                # A grade absent from grade_clubs is a legacy saved selection.
+                # Preserve the old behaviour: filter it only when a followed
+                # club actually participates in that grade, leaving unrelated
+                # carnival/competition grades untouched.
                 clubs_for_grade = [
                     club
                     for club in clubs
