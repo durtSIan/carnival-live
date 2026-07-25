@@ -32,23 +32,48 @@ class FavouriteStore:
         if not isinstance(filters, list):
             return []
         return [str(item).strip() for item in filters if str(item).strip()]
-    def save(self, grade_id: str, grade_name: str, organisation_name: str = "") -> None:
+    def save(
+        self, grade_id: str, grade_name: str, organisation_name: str = "",
+        club_name: str = "",
+    ) -> None:
         item = {"grade_id": grade_id, "grade_name": grade_name or grade_id, "organisation_name": organisation_name}
+        club_name = club_name.strip()
+        if club_name:
+            item["club_name"] = club_name
         with self._lock:
             data = self._read()
-            grades = [x for x in self.all() if x.get("grade_id") != grade_id]
+            grades = [
+                x for x in self.all()
+                if not (
+                    x.get("grade_id") == grade_id
+                    and str(x.get("club_name") or "").casefold() == club_name.casefold()
+                )
+            ]
             data["grades"] = [item, *grades]
             self._write(data)
-    def remove(self, grade_id: str) -> None:
+    def remove(self, grade_id: str, club_name: str | None = None) -> None:
         with self._lock:
             data = self._read()
-            data["grades"] = [x for x in self.all() if x.get("grade_id") != grade_id]
+            if club_name is None:
+                data["grades"] = [x for x in self.all() if x.get("grade_id") != grade_id]
+            else:
+                data["grades"] = [
+                    x for x in self.all()
+                    if not (
+                        x.get("grade_id") == grade_id
+                        and str(x.get("club_name") or "").casefold() == club_name.casefold()
+                    )
+                ]
             self._write(data)
     def set_club_filter(self, club_filter: str) -> None:
         with self._lock:
             data = self._read()
             values = [item.strip() for item in club_filter.split(",") if item.strip()]
             data["club_filters"] = list(dict.fromkeys(values))
+            if not values:
+                data["grades"] = [
+                    item for item in self.all() if not str(item.get("club_name") or "").strip()
+                ]
             data.pop("club_filter", None)
             self._write(data)
     def add_club_filter(self, club_filter: str) -> None:
@@ -68,6 +93,10 @@ class FavouriteStore:
         with self._lock:
             data = self._read()
             data["club_filters"] = [item for item in self.club_filters() if item != value]
+            data["grades"] = [
+                item for item in self.all()
+                if str(item.get("club_name") or "").casefold() != value.casefold()
+            ]
             data.pop("club_filter", None)
             self._write(data)
     def default_grade_id(self) -> str:

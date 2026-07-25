@@ -25,28 +25,38 @@ class MatchService:
     def matches_for_grades(
         self, grade_ids: list[str], selected_date: str, timezone_name: str, club_name: str | list[str] = "",
         grade_names: dict[str, str] | None = None,
+        grade_clubs: dict[str, list[str] | None] | None = None,
     ) -> list[Match]:
-        """Combine grade feeds, optionally retaining only one club's matches."""
+        """Combine grade-wide and additive club-specific selections."""
         clubs = self._normalise_club_filters(club_name)
         combined: list[Match] = []
         seen: set[str] = set()
         for grade_id in grade_ids:
             grade_matches = self.source.get_matches(grade_id, timezone_name)
-            grade_clubs = [
-                club
-                for club in clubs
-                if any(
-                    self._team_matches_club_filter(match.home_team, club)
-                    or self._team_matches_club_filter(match.away_team, club)
-                    for match in grade_matches
+            if grade_clubs is not None:
+                saved_scope = grade_clubs.get(grade_id)
+                clubs_for_grade = (
+                    [] if saved_scope is None
+                    else self._normalise_club_filters(saved_scope or [])
                 )
-            ]
+                filter_this_grade = saved_scope is not None
+            else:
+                clubs_for_grade = [
+                    club
+                    for club in clubs
+                    if any(
+                        self._team_matches_club_filter(match.home_team, club)
+                        or self._team_matches_club_filter(match.away_team, club)
+                        for match in grade_matches
+                    )
+                ]
+                filter_this_grade = bool(clubs_for_grade)
             for match in self._visible(grade_matches, selected_date):
                 if not match.competition_name and grade_names:
                     match.competition_name = grade_names.get(grade_id, "")
-                if grade_clubs and not any(
+                if filter_this_grade and not any(
                     self._team_matches_club_filter(match.home_team, club) or self._team_matches_club_filter(match.away_team, club)
-                    for club in grade_clubs
+                    for club in clubs_for_grade
                 ):
                     continue
                 if match.match_id in seen:

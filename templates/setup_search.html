@@ -30,7 +30,7 @@
       <div class="feed-overview">
         <h2>Your live feed</h2>
         {% if favourites or club_filters %}
-          <p>{{ favourites|length }} grade{% if favourites|length != 1 %}s{% endif %}{% if favourite_organisations %} · {{ favourite_organisations|length }} competition{% if favourite_organisations|length != 1 %}s{% endif %}{% endif %}{% if club_filters %} · {{ club_filters|length }} club/team filter{% if club_filters|length != 1 %}s{% endif %}{% endif %}</p>
+          <p>{{ favourites|length }} grade selection{% if favourites|length != 1 %}s{% endif %}{% if favourite_organisations %} · {{ favourite_organisations|length }} competition{% if favourite_organisations|length != 1 %}s{% endif %}{% endif %}{% if club_filters %} · {{ club_filters|length }} followed club{% if club_filters|length != 1 %}s{% endif %}{% endif %}</p>
         {% else %}
           <p>No clubs, competitions or grades saved yet. Search below to build your feed.</p>
         {% endif %}
@@ -109,53 +109,36 @@
       </section>
     {% endif %}
 
-    {% if favourites or club_filters %}
+    {% if club_filters %}
       <section>
-        <h2>Saved clubs / teams</h2>
-        <p class="hint">
-          {% if club_filters %}
-            These filters apply to grades where the club or team participates. Other saved competitions remain visible.
-          {% else %}
-            No club filter is active, so all matches in the saved grades will show.
-          {% endif %}
-        </p>
-        <form class="feed-filter-form" method="post" action="{{ url_for('save_feed_filter') }}">
-          <label for="club_filter">Add club/team filter</label>
-          <div>
-            <input id="club_filter" name="club_filter" placeholder="e.g. Palmerston or PINT">
-            <button>Add filter</button>
-            {% if club_filters %}
-              <button class="remove-button" name="club_filter" value="">Clear all</button>
-            {% endif %}
-          </div>
-        </form>
-        {% if club_filters %}
-          <div class="filter-list" aria-label="Saved club filters">
-            {% for filter in club_filters %}
-              <form method="post" action="{{ url_for('remove_feed_filter') }}">
-                <span>{{ filter }}</span>
-                <input type="hidden" name="club_filter" value="{{ filter }}">
-                <button class="remove-button" aria-label="Remove {{ filter }}">Remove</button>
-              </form>
-            {% endfor %}
-          </div>
-        {% endif %}
+        <h2>Followed clubs / teams</h2>
+        <p class="hint">Club matches are added to your feed. They do not narrow any grades or competitions you follow.</p>
+        <div class="filter-list" aria-label="Followed clubs and teams">
+          {% for filter in club_filters %}
+            <form method="post" action="{{ url_for('remove_feed_filter') }}">
+              <span>{{ filter }}</span>
+              <input type="hidden" name="club_filter" value="{{ filter }}">
+              <button class="remove-button" aria-label="Stop following {{ filter }}">Remove</button>
+            </form>
+          {% endfor %}
+        </div>
       </section>
     {% endif %}
 
     {% if favourites %}
       <section>
         <h2>Saved grades</h2>
-        <p class="hint">The scores screen will search all saved favourite grades together{% if club_filters %}, with club/team filters applied only to relevant grades{% endif %}.</p>
+        <p class="hint">Grade-wide selections show every match. Grades added through a club show that club’s matches only.</p>
         <div class="results">
           {% for item in favourites %}
             <div class="favourite-row">
               <a class="favourite" href="{{ url_for('dashboard') }}">
                 <strong>{{ item.grade_name }}</strong>
-                <small>{{ item.organisation_name }}</small>
+                <small>{{ item.organisation_name }}{% if item.club_name %} · {{ item.club_name }} matches{% else %} · All matches{% endif %}</small>
               </a>
               <form method="post" action="{{ url_for('remove_favourite') }}">
                 <input type="hidden" name="grade_id" value="{{ item.grade_id }}">
+                {% if item.club_name %}<input type="hidden" name="club_name" value="{{ item.club_name }}">{% endif %}
                 <button class="remove-button" aria-label="Remove {{ item.grade_name }}">Remove</button>
               </form>
             </div>

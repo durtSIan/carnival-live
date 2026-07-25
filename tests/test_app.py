@@ -2,7 +2,10 @@ import copy
 import json
 from pathlib import Path
 
-from app import club_team_grade_options, create_app, current_seasons_only, favourite_grade_selection, grade_setup_order
+from app import (
+    club_team_grade_options, create_app, current_seasons_only,
+    favourite_grade_scopes, favourite_grade_selection, grade_setup_order,
+)
 from data_sources.playcricket_public import PlayCricketPublicSource
 from data_sources.playhq_public import PlayHQPublicEnricher
 from favourites import FavouriteStore
@@ -612,6 +615,27 @@ def test_club_filter_does_not_hide_an_unrelated_carnival_grade():
     assert "darwin-a" not in {match.match_id for match in matches}
 
 
+def test_additive_feed_keeps_grade_wide_matches_and_adds_club_matches():
+    pint_a = Match("pint-a", "", "PINT A", "Darwin A", "", "Round 1", "One Day", "LIVE", "2026-07-25", "1:00 PM")
+    nightcliff_a = Match("nightcliff-a", "", "Nightcliff A", "Waratah A", "", "Round 1", "One Day", "LIVE", "2026-07-25", "1:00 PM")
+    pint_c = Match("pint-c", "", "PINT C", "Darwin C", "", "Round 1", "One Day", "LIVE", "2026-07-25", "1:00 PM")
+    nightcliff_c = Match("nightcliff-c", "", "Nightcliff C", "Waratah C", "", "Round 1", "One Day", "LIVE", "2026-07-25", "1:00 PM")
+
+    class FakeSource:
+        def get_matches(self, grade_id, *_):
+            return [pint_a, nightcliff_a] if grade_id == "grade-a" else [pint_c, nightcliff_c]
+        def add_scorecard(self, match): return match
+
+    matches = MatchService(FakeSource()).matches_for_grades(
+        ["grade-a", "grade-c"], "2026-07-25", "Australia/Darwin", "",
+        {"grade-a": "A Grade", "grade-c": "C Grade"},
+        {"grade-a": None, "grade-c": ["PINT Cricket Club"]},
+    )
+
+    assert {match.match_id for match in matches} == {"pint-a", "nightcliff-a", "pint-c"}
+    assert "nightcliff-c" not in {match.match_id for match in matches}
+
+
 def test_dashboard_routes_multi_grade_club_view():
     class FakeService:
         def matches_for_grades(self, grade_ids, date, timezone, club, grade_names):
@@ -773,23 +797,26 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     assert "Remove" in setup and "View live scores" in setup
     assert "Set up your live feed" in setup
     assert "Your live feed" in setup and "Add to your feed" in setup
-    assert "Saved clubs / teams" in setup and "Saved grades" in setup
-    assert "all saved favourite grades together" in setup
+    assert "Saved grades" in setup
+    assert "All matches" in setup
     assert "Advanced: enter grade URL or ID" not in setup
-    assert "Add club/team filter" in setup
-    filter_response = client.post("/setup/feed-filter", data={"club_filter": "Palmerston"})
-    assert filter_response.status_code == 302
-    assert store.club_filter() == "Palmerston"
-    client.post("/setup/feed-filter", data={"club_filter": "PINT Cricket Club"})
-    assert store.club_filters() == ["Palmerston", "PINT Cricket Club"]
+    assert "Add club/team filter" not in setup
+    client.post("/setup/favourite", data={
+        "grade_id": "11111111-1111-1111-1111-111111111111",
+        "grade_name": "C Grade",
+        "organisation_name": "Darwin Competition",
+        "club_name": "PINT Cricket Club",
+    })
     setup_filtered = client.get("/setup").get_data(as_text=True)
-    assert "club/team filters applied only to relevant grades" in setup_filtered and "Clear" in setup_filtered
-    assert "Clubs / teams" in setup_filtered
-    assert "Palmerston" in setup_filtered and "PINT Cricket Club" in setup_filtered
+    assert "Club matches are added to your feed" in setup_filtered
+    assert "Followed clubs / teams" in setup_filtered
+    assert "PINT Cricket Club" in setup_filtered
     assert "Competitions" in setup_filtered and "Darwin Competition" in setup_filtered
-    clear_response = client.post("/setup/feed-filter", data={"club_filter": ""})
-    assert clear_response.status_code == 302
-    assert store.club_filter() == ""
+    assert store.club_filters() == ["PINT Cricket Club"]
+    assert any(item.get("club_name") == "PINT Cricket Club" for item in store.all())
+    client.post("/setup/feed-filter/remove", data={"club_filter": "PINT Cricket Club"})
+    assert store.club_filters() == []
+    assert all(not item.get("club_name") for item in store.all())
     removed = client.post("/setup/favourite/remove", data={"grade_id": "213859e0-488a-40c6-a642-dcf36df09f04"})
     assert removed.status_code == 302
     assert store.all() == []
@@ -960,10 +987,8 @@ def test_setup_shows_current_season_only_and_guides_club_results(tmp_path):
     body = client.get("/setup/organisation/org-1?name=Palmerston+Cricket+Club").get_data(as_text=True)
     assert "Winter 2026" not in body and "Winter 2025" not in body
     assert 'name="season"' not in body
-    assert "grades are often listed under the association" in body
-    assert "Save this club/team as your filter" in body
-    response = client.post("/setup/feed-filter", data={"club_filter": "Palmerston Cricket Club"})
-    assert response.status_code == 302
+    assert "No current grade links were returned for this club" in body
+    assert "Save this club/team as your filter" not in body
 
 
 def test_setup_club_page_shows_team_grades_and_sets_filter(tmp_path):
@@ -1029,14 +1054,24 @@ def test_dashboard_uses_all_saved_favourites_when_no_grade_is_requested(tmp_path
     store = FavouriteStore(tmp_path / "favourites.json")
     store.save("11111111-1111-1111-1111-111111111111", "A Grade", "Darwin")
     store.save("22222222-2222-2222-2222-222222222222", "B Grade", "Darwin")
-    store.set_club_filter("Palmerston")
+    store.save(
+        "33333333-3333-3333-3333-333333333333", "C Grade", "Darwin",
+        "Palmerston Cricket Club",
+    )
+    store.add_club_filter("Palmerston Cricket Club")
     class FakeService:
-        def matches_for_grades(self, grade_ids, date, timezone, club, grade_names):
+        def matches_for_grades(self, grade_ids, date, timezone, club, grade_names, grade_clubs):
             assert grade_ids == [
                 "11111111-1111-1111-1111-111111111111",
                 "22222222-2222-2222-2222-222222222222",
+                "33333333-3333-3333-3333-333333333333",
             ]
-            assert club == ["Palmerston"]
+            assert club == ""
+            assert grade_clubs == {
+                "11111111-1111-1111-1111-111111111111": None,
+                "22222222-2222-2222-2222-222222222222": None,
+                "33333333-3333-3333-3333-333333333333": ["Palmerston Cricket Club"],
+            }
             assert grade_names["11111111-1111-1111-1111-111111111111"] == "A Grade"
             return []
         def matches_for_date(self, *args):
@@ -1052,6 +1087,26 @@ def test_favourite_grade_selection_ignores_duplicates_and_bad_ids():
     ])
     assert ids == ["11111111-1111-1111-1111-111111111111"]
     assert names == {"11111111-1111-1111-1111-111111111111": "A Grade"}
+
+
+def test_favourite_grade_scopes_allow_all_matches_and_club_only_matches():
+    scopes = favourite_grade_scopes([
+        {"grade_id": "11111111-1111-1111-1111-111111111111", "grade_name": "A Grade"},
+        {
+            "grade_id": "22222222-2222-2222-2222-222222222222",
+            "grade_name": "C Grade", "club_name": "PINT Cricket Club",
+        },
+        {
+            "grade_id": "22222222-2222-2222-2222-222222222222",
+            "grade_name": "C Grade", "club_name": "Palmerston Cricket Club",
+        },
+    ])
+    assert scopes == {
+        "11111111-1111-1111-1111-111111111111": None,
+        "22222222-2222-2222-2222-222222222222": [
+            "PINT Cricket Club", "Palmerston Cricket Club",
+        ],
+    }
 
 
 def test_two_day_previous_innings_line_includes_lead_or_chase_context():

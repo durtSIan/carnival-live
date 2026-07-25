@@ -18,6 +18,8 @@ continues.
 
 - [x] Store each phone's selected clubs, competitions and grades separately in
       a signed, one-year browser cookie. Display mode remains in local storage.
+- [x] Combine grade-wide selections and club-specific selections additively,
+      deduplicating matches that appear through both paths.
 - [ ] Cache match lists by grade and date.
 - [ ] Cache scorecards by match for approximately 20–30 seconds.
 - [ ] Ensure concurrent requests for the same uncached item cause only one

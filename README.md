@@ -57,9 +57,11 @@ The running application does not currently call an AI model. Codex and GPT-5.6 w
 
 ## Personal feeds
 
-Each browser or installed PWA stores its own favourite grades and club/team
-filters in a signed cookie. A phone, one computer and another computer can
-therefore follow different feeds without accounts or passwords.
+Each browser or installed PWA stores its own favourite grades and followed
+clubs/teams in a signed cookie. Grade selections show every match in that
+grade. Club selections add only that club's matches from the associated grades;
+they never narrow a grade-wide selection. A phone, one computer and another
+computer can therefore follow different feeds without accounts or passwords.
 
 Selections are specific to that browser. Clearing its site data removes the
 feed, and selections do not automatically transfer to another device. Shared

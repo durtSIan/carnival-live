@@ -31,29 +31,6 @@
         <a class="primary-action" href="{{ url_for('dashboard') }}">Go to live scores</a>
         <span>{{ favourites|length }} favourite{% if favourites|length != 1 %}s{% endif %} saved</span>
       </div>
-      <form class="feed-filter-form compact" method="post" action="{{ url_for('save_feed_filter') }}">
-        <label for="club_filter">Add club/team filter</label>
-        <div>
-          <input id="club_filter" name="club_filter" placeholder="e.g. Palmerston or PINT">
-          <button>Add filter</button>
-          {% if club_filters %}
-            <button class="remove-button" name="club_filter" value="">Clear</button>
-          {% endif %}
-        </div>
-        <input type="hidden" name="next" value="{{ request.full_path }}">
-      </form>
-      {% if club_filters %}
-        <div class="filter-list compact" aria-label="Saved club filters">
-          {% for filter in club_filters %}
-            <form method="post" action="{{ url_for('remove_feed_filter') }}">
-              <span>{{ filter }}</span>
-              <input type="hidden" name="club_filter" value="{{ filter }}">
-              <input type="hidden" name="next" value="{{ request.full_path }}">
-              <button class="remove-button" aria-label="Remove {{ filter }}">Remove</button>
-            </form>
-          {% endfor %}
-        </div>
-      {% endif %}
     {% endif %}
 
     {% if error %}
@@ -113,10 +90,10 @@
     {% elif club_team_grades %}
       <section>
         <h2>Club teams found</h2>
-        <p class="hint">These teams are listed under their association or competition grades. Add the grades you want, and {{ organisation_name }} will be saved as the filter.</p>
+        <p class="hint">Choose the teams you want to follow. Their matches will be added without narrowing any other grades in your feed.</p>
         <div class="results">
           {% for grade in club_team_grades %}
-            {% if grade.id in saved_grade_ids %}
+            {% if grade.id in saved_club_grade_ids %}
               <div class="result grade team-grade">
                 <div>
                   <strong>{{ grade.name }}</strong>
@@ -127,6 +104,7 @@
                   <button disabled>Saved</button>
                   <form method="post" action="{{ url_for('remove_favourite') }}">
                     <input type="hidden" name="grade_id" value="{{ grade.id }}">
+                    <input type="hidden" name="club_name" value="{{ organisation_name }}">
                     <input type="hidden" name="next" value="{{ request.full_path }}">
                     <button class="remove-button">Remove</button>
                   </form>
@@ -137,7 +115,7 @@
                 <input type="hidden" name="grade_id" value="{{ grade.id }}">
                 <input type="hidden" name="grade_name" value="{{ grade.name }}">
                 <input type="hidden" name="organisation_name" value="{{ grade.owning_organisation }}">
-                <input type="hidden" name="club_filter" value="{{ organisation_name }}">
+                <input type="hidden" name="club_name" value="{{ organisation_name }}">
                 <input type="hidden" name="next" value="{{ request.full_path }}">
                 <div>
                   <strong>{{ grade.name }}</strong>
@@ -152,15 +130,7 @@
     {% elif seasons and not error %}
       <div class="message">
         <p>No grades were returned for the current season.</p>
-        <p>For clubs, grades are often listed under the association or competition instead. Try searching for the association, then choose the grades and filter by this club.</p>
-        <form class="feed-filter-form" method="post" action="{{ url_for('save_feed_filter') }}">
-          <label for="club_filter_empty">Save this club/team as your filter</label>
-          <div>
-            <input id="club_filter_empty" name="club_filter" value="{{ organisation_name }}">
-            <button>Save filter</button>
-          </div>
-          <input type="hidden" name="next" value="{{ url_for('setup_search') }}">
-        </form>
+        <p>No current grade links were returned for this club. Try searching for its association or competition, then choose the grades you want to follow.</p>
       </div>
     {% endif %}
   </main>
