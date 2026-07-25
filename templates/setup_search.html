@@ -134,13 +134,32 @@
             <div class="favourite-row">
               <a class="favourite" href="{{ url_for('dashboard') }}">
                 <strong>{{ item.grade_name }}</strong>
-                <small>{{ item.organisation_name }}{% if item.club_name %} · {{ item.club_name }} matches{% else %} · All matches{% endif %}</small>
+                <small>
+                  {{ item.organisation_name }}
+                  {% if item.club_name %}
+                    · {{ item.club_name }} matches
+                  {% elif item.scope == "all" or not club_filters %}
+                    · All matches
+                  {% else %}
+                    · {{ club_filters|join(", ") }} matches (older selection)
+                  {% endif %}
+                </small>
               </a>
-              <form method="post" action="{{ url_for('remove_favourite') }}">
-                <input type="hidden" name="grade_id" value="{{ item.grade_id }}">
-                {% if item.club_name %}<input type="hidden" name="club_name" value="{{ item.club_name }}">{% endif %}
-                <button class="remove-button" aria-label="Remove {{ item.grade_name }}">Remove</button>
-              </form>
+              <div class="favourite-actions">
+                {% if not item.club_name and item.scope != "all" and club_filters %}
+                  <form method="post" action="{{ url_for('save_favourite') }}">
+                    <input type="hidden" name="grade_id" value="{{ item.grade_id }}">
+                    <input type="hidden" name="grade_name" value="{{ item.grade_name }}">
+                    <input type="hidden" name="organisation_name" value="{{ item.organisation_name }}">
+                    <button aria-label="Show all matches in {{ item.grade_name }}">All matches</button>
+                  </form>
+                {% endif %}
+                <form method="post" action="{{ url_for('remove_favourite') }}">
+                  <input type="hidden" name="grade_id" value="{{ item.grade_id }}">
+                  {% if item.club_name %}<input type="hidden" name="club_name" value="{{ item.club_name }}">{% endif %}
+                  <button class="remove-button" aria-label="Remove {{ item.grade_name }}">Remove</button>
+                </form>
+              </div>
             </div>
           {% endfor %}
         </div>

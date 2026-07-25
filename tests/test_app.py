@@ -887,6 +887,41 @@ def test_setup_summary_shows_club_filter_without_saved_grades(tmp_path):
     assert "No clubs, competitions or grades saved yet" not in body
 
 
+def test_legacy_grade_can_be_converted_to_all_matches_without_resetting_feed(tmp_path):
+    grade_id = "11111111-1111-1111-1111-111111111111"
+    store = FavouriteStore(tmp_path / "favourites.json")
+    store._write({
+        "grades": [{
+            "grade_id": grade_id,
+            "grade_name": "A Grade",
+            "organisation_name": "Darwin Competition",
+        }],
+        "club_filters": ["PINT Cricket Club"],
+    })
+
+    class FakeService:
+        def matches_for_date(self, *args): return []
+
+    client = create_app(FakeService(), favourite_store=store).test_client()
+    before = client.get("/setup").get_data(as_text=True)
+    assert "PINT Cricket Club matches (older selection)" in before
+    assert "All matches" in before
+
+    response = client.post("/setup/favourite", data={
+        "grade_id": grade_id,
+        "grade_name": "A Grade",
+        "organisation_name": "Darwin Competition",
+    })
+    assert response.status_code == 302
+    assert store.all() == [{
+        "grade_id": grade_id,
+        "grade_name": "A Grade",
+        "organisation_name": "Darwin Competition",
+        "scope": "all",
+    }]
+    assert store.club_filters() == ["PINT Cricket Club"]
+
+
 def test_default_personal_feeds_are_isolated_between_browsers(monkeypatch):
     monkeypatch.delenv("CARNIVAL_GRADE_ID", raising=False)
     monkeypatch.setenv("CARNIVAL_SECURE_COOKIES", "false")

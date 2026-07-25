@@ -199,6 +199,8 @@ h2 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: va
 .favourite { flex: 1; }
 .favourite-row { display: flex; gap: 8px; align-items: stretch; }
 .favourite-row form { display: flex; }
+.favourite-actions { display: flex; gap: 8px; align-items: stretch; }
+.favourite-actions button { padding: 0 12px; font-size: 12px; }
 .remove-button {
   min-height: auto;
   padding: 0 12px;
@@ -234,5 +236,6 @@ h2 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: va
   .grade { align-items: flex-start; }
   .grade button { flex: none; }
   .grade-actions { flex-direction: column; }
+  .favourite-actions { flex-direction: column; }
   .remove-button { padding: 0 10px; }
 }
