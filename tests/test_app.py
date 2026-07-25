@@ -251,6 +251,47 @@ def test_playhq_public_over_limit_enables_one_day_required_rate():
     assert match.chase_line == "Target 226  |  Need 126 off 150  |  RRReq=5.04"
 
 
+def test_match_schedule_keeps_play_cricket_local_offset_in_mixed_region_feed():
+    raw = {
+        "id": "match-id",
+        "status": "LIVE",
+        "matchType": "One Day",
+        "round": {"name": "Round 3"},
+        "matchSchedule": [{
+            "matchDay": 1,
+            "startDateTime": "2026-07-26T10:00:00.0000000+10:00",
+        }],
+        "teams": [
+            {"displayName": "Townsville", "isHome": True},
+            {"displayName": "NSW O50", "isHome": False},
+        ],
+    }
+
+    match = PlayCricketPublicSource()._map_match(raw, "Australia/Darwin")
+
+    assert match.start_date == "2026-07-26"
+    assert match.start_time == "10:00 AM"
+    assert match.schedule_dates == ["2026-07-26"]
+
+
+def test_utc_match_schedule_still_uses_configured_fallback_timezone():
+    raw = {
+        "id": "match-id",
+        "status": "LIVE",
+        "matchType": "One Day",
+        "matchSchedule": [{"startDateTime": "2026-07-26T00:30:00Z"}],
+        "teams": [
+            {"displayName": "Home", "isHome": True},
+            {"displayName": "Away", "isHome": False},
+        ],
+    }
+
+    match = PlayCricketPublicSource()._map_match(raw, "Australia/Darwin")
+
+    assert match.start_date == "2026-07-26"
+    assert match.start_time == "10:00 AM"
+
+
 def test_playhq_event_settings_use_latest_adjustment_then_defaults():
     events = [
         {"type": "GAME_TYPE_SETTINGS", "payload": {"scoringSettings": {"overs": 40}}},

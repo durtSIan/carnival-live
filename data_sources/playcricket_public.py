@@ -326,19 +326,38 @@ class PlayCricketPublicSource:
         value = re.sub(r"(\.\d{6})\d+([+-]\d{2}:\d{2}|Z)$", r"\1\2", value.strip())
         return datetime.fromisoformat(value[:-1] + "+00:00" if value.endswith("Z") else value)
 
+    @classmethod
+    def _schedule_datetime(cls, value: str, fallback_timezone: str) -> datetime:
+        """Keep the local offset Play Cricket supplies for the fixture.
+
+        A combined feed can contain Darwin (+09:30), Queensland (+10:00)
+        and other regions at the same time. Converting every fixture to the
+        app's fallback timezone changes the advertised local start time.
+        UTC/naive values still use the configured fallback for compatibility.
+        """
+        parsed = cls._parse_datetime(value)
+        raw = value.strip().upper()
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=ZoneInfo(fallback_timezone))
+        if raw.endswith("Z"):
+            return parsed.astimezone(ZoneInfo(fallback_timezone))
+        return parsed
+
     def _map_match(self, raw: dict[str, Any], timezone_name: str) -> Match:
         teams = raw.get("teams") or []
         home = next((x for x in teams if x.get("isHome") is True), teams[0] if teams else {})
         away = next((x for x in teams if x.get("isHome") is False), teams[1] if len(teams) > 1 else {})
         schedule = raw.get("matchSchedule") or []
         start = (schedule[0] if schedule else {}).get("startDateTime") or ""
-        local = self._parse_datetime(start).astimezone(ZoneInfo(timezone_name)) if start else None
+        local = self._schedule_datetime(start, timezone_name) if start else None
         schedule_dates = []
         for item in schedule:
             value = str(item.get("startDateTime") or "")
             if not value:
                 continue
-            schedule_dates.append(self._parse_datetime(value).astimezone(ZoneInfo(timezone_name)).date().isoformat())
+            schedule_dates.append(
+                self._schedule_datetime(value, timezone_name).date().isoformat()
+            )
         match_id = str(raw.get("id") or "")
         home_name, away_name = self._team_name(home), self._team_name(away)
         slug = re.sub(r"[^a-z0-9]+", "-", f"{home_name}-{away_name}".lower()).strip("-")
