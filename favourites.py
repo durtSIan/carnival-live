@@ -47,13 +47,23 @@ class FavouriteStore:
             item["scope"] = "all"
         with self._lock:
             data = self._read()
-            grades = [
-                x for x in self.all()
-                if not (
-                    x.get("grade_id") == grade_id
-                    and str(x.get("club_name") or "").casefold() == club_name.casefold()
-                )
-            ]
+            if club_name:
+                grades = [
+                    x for x in self.all()
+                    if not (
+                        x.get("grade_id") == grade_id
+                        and str(x.get("club_name") or "").casefold() == club_name.casefold()
+                    )
+                ]
+            else:
+                # "All matches" supersedes every older club-specific or
+                # legacy copy of this grade. Keeping those duplicates makes
+                # the saved scope ambiguous and unnecessarily enlarges the
+                # browser's signed session cookie.
+                grades = [
+                    x for x in self.all()
+                    if x.get("grade_id") != grade_id
+                ]
             data["grades"] = [item, *grades]
             self._write(data)
     def remove(self, grade_id: str, club_name: str | None = None) -> None:

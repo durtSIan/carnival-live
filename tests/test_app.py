@@ -922,6 +922,30 @@ def test_legacy_grade_can_be_converted_to_all_matches_without_resetting_feed(tmp
     assert store.club_filters() == ["PINT Cricket Club"]
 
 
+def test_all_matches_replaces_club_scoped_copy_of_the_same_grade(tmp_path):
+    grade_id = "11111111-1111-1111-1111-111111111111"
+    other_grade_id = "22222222-2222-2222-2222-222222222222"
+    store = FavouriteStore(tmp_path / "favourites.json")
+    store.save(grade_id, "A Grade", "Darwin Competition", "PINT Cricket Club")
+    store.save(other_grade_id, "C Grade", "Darwin Competition", "PINT Cricket Club")
+
+    store.save(grade_id, "A Grade", "Darwin Competition")
+
+    assert [item for item in store.all() if item["grade_id"] == grade_id] == [{
+        "grade_id": grade_id,
+        "grade_name": "A Grade",
+        "organisation_name": "Darwin Competition",
+        "scope": "all",
+    }]
+    assert [item for item in store.all() if item["grade_id"] == other_grade_id] == [{
+        "grade_id": other_grade_id,
+        "grade_name": "C Grade",
+        "organisation_name": "Darwin Competition",
+        "club_name": "PINT Cricket Club",
+    }]
+    assert store.club_filters() == []
+
+
 def test_default_personal_feeds_are_isolated_between_browsers(monkeypatch):
     monkeypatch.delenv("CARNIVAL_GRADE_ID", raising=False)
     monkeypatch.setenv("CARNIVAL_SECURE_COOKIES", "false")
