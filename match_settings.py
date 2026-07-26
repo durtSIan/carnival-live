@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from typing import Any, Iterable
 
 
-CONFIRMED_GRADE_OVER_LIMITS = {
-    # Interstate O50 Quad Series Challenge (Mackay), confirmed for 24 July 2026.
-    "c88db389-74bb-4711-b9e2-3399d9c1b6b9": 45,
-}
+# Do not infer a match's innings limit from its grade. One Day fixtures in the
+# same competition can have different limits, and scorers can adjust them.
+# Only match-specific source data may populate the production over limit.
+CONFIRMED_GRADE_OVER_LIMITS: dict[str, int] = {}
 
 
 @dataclass(frozen=True)

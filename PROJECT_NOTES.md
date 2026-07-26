@@ -137,6 +137,12 @@ This was verified end-to-end on 24 July 2026 with the Interstate O50 Quad
 Series Challenge (Mackay). The completed NSW O50 v Victoria Over 50 Men game
 returned an authoritative limit of 45 overs for both innings.
 
+That value is match-specific. It must not be saved as a grade-wide default:
+One Day fixtures can be 40, 45 or 50 overs within the same broader competition,
+and the scorer can adjust an individual match. Without an authoritative
+match-specific limit, Carnival Live shows Target only and withholds balls
+remaining and required run rate.
+
 ## Architecture decision
 
 Keep the data source replaceable:
