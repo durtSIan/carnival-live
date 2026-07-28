@@ -124,6 +124,7 @@ class Match:
     competition_name: str = ""
     toss_decision: str = ""
     schedule_dates: list[str] = field(default_factory=list)
+    pool_name: str = ""
     match_format: MatchFormat = field(init=False)
 
     def __post_init__(self) -> None:

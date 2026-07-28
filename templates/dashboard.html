@@ -33,12 +33,22 @@
     {% if not matches and not error %}<div class="notice">No live matches yet. Scores will display when matches start.</div>{% endif %}
     <section class="match-grid">
       {% set grade_group = namespace(name=None) %}
+      {% set pool_group = namespace(name=None) %}
       {% for match in matches %}
       {% if match.grade_label and match.grade_label != grade_group.name %}
       {% set grade_group.name = match.grade_label %}
+      {% set pool_group.name = None %}
       <div class="grade-divider" role="separator" aria-label="{{ match.grade_label }}">
         <span>{{ match.grade_label }}</span>
         </div>
+      {% endif %}
+      {% if match.pool_name and match.pool_name != pool_group.name %}
+      {% set pool_group.name = match.pool_name %}
+      <div class="pool-divider" role="separator" aria-label="{{ match.pool_name }}">
+        <span>{{ match.pool_name }}</span>
+      </div>
+      {% elif not match.pool_name %}
+      {% set pool_group.name = None %}
       {% endif %}
       <article class="match-card">
         <div class="card-head">

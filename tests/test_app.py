@@ -444,6 +444,95 @@ def test_dashboard_adds_grade_dividers_when_grade_changes():
     assert "grade-chip" not in body
 
 
+def test_dashboard_keeps_competition_centred_and_adds_left_pool_dividers():
+    matches = [
+        Match(
+            "a1", "", "Alpha", "Beta", "", "Round 1", "T20", "LIVE",
+            "2026-07-28", "10:00 AM", LiveScore("Alpha", "1-40", "6", "6.67"),
+            competition_name="UniSport Nationals Men", pool_name="Pool A",
+        ),
+        Match(
+            "a2", "", "Gamma", "Delta", "", "Round 1", "T20", "LIVE",
+            "2026-07-28", "10:00 AM", LiveScore("Gamma", "2-50", "7", "7.14"),
+            competition_name="UniSport Nationals Men", pool_name="Pool A",
+        ),
+        Match(
+            "b1", "", "Echo", "Foxtrot", "", "Round 1", "T20", "LIVE",
+            "2026-07-28", "10:00 AM", LiveScore("Echo", "0-30", "4", "7.50"),
+            competition_name="UniSport Nationals Men", pool_name="Pool B",
+        ),
+    ]
+
+    class FakeService:
+        def matches_for_date(self, *args): return matches
+
+    body = create_app(FakeService()).test_client().get(
+        "/?date=2026-07-28"
+    ).get_data(as_text=True)
+
+    assert body.count('class="grade-divider"') == 1
+    assert body.count('class="pool-divider"') == 2
+    assert body.index("UniSport Nationals Men") < body.index("Pool A")
+    assert body.index("Pool A") < body.index("Alpha")
+    assert body.index("Gamma") < body.index("Pool B") < body.index("Echo")
+
+
+def test_public_ladder_pool_membership_only_labels_pool_stage_matches():
+    source = PlayCricketPublicSource()
+    memberships = {
+        "id:alpha-id": "Pool A",
+        "name:alpha": "Pool A",
+        "id:beta-id": "Pool A",
+        "name:beta": "Pool A",
+        "id:gamma-id": "Pool B",
+        "name:gamma": "Pool B",
+    }
+    pool_match = {
+        "round": {"name": "Round 3"},
+        "teams": [
+            {"id": "alpha-id", "displayName": "Alpha"},
+            {"id": "beta-id", "displayName": "Beta"},
+        ],
+    }
+    cross_pool_match = {
+        "round": {"name": "Round 3"},
+        "teams": [
+            {"id": "alpha-id", "displayName": "Alpha"},
+            {"id": "gamma-id", "displayName": "Gamma"},
+        ],
+    }
+    final_match = {**pool_match, "round": {"name": "Finals Round 1"}}
+
+    assert source._match_pool_name(pool_match, memberships) == "Pool A"
+    assert source._match_pool_name(cross_pool_match, memberships) == ""
+    assert source._match_pool_name(final_match, memberships) == ""
+
+
+def test_service_orders_pool_groups_naturally_within_a_competition():
+    pool_b = Match(
+        "b", "", "Bravo", "Beta", "", "Round 1", "T20", "LIVE",
+        "2026-07-28", "10:00 AM", competition_name="Nationals", pool_name="Pool B",
+    )
+    pool_a_late = Match(
+        "a2", "", "Alpha Two", "Beta Two", "", "Round 1", "T20", "LIVE",
+        "2026-07-28", "2:00 PM", competition_name="Nationals", pool_name="Pool A",
+    )
+    pool_a_early = Match(
+        "a1", "", "Alpha One", "Beta One", "", "Round 1", "T20", "LIVE",
+        "2026-07-28", "10:00 AM", competition_name="Nationals", pool_name="Pool A",
+    )
+
+    class FakeSource:
+        def get_matches(self, *args): return [pool_b, pool_a_late, pool_a_early]
+        def add_scorecard(self, match): return match
+
+    matches = MatchService(FakeSource()).matches_for_date(
+        "grade", "2026-07-28", "Australia/Brisbane"
+    )
+
+    assert [match.match_id for match in matches] == ["a1", "a2", "b"]
+
+
 def test_dashboard_setup_link_reflects_saved_feed_state(tmp_path, monkeypatch):
     monkeypatch.delenv("CARNIVAL_GRADE_ID", raising=False)
     class FakeService:

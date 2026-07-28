@@ -36,6 +36,7 @@ class PlayCricketPublicSource:
         self._grade_context: dict[str, tuple[str, str, str]] = {}
         self._grade_details: dict[str, dict[str, Any]] = {}
         self._match_grade_ids: dict[str, str] = {}
+        self._grade_pool_memberships: dict[str, dict[str, str]] = {}
         self._recent_bowler_cache: dict[str, tuple[float, dict[int, list[str]]]] = {}
 
     def _get(self, path: str, **params: str) -> dict[str, Any]:
@@ -73,13 +74,72 @@ class PlayCricketPublicSource:
         organisation_id = PlayHQPublicEnricher.organisation_id_from_logo(
             str(organisation.get("logoUrl") or "")
         )
+        pool_memberships = self._pool_memberships(grade_id)
         matches = [self._map_match(row, timezone_name) for row in rows]
-        for match in matches:
+        for row, match in zip(rows, matches):
             if grade_name:
                 match.competition_name = grade_name
+            match.pool_name = self._match_pool_name(row, pool_memberships)
             self._grade_context[match.match_id] = (grade_name, organisation_id, timezone_name)
             self._match_grade_ids[match.match_id] = grade_id
         return matches
+
+    @staticmethod
+    def _pool_team_keys(team: dict[str, Any]) -> list[str]:
+        keys: list[str] = []
+        team_id = str(team.get("id") or "").strip()
+        if team_id:
+            keys.append(f"id:{team_id.casefold()}")
+        name = PlayHQPublicEnricher._normalise(
+            str(team.get("displayName") or team.get("name") or "")
+        )
+        if name:
+            keys.append(f"name:{name}")
+        return keys
+
+    def _pool_memberships(self, grade_id: str) -> dict[str, str]:
+        """Map public ladder team IDs/names to their pool for one grade."""
+        if grade_id in self._grade_pool_memberships:
+            return self._grade_pool_memberships[grade_id]
+        try:
+            data = self._get(f"/fixturesladders/grades/{grade_id}/ladders")
+        except (requests.RequestException, ValueError):
+            self._grade_pool_memberships[grade_id] = {}
+            return {}
+        memberships: dict[str, str] = {}
+        for ladder in data.get("ladders") or []:
+            for pool in ladder.get("pools") or []:
+                pool_name = str(pool.get("name") or "").strip()
+                if not pool_name:
+                    continue
+                for team in pool.get("teams") or []:
+                    for key in self._pool_team_keys(team):
+                        memberships[key] = pool_name
+        self._grade_pool_memberships[grade_id] = memberships
+        return memberships
+
+    @classmethod
+    def _match_pool_name(
+        cls, raw: dict[str, Any], memberships: dict[str, str]
+    ) -> str:
+        """Return a shared pool for a pool-stage match, never for finals."""
+        round_name = str((raw.get("round") or {}).get("name") or "")
+        if "FINAL" in round_name.upper() or not memberships:
+            return ""
+        pools: list[str] = []
+        for team in raw.get("teams") or []:
+            pool_name = next(
+                (
+                    memberships[key]
+                    for key in cls._pool_team_keys(team)
+                    if key in memberships
+                ),
+                "",
+            )
+            if not pool_name:
+                return ""
+            pools.append(pool_name)
+        return pools[0] if pools and len(set(pools)) == 1 else ""
 
     def search_organisations(self, search_text: str, limit: int = 100) -> list[dict[str, Any]]:
         data = self._get("/orgsproducts/organisation/search", searchString=search_text.strip(), limit=str(limit))

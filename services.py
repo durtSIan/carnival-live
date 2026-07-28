@@ -111,11 +111,28 @@ class MatchService:
                 results.append(self.source.add_scorecard(match))
             except requests.RequestException:
                 results.append(match)
+        competition_order: dict[str, int] = {}
+        for match in results:
+            competition_order.setdefault(
+                match.competition_name, len(competition_order)
+            )
+
+        def pool_order(pool_name: str) -> tuple[int, int, str]:
+            found = re.search(r"\bPOOL\s+([A-Z])\b", pool_name.upper())
+            if found:
+                return (0, ord(found.group(1)) - ord("A"), pool_name)
+            found = re.search(r"\bPOOL\s+(\d+)\b", pool_name.upper())
+            if found:
+                return (0, int(found.group(1)), pool_name)
+            return (1, 0, pool_name)
+
         return sorted(
             results,
             key=lambda match: (
                 match.status.upper() in {"COMPLETED", "FORFEITED"} or match.is_final,
                 match.grade_order,
+                competition_order.get(match.competition_name, 0),
+                pool_order(match.pool_name),
                 match.start_time,
             ),
         )
