@@ -14,7 +14,7 @@
   <link rel="icon" href="{{ url_for('static', filename='icon.svg') }}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.svg') }}">
   <script>try{const mode=localStorage.getItem("carnivalLive.displayMode");if(["brief","standard","detailed"].includes(mode))document.documentElement.dataset.displayMode=mode}catch(e){}</script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css', v='2') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='final.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='chase.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}">
@@ -102,13 +102,26 @@
       {% if match.pool_name and match.pool_name != completed_pool_group.name %}
       {% set completed_pool_group.name = match.pool_name %}
       <div class="pool-divider completed-pool-divider" role="separator" aria-label="{{ match.pool_name }}">
-        <span>{{ match.pool_name }}</span>
+        <span>{{ match.pool_name }} - Completed</span>
       </div>
       {% elif not match.pool_name %}
       {% set completed_pool_group.name = None %}
       {% endif %}
       <article class="completed-result-line">
-        <strong>{% if match.final_result_line %}{{ match.final_result_line }}{% else %}{{ match.home_team }} v {{ match.away_team }} — {% if match.is_forfeit %}Forfeit{% else %}Completed{% endif %}{% endif %}</strong>
+        {% if match.result_winner %}
+        <strong class="completed-team">{{ match.result_winner }}</strong>
+        <span>def</span>
+        <strong class="completed-team">{{ match.result_loser }}</strong>
+        {% if match.final_qualifier %}<span>{{ match.final_qualifier }}</span>{% endif %}
+        {% if match.final_margin %}<span>{{ match.final_margin }}</span>{% endif %}
+        {% elif match.final_result_line %}
+        <span>{{ match.final_result_line }}</span>
+        {% else %}
+        <strong class="completed-team">{{ match.home_team }}</strong>
+        <span>v</span>
+        <strong class="completed-team">{{ match.away_team }}</strong>
+        <span>— {% if match.is_forfeit %}Forfeit{% else %}Completed{% endif %}</span>
+        {% endif %}
       </article>
       {% endif %}
       {% endfor %}

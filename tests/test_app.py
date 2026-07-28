@@ -571,9 +571,11 @@ def test_completed_matches_render_last_as_single_lines_grouped_only_by_pool():
     ).get_data(as_text=True)
     assert body.count('class="match-card"') == 1
     assert body.count('class="completed-result-line"') == 2
-    assert body.index("Live Alpha") < body.index("Alpha def Able by 12 runs")
-    assert body.index("Pool A") < body.index("Alpha def Able by 12 runs")
-    assert body.index("Pool B") < body.index("Bravo def Beta by 5 wickets")
+    alpha_result = body.index('<strong class="completed-team">Alpha</strong>')
+    bravo_result = body.index('<strong class="completed-team">Bravo</strong>')
+    assert body.index("Live Alpha") < alpha_result
+    assert body.index("Pool A - Completed") < alpha_result
+    assert body.index("Pool B - Completed") < bravo_result
     assert "Round 2" not in body
 
 
@@ -842,7 +844,9 @@ def test_forfeit_result_gets_compact_completed_line():
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
     assert '<article class="completed-result-line">' in body
-    assert "Alpha def Beta by forfeit" in body
+    assert '<strong class="completed-team">Alpha</strong>' in body
+    assert '<strong class="completed-team">Beta</strong>' in body
+    assert "<span>def</span>" in body and "<span>by forfeit</span>" in body
     assert 'class="match-card"' not in body
 
 
@@ -855,7 +859,9 @@ def test_completed_result_is_one_line_without_detailed_team_summaries():
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
-    assert "Alpha def Beta by 10 runs" in body
+    assert '<strong class="completed-team">Alpha</strong>' in body
+    assert '<strong class="completed-team">Beta</strong>' in body
+    assert "<span>def</span>" in body and "<span>by 10 runs</span>" in body
     assert "outright" not in body
     assert all(name not in body for name in ["A One", "A Bowl", "B One", "B Bowl"])
     assert "2-100 (20)" not in body and "8-90 (20)" not in body
@@ -870,7 +876,8 @@ def test_completed_line_shows_first_innings_result():
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
-    assert "Alpha def Beta on first innings by 2 wickets" in body
+    assert "<span>on first innings</span>" in body
+    assert "<span>by 2 wickets</span>" in body
     assert "FIRST INNINGS" not in body
 
 
@@ -883,7 +890,8 @@ def test_two_day_completed_line_shows_outright_qualifier():
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
-    assert "Alpha def Beta outright by 7 wickets" in body
+    assert "<span>outright</span>" in body
+    assert "<span>by 7 wickets</span>" in body
     assert "OUTRIGHT" not in body
 
 
