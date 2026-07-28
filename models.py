@@ -271,6 +271,17 @@ class Match:
         return self.is_final or self.status.upper() in {"COMPLETED", "FORFEITED"}
 
     @property
+    def is_awaiting_result(self) -> bool:
+        """A limited-overs chase has ended but the scorer has not finalised it."""
+        return bool(
+            not self.is_completed
+            and self.live
+            and self.match_format.is_limited_overs
+            and self.live.target is not None
+            and self.live.innings_complete
+        )
+
+    @property
     def final_result_line(self) -> str:
         if not self.result_winner:
             return self.result_text

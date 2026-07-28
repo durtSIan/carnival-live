@@ -545,6 +545,15 @@ def test_completed_matches_render_last_as_single_lines_grouped_only_by_pool():
         "2026-07-28", "1:00 PM", LiveScore("Live Alpha", "1-40", "6", "6.67"),
         competition_name="Nationals", pool_name="Pool C",
     )
+    awaiting = Match(
+        "awaiting", "", "Morning Alpha", "Morning Beta", "", "Round 3",
+        "T20", "LIVE", "2026-07-28", "9:00 AM",
+        LiveScore(
+            "Morning Beta", "6-135", "20", "6.75", target=145,
+            innings_complete=True,
+        ),
+        competition_name="Nationals", pool_name="Pool C",
+    )
     completed_b = Match(
         "done-b", "", "Bravo", "Beta", "", "Round 2", "T20", "COMPLETED",
         "2026-07-28", "9:00 AM", is_final=True, result_winner="Bravo",
@@ -559,21 +568,27 @@ def test_completed_matches_render_last_as_single_lines_grouped_only_by_pool():
     )
 
     class FakeSource:
-        def get_matches(self, *args): return [completed_b, live, completed_a]
+        def get_matches(self, *args): return [completed_b, awaiting, live, completed_a]
         def add_scorecard(self, match): return match
 
     service = MatchService(FakeSource())
     matches = service.matches_for_date("grade", "2026-07-28", "Australia/Brisbane")
-    assert [match.match_id for match in matches] == ["live", "done-a", "done-b"]
+    assert [match.match_id for match in matches] == [
+        "live", "awaiting", "done-a", "done-b",
+    ]
+    assert awaiting.is_awaiting_result
 
     body = create_app(service).test_client().get(
         "/?date=2026-07-28"
     ).get_data(as_text=True)
-    assert body.count('class="match-card"') == 1
+    assert body.count('class="match-card"') == 2
     assert body.count('class="completed-result-line"') == 2
     alpha_result = body.index('<strong class="completed-team">Alpha</strong>')
     bravo_result = body.index('<strong class="completed-team">Bravo</strong>')
-    assert body.index("Live Alpha") < alpha_result
+    assert body.index("Live Alpha") < body.index("Pool C - Awaiting Result")
+    assert body.index("Pool C - Awaiting Result") < body.index("Morning Alpha")
+    assert body.index("Morning Alpha") < alpha_result
+    assert "AWAITING RESULT" in body
     assert body.index("Pool A - Completed") < alpha_result
     assert body.index("Pool B - Completed") < bravo_result
     assert "Round 2" not in body

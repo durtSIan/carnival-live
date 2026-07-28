@@ -129,7 +129,7 @@ class MatchService:
         return sorted(
             results,
             key=lambda match: (
-                match.is_completed,
+                2 if match.is_completed else 1 if match.is_awaiting_result else 0,
                 (
                     pool_order(match.pool_name)
                     if match.is_completed

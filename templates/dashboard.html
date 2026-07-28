@@ -33,28 +33,29 @@
     {% if not matches and not error %}<div class="notice">No live matches yet. Scores will display when matches start.</div>{% endif %}
     <section class="match-grid">
       {% set grade_group = namespace(name=None) %}
-      {% set pool_group = namespace(name=None) %}
+      {% set pool_group = namespace(key=None) %}
       {% for match in matches %}
       {% if not match.is_completed %}
       {% if match.grade_label and match.grade_label != grade_group.name %}
       {% set grade_group.name = match.grade_label %}
-      {% set pool_group.name = None %}
+      {% set pool_group.key = None %}
       <div class="grade-divider" role="separator" aria-label="{{ match.grade_label }}">
         <span>{{ match.grade_label }}</span>
         </div>
       {% endif %}
-      {% if match.pool_name and match.pool_name != pool_group.name %}
-      {% set pool_group.name = match.pool_name %}
+      {% set pool_key = ('awaiting:' if match.is_awaiting_result else 'live:') ~ match.pool_name %}
+      {% if match.pool_name and pool_key != pool_group.key %}
+      {% set pool_group.key = pool_key %}
       <div class="pool-divider" role="separator" aria-label="{{ match.pool_name }}">
-        <span>{{ match.pool_name }}</span>
+        <span>{{ match.pool_name }}{% if match.is_awaiting_result %} - Awaiting Result{% endif %}</span>
       </div>
       {% elif not match.pool_name %}
-      {% set pool_group.name = None %}
+      {% set pool_group.key = None %}
       {% endif %}
       <article class="match-card">
         <div class="card-head">
           <h2>{% if match.is_final and match.result_winner %}{{ match.result_winner }} <span>def</span> {{ match.result_loser }}{% if match.final_qualifier %} <span>{{ match.final_qualifier }}</span>{% endif %}{% if match.final_margin %} <span>{{ match.final_margin }}</span>{% endif %}{% else %}{{ match.home_team }} <span>v</span> {{ match.away_team }}{% endif %}</h2>
-          <div class="meta"><span>{{ match.round }}</span><span>{{ match.match_type }}</span><strong>{% if match.is_forfeit %}FORFEIT{% else %}{{ match.status }}{% endif %}</strong><span>{{ match.display_date }} {{ match.start_time }}</span></div>
+          <div class="meta"><span>{{ match.round }}</span><span>{{ match.match_type }}</span><strong>{% if match.is_awaiting_result %}AWAITING RESULT{% elif match.is_forfeit %}FORFEIT{% else %}{{ match.status }}{% endif %}</strong><span>{{ match.display_date }} {{ match.start_time }}</span></div>
           {% if not match.is_final and match.toss_winner %}<p class="toss-line">(toss {{ match.toss_winner }}{% if match.toss_decision %}, {{ match.toss_decision }}{% endif %})</p>{% endif %}
         </div>
         {% if match.is_final %}
