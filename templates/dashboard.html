@@ -35,6 +35,7 @@
       {% set grade_group = namespace(name=None) %}
       {% set pool_group = namespace(name=None) %}
       {% for match in matches %}
+      {% if not match.is_completed %}
       {% if match.grade_label and match.grade_label != grade_group.name %}
       {% set grade_group.name = match.grade_label %}
       {% set pool_group.name = None %}
@@ -93,6 +94,23 @@
         </div>
         {% endif %}
       </article>
+      {% endif %}
+      {% endfor %}
+      {% set completed_pool_group = namespace(name=None) %}
+      {% for match in matches %}
+      {% if match.is_completed %}
+      {% if match.pool_name and match.pool_name != completed_pool_group.name %}
+      {% set completed_pool_group.name = match.pool_name %}
+      <div class="pool-divider completed-pool-divider" role="separator" aria-label="{{ match.pool_name }}">
+        <span>{{ match.pool_name }}</span>
+      </div>
+      {% elif not match.pool_name %}
+      {% set completed_pool_group.name = None %}
+      {% endif %}
+      <article class="completed-result-line">
+        <strong>{% if match.final_result_line %}{{ match.final_result_line }}{% else %}{{ match.home_team }} v {{ match.away_team }} — {% if match.is_forfeit %}Forfeit{% else %}Completed{% endif %}{% endif %}</strong>
+      </article>
+      {% endif %}
       {% endfor %}
     </section>
   </main>

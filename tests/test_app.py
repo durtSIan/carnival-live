@@ -533,6 +533,44 @@ def test_service_orders_pool_groups_naturally_within_a_competition():
     assert [match.match_id for match in matches] == ["a1", "a2", "b"]
 
 
+def test_completed_matches_render_last_as_single_lines_grouped_only_by_pool():
+    live = Match(
+        "live", "", "Live Alpha", "Live Beta", "", "Round 3", "T20", "LIVE",
+        "2026-07-28", "1:00 PM", LiveScore("Live Alpha", "1-40", "6", "6.67"),
+        competition_name="Nationals", pool_name="Pool C",
+    )
+    completed_b = Match(
+        "done-b", "", "Bravo", "Beta", "", "Round 2", "T20", "COMPLETED",
+        "2026-07-28", "9:00 AM", is_final=True, result_winner="Bravo",
+        result_loser="Beta", result_text="Bravo won by 5 wickets",
+        competition_name="Nationals", pool_name="Pool B",
+    )
+    completed_a = Match(
+        "done-a", "", "Alpha", "Able", "", "Round 2", "T20", "COMPLETED",
+        "2026-07-28", "9:00 AM", is_final=True, result_winner="Alpha",
+        result_loser="Able", result_text="Alpha won by 12 runs",
+        competition_name="Nationals", pool_name="Pool A",
+    )
+
+    class FakeSource:
+        def get_matches(self, *args): return [completed_b, live, completed_a]
+        def add_scorecard(self, match): return match
+
+    service = MatchService(FakeSource())
+    matches = service.matches_for_date("grade", "2026-07-28", "Australia/Brisbane")
+    assert [match.match_id for match in matches] == ["live", "done-a", "done-b"]
+
+    body = create_app(service).test_client().get(
+        "/?date=2026-07-28"
+    ).get_data(as_text=True)
+    assert body.count('class="match-card"') == 1
+    assert body.count('class="completed-result-line"') == 2
+    assert body.index("Live Alpha") < body.index("Alpha def Able by 12 runs")
+    assert body.index("Pool A") < body.index("Alpha def Able by 12 runs")
+    assert body.index("Pool B") < body.index("Bravo def Beta by 5 wickets")
+    assert "Round 2" not in body
+
+
 def test_dashboard_setup_link_reflects_saved_feed_state(tmp_path, monkeypatch):
     monkeypatch.delenv("CARNIVAL_GRADE_ID", raising=False)
     class FakeService:
@@ -779,7 +817,7 @@ def test_dashboard_routes_multi_grade_club_view():
     assert create_app(FakeService()).test_client().get(url).status_code == 200
 
 
-def test_forfeit_result_gets_explicit_final_card():
+def test_forfeit_result_gets_compact_completed_line():
     detail = {
         "status": "COMPLETED", "innings": [],
         "teams": [{"id": "a", "displayName": "Alpha"}, {"id": "b", "displayName": "Beta"}],
@@ -796,10 +834,12 @@ def test_forfeit_result_gets_explicit_final_card():
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
-    assert "Alpha <span>def</span> Beta <span>by forfeit</span>" in body and "FORFEIT" in body
+    assert '<article class="completed-result-line">' in body
+    assert "Alpha def Beta by forfeit" in body
+    assert 'class="match-card"' not in body
 
 
-def test_final_card_shows_winner_margin_and_both_team_summaries():
+def test_completed_result_is_one_line_without_detailed_team_summaries():
     summaries = [
         TeamPerformance("Alpha", "2-100", [Batter("A One", 50, 30)], [Bowler("A Bowl", 2, 10, 4)], "20"),
         TeamPerformance("Beta", "8-90", [Batter("B One", 40, 35)], [Bowler("B Bowl", 3, 20, 4)], "20"),
@@ -808,13 +848,13 @@ def test_final_card_shows_winner_margin_and_both_team_summaries():
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
-    assert "Alpha <span>def</span> Beta <span>by 10 runs</span>" in body
+    assert "Alpha def Beta by 10 runs" in body
     assert "outright" not in body
-    assert all(name in body for name in ["A One", "A Bowl", "B One", "B Bowl"])
-    assert "2-100 (20)" in body and "8-90 (20)" in body
+    assert all(name not in body for name in ["A One", "A Bowl", "B One", "B Bowl"])
+    assert "2-100 (20)" not in body and "8-90 (20)" not in body
 
 
-def test_final_badge_shows_first_innings_result():
+def test_completed_line_shows_first_innings_result():
     match = Match(
         "id", "", "Alpha", "Beta", "", "Round 1", "Two Day", "COMPLETED", "2026-06-19", "6:00 PM",
         is_final=True, result_winner="Alpha", result_loser="Beta",
@@ -823,11 +863,11 @@ def test_final_badge_shows_first_innings_result():
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
-    assert "Alpha <span>def</span> Beta <span>on first innings</span> <span>by 2 wickets</span>" in body
+    assert "Alpha def Beta on first innings by 2 wickets" in body
     assert "FIRST INNINGS" not in body
 
 
-def test_two_day_final_title_shows_outright_qualifier():
+def test_two_day_completed_line_shows_outright_qualifier():
     match = Match(
         "id", "", "Alpha", "Beta", "", "Round 1", "Two Day", "COMPLETED", "2026-06-19", "6:00 PM",
         is_final=True, result_winner="Alpha", result_loser="Beta",
@@ -836,7 +876,7 @@ def test_two_day_final_title_shows_outright_qualifier():
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
-    assert "Alpha <span>def</span> Beta <span>outright</span> <span>by 7 wickets</span>" in body
+    assert "Alpha def Beta outright by 7 wickets" in body
     assert "OUTRIGHT" not in body
 
 

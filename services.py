@@ -129,10 +129,18 @@ class MatchService:
         return sorted(
             results,
             key=lambda match: (
-                match.status.upper() in {"COMPLETED", "FORFEITED"} or match.is_final,
-                match.grade_order,
-                competition_order.get(match.competition_name, 0),
-                pool_order(match.pool_name),
+                match.is_completed,
+                (
+                    pool_order(match.pool_name)
+                    if match.is_completed
+                    else (match.grade_order, 0, match.grade_label)
+                ),
+                (
+                    competition_order.get(match.competition_name, 0)
+                    if match.is_completed
+                    else competition_order.get(match.competition_name, 0)
+                ),
+                pool_order(match.pool_name) if not match.is_completed else (0, 0, ""),
                 match.start_time,
             ),
         )

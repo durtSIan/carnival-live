@@ -267,6 +267,10 @@ class Match:
         return self.live is not None
 
     @property
+    def is_completed(self) -> bool:
+        return self.is_final or self.status.upper() in {"COMPLETED", "FORFEITED"}
+
+    @property
     def final_result_line(self) -> str:
         if not self.result_winner:
             return self.result_text
