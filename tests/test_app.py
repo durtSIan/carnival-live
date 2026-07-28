@@ -356,7 +356,7 @@ def test_two_day_second_innings_is_not_mistaken_for_a_limited_overs_chase():
     assert match.chase_line == ""
 
 
-def test_target_renders_immediately_after_overs():
+def test_t20_brief_line_orders_target_before_rr_and_required_rate_last():
     live = LiveScore(batting_team="Alpha", score="1-12", overs=2, run_rate="6.00", target=87, required_run_rate="4.17", runs_needed=75, balls_remaining=108, chase_metrics_confident=True)
     match = Match("id", "", "Alpha", "Beta", "", "Round 1", "T20", "LIVE", "2026-06-19", "6:00 PM", live)
     class FakeService:
@@ -364,8 +364,14 @@ def test_target_renders_immediately_after_overs():
     body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
     assert "Target 87" in body
     assert 'class="brief-target">Tar 87' in body
+    assert 'class="brief-required">RRReq=4.17' in body
     assert "Alpha" in body and "RR=6.00" in body
-    assert body.index("(2)") < body.rindex("Target 87") < body.index("Need 75 off 108") < body.index("RRReq=4.17")
+    assert (
+        body.index('class="brief-target">Tar 87')
+        < body.index("RR=6.00")
+        < body.index('class="brief-required">RRReq=4.17')
+    )
+    assert body.index("(2)") < body.rindex("Target 87") < body.index("Need 75 off 108") < body.rindex("RRReq=4.17")
 
 
 def test_target_remains_during_live_end_of_innings_wait():
@@ -629,6 +635,7 @@ def test_display_mode_selector_and_local_persistence_are_present():
     assert "carnivalLive.displayMode" in script
     assert 'data-display-mode="brief"' in styles and 'data-display-mode="standard"' in styles
     assert ".brief-target{display:inline;margin-left:7px;color:var(--ink);font-size:14px;font-weight:800}" in styles
+    assert ".brief-required{display:inline;margin-left:7px}" in styles
 
 
 def test_pwa_manifest_metadata_and_service_worker_are_present():
