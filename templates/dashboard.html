@@ -43,13 +43,14 @@
         <span>{{ match.grade_label }}</span>
         </div>
       {% endif %}
-      {% set pool_key = ('awaiting:' if match.is_awaiting_result else 'live:') ~ match.pool_name %}
-      {% if match.pool_name and pool_key != pool_group.key %}
+      {% set group_name = match.display_group_name %}
+      {% set pool_key = ('awaiting:' if match.is_awaiting_result else 'live:') ~ group_name %}
+      {% if group_name and pool_key != pool_group.key %}
       {% set pool_group.key = pool_key %}
-      <div class="pool-divider" role="separator" aria-label="{{ match.pool_name }}">
-        <span>{{ match.pool_name }}{% if match.is_awaiting_result %} - Awaiting Result{% endif %}</span>
+      <div class="pool-divider" role="separator" aria-label="{{ group_name }}">
+        <span>{{ group_name }}{% if match.is_awaiting_result %} - Awaiting Result{% endif %}</span>
       </div>
-      {% elif not match.pool_name %}
+      {% elif not group_name %}
       {% set pool_group.key = None %}
       {% endif %}
       <article class="match-card">
@@ -100,12 +101,13 @@
       {% set completed_pool_group = namespace(name=None) %}
       {% for match in matches %}
       {% if match.is_completed %}
-      {% if match.pool_name and match.pool_name != completed_pool_group.name %}
-      {% set completed_pool_group.name = match.pool_name %}
-      <div class="pool-divider completed-pool-divider" role="separator" aria-label="{{ match.pool_name }}">
-        <span>{{ match.pool_name }} - Completed</span>
+      {% set group_name = match.display_group_name %}
+      {% if group_name and group_name != completed_pool_group.name %}
+      {% set completed_pool_group.name = group_name %}
+      <div class="pool-divider completed-pool-divider" role="separator" aria-label="{{ group_name }}">
+        <span>{{ group_name }} - Completed</span>
       </div>
-      {% elif not match.pool_name %}
+      {% elif not group_name %}
       {% set completed_pool_group.name = None %}
       {% endif %}
       <article class="completed-result-line">

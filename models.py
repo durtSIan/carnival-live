@@ -235,6 +235,13 @@ class Match:
         return re.sub(r"\s*\([^)]*\)\s*$", "", self.competition_name).strip()
 
     @property
+    def display_group_name(self) -> str:
+        """Use a pool during qualifying and the source round during finals."""
+        if "FINAL" in self.round_name.upper():
+            return self.round_name.strip()
+        return self.pool_name
+
+    @property
     def grade_order(self) -> int:
         """Normalise common Australian senior grade names for club views."""
         label = self.grade_label.upper()

@@ -117,21 +117,24 @@ class MatchService:
                 match.competition_name, len(competition_order)
             )
 
-        def pool_order(pool_name: str) -> tuple[int, int, str]:
-            found = re.search(r"\bPOOL\s+([A-Z])\b", pool_name.upper())
+        def group_order(group_name: str) -> tuple[int, int, str]:
+            found = re.search(r"\bPOOL\s+([A-Z])\b", group_name.upper())
             if found:
-                return (0, ord(found.group(1)) - ord("A"), pool_name)
-            found = re.search(r"\bPOOL\s+(\d+)\b", pool_name.upper())
+                return (0, ord(found.group(1)) - ord("A"), group_name)
+            found = re.search(r"\bPOOL\s+(\d+)\b", group_name.upper())
             if found:
-                return (0, int(found.group(1)), pool_name)
-            return (1, 0, pool_name)
+                return (0, int(found.group(1)), group_name)
+            found = re.search(r"\bFINALS?\s+ROUND\s+(\d+)\b", group_name.upper())
+            if found:
+                return (1, int(found.group(1)), group_name)
+            return (2, 0, group_name)
 
         return sorted(
             results,
             key=lambda match: (
                 2 if match.is_completed else 1 if match.is_awaiting_result else 0,
                 (
-                    pool_order(match.pool_name)
+                    group_order(match.display_group_name)
                     if match.is_completed
                     else (match.grade_order, 0, match.grade_label)
                 ),
@@ -140,7 +143,11 @@ class MatchService:
                     if match.is_completed
                     else competition_order.get(match.competition_name, 0)
                 ),
-                pool_order(match.pool_name) if not match.is_completed else (0, 0, ""),
+                (
+                    group_order(match.display_group_name)
+                    if not match.is_completed
+                    else (0, 0, "")
+                ),
                 match.start_time,
             ),
         )

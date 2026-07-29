@@ -467,6 +467,12 @@ def test_dashboard_keeps_competition_centred_and_adds_left_pool_dividers():
             "2026-07-28", "10:00 AM", LiveScore("Echo", "0-30", "4", "7.50"),
             competition_name="UniSport Nationals Men", pool_name="Pool B",
         ),
+        Match(
+            "f1", "", "Final Alpha", "Final Beta", "", "Finals Round 1",
+            "T20", "LIVE", "2026-07-28", "1:00 PM",
+            LiveScore("Final Alpha", "1-20", "3", "6.67"),
+            competition_name="UniSport Nationals Men",
+        ),
     ]
 
     class FakeService:
@@ -477,10 +483,12 @@ def test_dashboard_keeps_competition_centred_and_adds_left_pool_dividers():
     ).get_data(as_text=True)
 
     assert body.count('class="grade-divider"') == 1
-    assert body.count('class="pool-divider"') == 2
+    assert body.count('class="pool-divider"') == 3
     assert body.index("UniSport Nationals Men") < body.index("Pool A")
     assert body.index("Pool A") < body.index("Alpha")
     assert body.index("Gamma") < body.index("Pool B") < body.index("Echo")
+    assert body.index("Pool B") < body.index("Finals Round 1")
+    assert body.index("Finals Round 1") < body.index("Final Alpha")
 
 
 def test_public_ladder_pool_membership_only_labels_pool_stage_matches():
@@ -537,6 +545,35 @@ def test_service_orders_pool_groups_naturally_within_a_competition():
     )
 
     assert [match.match_id for match in matches] == ["a1", "a2", "b"]
+
+
+def test_service_orders_finals_round_bubbles_after_pool_groups():
+    finals_two = Match(
+        "f2", "", "Final Two A", "Final Two B", "", "Finals Round 2",
+        "T20", "LIVE", "2026-07-30", "9:00 AM",
+        competition_name="Nationals",
+    )
+    finals_one = Match(
+        "f1", "", "Final One A", "Final One B", "", "Finals Round 1",
+        "T20", "LIVE", "2026-07-30", "1:00 PM",
+        competition_name="Nationals",
+    )
+    pool_c = Match(
+        "c", "", "Pool C A", "Pool C B", "", "Round 5", "T20", "LIVE",
+        "2026-07-30", "1:00 PM", competition_name="Nationals",
+        pool_name="Pool C",
+    )
+
+    class FakeSource:
+        def get_matches(self, *args): return [finals_two, finals_one, pool_c]
+        def add_scorecard(self, match): return match
+
+    matches = MatchService(FakeSource()).matches_for_date(
+        "grade", "2026-07-30", "Australia/Brisbane"
+    )
+
+    assert finals_one.display_group_name == "Finals Round 1"
+    assert [match.match_id for match in matches] == ["c", "f1", "f2"]
 
 
 def test_completed_matches_render_last_as_single_lines_grouped_only_by_pool():
