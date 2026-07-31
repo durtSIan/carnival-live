@@ -84,6 +84,7 @@ class LiveScore:
     innings_label: str = ""
     current_batters: list[Batter] = field(default_factory=list)
     dismissed_batters: list[Batter] = field(default_factory=list)
+    top_batting: list[Batter] = field(default_factory=list)
     bowlers: list[Bowler] = field(default_factory=list)
     previous_innings: InningsSummary | None = None
     current_over_limit: int | None = None
@@ -178,7 +179,9 @@ class Match:
     def top_batters(self) -> list[Batter]:
         if not self.live:
             return []
-        return self.live.current_batters if self.live.innings_complete else self.live.dismissed_batters
+        if self.live.innings_complete:
+            return self.live.current_batters
+        return self.live.top_batting or self.live.dismissed_batters
 
     @property
     def best_bowlers(self) -> list[Bowler]:

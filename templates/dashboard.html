@@ -89,7 +89,7 @@
           </section>
           {% if not match.innings_complete and (match.top_batters or match.best_bowlers) %}
           <section class="player-section best-section">
-            {% if match.top_batters %}<h4>Batting</h4><div class="player-list">{% for batter in match.top_batters %}<p><span>{{ batter.name }}</span><b>{{ batter.runs }} <small>({{ batter.balls }})</small></b></p>{% endfor %}</div>{% endif %}
+            {% if match.top_batters %}<h4>Batting</h4><div class="player-list">{% for batter in match.top_batters %}<p><span>{{ batter.name }}</span><b>{{ batter.runs }}{% if batter.not_out %}*{% endif %} <small>({{ batter.balls }})</small></b></p>{% endfor %}</div>{% endif %}
             {% if match.best_bowlers %}<h4>Bowling</h4><div class="player-list">{% for bowler in match.best_bowlers %}<p><span>{{ bowler.name }}</span><b>{{ bowler.wickets }}/{{ bowler.runs }} <small>({{ bowler.overs }})</small></b></p>{% endfor %}</div>{% endif %}
           </section>
           {% endif %}

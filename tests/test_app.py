@@ -85,6 +85,62 @@ def test_retired_not_out_batters_keep_their_asterisks():
     assert source._is_batter_not_out({"dismissalType": "Retired Out"}) is False
 
 
+def test_retired_not_out_is_top_batting_until_player_returns():
+    detail = json.loads((Path(__file__).parents[1] / "blue_mountains_match_with_scorecard.json").read_text())
+    innings = detail["innings"][-1]
+    innings["inningsCloseType"] = "In Progress"
+    innings["numberOfWicketsFallen"] = 2
+    innings["batting"] = [
+        {
+            "playerShortName": "Current One", "runsScored": 3, "ballsFaced": 5,
+            "batOrder": 4, "isOnStrike": True, "dismissalType": "Not Out",
+        },
+        {
+            "playerShortName": "Current Two", "runsScored": 28, "ballsFaced": 35,
+            "batOrder": 5, "isOnNonStrike": True, "dismissalType": "Not Out",
+        },
+        {
+            "playerShortName": "E Day", "runsScored": 52, "ballsFaced": 41,
+            "batOrder": 2, "dismissalType": "Retired Not Out",
+            "dismissalText": "retired not out",
+        },
+        {
+            "playerShortName": "J Johnston", "runsScored": 34, "ballsFaced": 27,
+            "batOrder": 1, "dismissalType": "Caught",
+        },
+        {
+            "playerShortName": "K Horne", "runsScored": 0, "ballsFaced": 3,
+            "batOrder": 3, "dismissalType": "Bowled",
+        },
+    ]
+
+    source = PlayCricketPublicSource()
+    live = source.parse_scorecard(detail)
+    assert [batter.name for batter in live.current_batters] == [
+        "Current One", "Current Two",
+    ]
+    assert [batter.name for batter in live.top_batting] == [
+        "E Day", "J Johnston",
+    ]
+    assert live.top_batting[0].not_out is True
+
+    match = Match(
+        "id", "", "Alpha", "Beta", "", "Round 1", "T20", "LIVE",
+        "2026-07-31", "6:00 PM", live,
+    )
+    class FakeService:
+        def matches_for_date(self, *args): return [match]
+    body = create_app(FakeService()).test_client().get(
+        "/?date=2026-07-31"
+    ).get_data(as_text=True)
+    assert "E Day" in body and "52*" in body
+
+    innings["batting"][2]["isOnStrike"] = True
+    returned = source.parse_scorecard(detail)
+    assert "E Day" in [batter.name for batter in returned.current_batters]
+    assert "E Day" not in [batter.name for batter in returned.top_batting]
+
+
 def test_t20_quota_marks_innings_complete_when_feed_lags():
     detail = json.loads((Path(__file__).parents[1] / "blue_mountains_match_with_scorecard.json").read_text())
     detail["matchType"] = "T20"
