@@ -5,9 +5,12 @@ html[data-display-mode="brief"] .card-sections,
 html[data-display-mode="brief"] .final-stats{display:none}
 html[data-display-mode="brief"] .chase-details,
 html[data-display-mode="brief"] .score-badges{display:none}
-.brief-target,.brief-required{display:none}
+.brief-target,.brief-required,.completed-score,.completed-detail{display:none}
 html[data-display-mode="brief"] .brief-target{display:inline;margin-left:7px;color:var(--ink);font-size:14px;font-weight:800}
 html[data-display-mode="brief"] .brief-required{display:inline;margin-left:7px}
+html[data-display-mode="standard"] .completed-score,
+html[data-display-mode="detailed"] .completed-score{display:inline}
+html[data-display-mode="detailed"] .completed-detail{display:flex;flex-direction:column;border-top:1px solid var(--line)}
 html[data-display-mode="standard"] .best-section,
 html[data-display-mode="standard"] .completed-summary-section,
 html[data-display-mode="standard"] .final-stats{display:none}

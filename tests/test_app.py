@@ -1009,14 +1009,15 @@ def test_forfeit_result_gets_compact_completed_line():
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
-    assert '<article class="completed-result-line">' in body
+    assert '<article class="completed-result-card">' in body
+    assert '<div class="completed-result-line">' in body
     assert '<strong class="completed-team">Alpha</strong>' in body
     assert '<strong class="completed-team">Beta</strong>' in body
     assert "<span>def</span>" in body and "<span>by forfeit</span>" in body
     assert 'class="match-card"' not in body
 
 
-def test_completed_result_is_one_line_without_detailed_team_summaries():
+def test_completed_result_supports_brief_standard_and_detailed_content():
     summaries = [
         TeamPerformance("Alpha", "2-100", [Batter("A One", 50, 30)], [Bowler("A Bowl", 2, 10, 4)], "20"),
         TeamPerformance("Beta", "8-90", [Batter("B One", 40, 35)], [Bowler("B Bowl", 3, 20, 4)], "20"),
@@ -1027,10 +1028,18 @@ def test_completed_result_is_one_line_without_detailed_team_summaries():
     body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
     assert '<strong class="completed-team">Alpha</strong>' in body
     assert '<strong class="completed-team">Beta</strong>' in body
+    assert '<strong class="completed-score">2-100</strong>' in body
+    assert '<strong class="completed-score">8-90</strong>' in body
     assert "<span>def</span>" in body and "<span>by 10 runs</span>" in body
     assert "outright" not in body
-    assert all(name not in body for name in ["A One", "A Bowl", "B One", "B Bowl"])
-    assert "2-100 (20)" not in body and "8-90 (20)" not in body
+    assert all(name in body for name in ["A One", "A Bowl", "B One", "B Bowl"])
+    assert "2-100 (20)" in body and "8-90 (20)" in body
+    assert body.count('class="completed-detail"') == 1
+
+    display_css = (Path(__file__).parents[1] / "static" / "display-mode.css").read_text()
+    assert ".brief-target,.brief-required,.completed-score,.completed-detail{display:none}" in display_css
+    assert 'html[data-display-mode="standard"] .completed-score' in display_css
+    assert 'html[data-display-mode="detailed"] .completed-detail' in display_css
 
 
 def test_completed_line_shows_first_innings_result():

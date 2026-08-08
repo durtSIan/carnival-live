@@ -249,6 +249,26 @@ class Match:
         """Group completed results by pool/finals, or by grade otherwise."""
         return self.display_group_name or self.grade_label
 
+    def final_score_for(self, team_name: str) -> str:
+        """Return a completed-match score without exposing source layout details."""
+        wanted = team_name.strip().casefold()
+        performance = next(
+            (
+                item for item in self.performances
+                if item.team_name.strip().casefold() == wanted
+            ),
+            None,
+        )
+        return performance.score if performance else ""
+
+    @property
+    def result_winner_score(self) -> str:
+        return self.final_score_for(self.result_winner)
+
+    @property
+    def result_loser_score(self) -> str:
+        return self.final_score_for(self.result_loser)
+
     @property
     def grade_order(self) -> int:
         """Normalise common Australian senior grade names for club views."""

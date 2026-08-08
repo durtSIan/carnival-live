@@ -14,14 +14,14 @@
   <link rel="icon" href="{{ url_for('static', filename='icon.svg') }}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.svg') }}">
   <script>try{const mode=localStorage.getItem("carnivalLive.displayMode");if(["brief","standard","detailed"].includes(mode))document.documentElement.dataset.displayMode=mode}catch(e){}</script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css', v='2') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css', v='3') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='final.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='chase.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='forfeit.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='status.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='compact.css', v='2') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='display-mode.css', v='4') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='display-mode.css', v='5') }}">
   <script defer src="{{ url_for('static', filename='display-mode.js') }}"></script>
   <script defer src="{{ url_for('static', filename='batter-order.js') }}"></script>
   <script defer src="{{ url_for('static', filename='pwa.js') }}"></script>
@@ -110,11 +110,14 @@
       {% elif not group_name %}
       {% set completed_pool_group.name = None %}
       {% endif %}
-      <article class="completed-result-line">
+      <article class="completed-result-card">
+        <div class="completed-result-line">
         {% if match.result_winner %}
         <strong class="completed-team">{{ match.result_winner }}</strong>
+        {% if not match.is_forfeit and match.result_winner_score %}<strong class="completed-score">{{ match.result_winner_score }}</strong>{% endif %}
         <span>def</span>
         <strong class="completed-team">{{ match.result_loser }}</strong>
+        {% if not match.is_forfeit and match.result_loser_score %}<strong class="completed-score">{{ match.result_loser_score }}</strong>{% endif %}
         {% if match.final_qualifier %}<span>{{ match.final_qualifier }}</span>{% endif %}
         {% if match.final_margin %}<span>{{ match.final_margin }}</span>{% endif %}
         {% elif match.final_result_line %}
@@ -124,6 +127,20 @@
         <span>v</span>
         <strong class="completed-team">{{ match.away_team }}</strong>
         <span>— {% if match.is_forfeit %}Forfeit{% else %}Completed{% endif %}</span>
+        {% endif %}
+        </div>
+        {% if match.performances and not match.is_forfeit %}
+        <div class="completed-detail">
+          {% for team in match.performances %}
+          <section class="team-final">
+            <h3><span>{{ team.team_name }}</span><strong>{{ team.score }}{% if match.match_format.is_limited_overs and team.overs != "" %} ({{ team.overs }}){% endif %}</strong></h3>
+            <div class="final-stats">
+              <div><h4>Batting</h4>{% for batter in team.batters[:2] %}<p><span>{{ batter.name }}</span><b>{{ batter.runs }}{% if batter.not_out %}*{% endif %} ({{ batter.balls }})</b></p>{% endfor %}</div>
+              <div><h4>Bowling in this innings</h4>{% for bowler in team.bowlers[:2] %}<p><span>{{ bowler.name }}</span><b>{{ bowler.wickets }}/{{ bowler.runs }} ({{ bowler.overs }})</b></p>{% endfor %}</div>
+            </div>
+          </section>
+          {% endfor %}
+        </div>
         {% endif %}
       </article>
       {% endif %}
