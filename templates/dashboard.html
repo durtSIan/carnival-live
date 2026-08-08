@@ -20,7 +20,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='forfeit.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='status.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='compact.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='compact.css', v='2') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='display-mode.css', v='4') }}">
   <script defer src="{{ url_for('static', filename='display-mode.js') }}"></script>
   <script defer src="{{ url_for('static', filename='batter-order.js') }}"></script>
@@ -74,7 +74,7 @@
         {% elif match.has_scorecard %}
         <div class="score-line">
           <div class="score-main"><span>{{ match.batting_team }}</span> <b>{{ match.score }}</b>{% if match.overs != "" %} <em>({{ match.overs }})</em>{% endif %}{% if match.target and match.match_format.is_t20 %} <small class="brief-target">Tar {{ match.target }}</small>{% endif %}{% if match.run_rate %} <small>RR={{ match.run_rate }}</small>{% endif %}{% if match.game_status %} <small class="game-status">({{ match.game_status }})</small>{% endif %}{% if match.target and not match.match_format.is_multi_day and not match.match_format.is_t20 %} <small class="brief-target">Tar {{ match.target }}</small>{% endif %}{% if match.match_format.is_t20 and match.required_rate %} <small class="brief-required">RRReq={{ match.required_rate }}</small>{% endif %}</div>
-          {% if match.previous_innings_line %}<p class="previous-innings">{{ match.previous_innings_line }}</p>{% endif %}
+          {% if match.previous_innings_line %}<p class="previous-innings"><span>{{ match.live.previous_innings.team_name }}{% if match.live.previous_innings.innings_label %} {{ match.live.previous_innings.innings_label }}{% endif %}</span> <strong>{{ match.live.previous_innings.score }}</strong>{% if match.two_day_context_line %} <span class="previous-innings-context">· {{ match.two_day_context_line }}</span>{% endif %}</p>{% endif %}
           {% if match.chase_line %}<div class="chase-details">{{ match.chase_line }}</div>{% endif %}
           {% if match.innings_complete %}<div class="score-badges"><small>INNINGS COMPLETE</small></div>{% endif %}
         </div>
@@ -101,7 +101,7 @@
       {% set completed_pool_group = namespace(name=None) %}
       {% for match in matches %}
       {% if match.is_completed %}
-      {% set group_name = match.display_group_name %}
+      {% set group_name = match.completed_group_name %}
       {% if group_name and group_name != completed_pool_group.name %}
       {% set completed_pool_group.name = group_name %}
       <div class="pool-divider completed-pool-divider" role="separator" aria-label="{{ group_name }}">

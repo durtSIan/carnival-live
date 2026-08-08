@@ -134,7 +134,7 @@ class MatchService:
             key=lambda match: (
                 2 if match.is_completed else 1 if match.is_awaiting_result else 0,
                 (
-                    group_order(match.display_group_name)
+                    group_order(match.completed_group_name)
                     if match.is_completed
                     else (match.grade_order, 0, match.grade_label)
                 ),

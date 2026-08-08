@@ -245,6 +245,11 @@ class Match:
         return self.pool_name
 
     @property
+    def completed_group_name(self) -> str:
+        """Group completed results by pool/finals, or by grade otherwise."""
+        return self.display_group_name or self.grade_label
+
+    @property
     def grade_order(self) -> int:
         """Normalise common Australian senior grade names for club views."""
         label = self.grade_label.upper()

@@ -459,8 +459,9 @@ def test_two_day_card_keeps_previous_innings_total_beneath_toss():
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
-    assert "Palmerston 1st innings 171" in body
-    assert body.index("Waratah Warriors</span>") < body.index("Palmerston 1st innings 171")
+    assert "Palmerston 1st innings" in body
+    assert "<strong>171</strong>" in body
+    assert body.index("Waratah Warriors</span>") < body.index("Palmerston 1st innings")
 
 
 def test_dashboard_hides_internal_fields():
@@ -685,6 +686,63 @@ def test_completed_matches_render_last_as_single_lines_grouped_only_by_pool():
     assert body.index("Pool A - Completed") < alpha_result
     assert body.index("Pool B - Completed") < bravo_result
     assert "Round 2" not in body
+
+
+def test_completed_matches_without_pools_are_grouped_by_grade():
+    completed_b = Match(
+        "done-b", "", "Palmerston B", "Tracy Village B", "", "Round 12",
+        "Two Day", "COMPLETED", "2026-08-08", "12:30 PM", is_final=True,
+        result_winner="Palmerston B", result_loser="Tracy Village B",
+        result_text="Palmerston B won on first innings by 60 runs",
+        competition_name="B Grade (Sponsor)",
+    )
+    completed_a = Match(
+        "done-a", "", "Darwin", "Waratah Warriors", "", "Round 12",
+        "Two Day", "COMPLETED", "2026-08-08", "11:00 AM", is_final=True,
+        result_winner="Darwin", result_loser="Waratah Warriors",
+        result_text="Darwin won on first innings by 38 runs",
+        competition_name="A Grade (Sponsor)",
+    )
+
+    class FakeSource:
+        def get_matches(self, *args): return [completed_b, completed_a]
+        def add_scorecard(self, match): return match
+
+    service = MatchService(FakeSource())
+    matches = service.matches_for_date("grade", "2026-08-08", "Australia/Darwin")
+    assert [match.match_id for match in matches] == ["done-a", "done-b"]
+
+    body = create_app(service).test_client().get(
+        "/?date=2026-08-08"
+    ).get_data(as_text=True)
+    a_result = body.index('<strong class="completed-team">Darwin</strong>')
+    b_result = body.index('<strong class="completed-team">Palmerston B</strong>')
+    assert body.index("A Grade - Completed") < a_result
+    assert body.index("B Grade - Completed") < b_result
+    assert a_result < body.index("B Grade - Completed")
+
+
+def test_previous_innings_score_is_rendered_as_emphasised_value():
+    live = LiveScore(
+        batting_team="Tracy Village B", score="8-165", overs="41.5",
+        run_rate="3.94", runs=338,
+        previous_innings=InningsSummary("Palmerston B", "231", runs=231),
+        two_day_context="Tracy Village B leads by 107",
+    )
+    match = Match(
+        "id", "", "Tracy Village B", "Palmerston B", "", "Round 12",
+        "Two Day", "LIVE", "2026-08-01", "12:30 PM", live,
+        competition_name="B Grade",
+    )
+
+    class FakeService:
+        def matches_for_date(self, *args): return [match]
+
+    body = create_app(FakeService()).test_client().get(
+        "/?date=2026-08-08"
+    ).get_data(as_text=True)
+    assert '<strong>231</strong>' in body
+    assert '· Tracy Village B leads by 107' in body
 
 
 def test_dashboard_setup_link_reflects_saved_feed_state(tmp_path, monkeypatch):
