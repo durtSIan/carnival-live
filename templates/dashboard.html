@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.svg') }}">
   <script>try{const mode=localStorage.getItem("carnivalLive.displayMode");if(["brief","standard","detailed"].includes(mode))document.documentElement.dataset.displayMode=mode}catch(e){}</script>
   <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css', v='3') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='final.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='final.css', v='2') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='chase.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='nav.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='forfeit.css') }}">
@@ -131,9 +131,9 @@
         </div>
         {% if match.performances and not match.is_forfeit %}
         <div class="completed-detail">
-          {% for team in match.performances %}
+          {% for team in match.completed_innings %}
           <section class="team-final">
-            <h3><span>{{ team.team_name }}</span><strong>{{ team.score }}{% if match.match_format.is_limited_overs and team.overs != "" %} ({{ team.overs }}){% endif %}</strong></h3>
+            <h3><span>{{ team.team_name }}{% if team.innings_label %} <small>{{ team.innings_label }}</small>{% endif %}</span><strong>{{ team.score }}{% if match.match_format.is_limited_overs and team.overs != "" %} ({{ team.overs }}){% endif %}</strong></h3>
             <div class="final-stats">
               <div><h4>Batting</h4>{% for batter in team.batters[:2] %}<p><span>{{ batter.name }}</span><b>{{ batter.runs }}{% if batter.not_out %}*{% endif %} ({{ batter.balls }})</b></p>{% endfor %}</div>
               <div><h4>Bowling in this innings</h4>{% for bowler in team.bowlers[:2] %}<p><span>{{ bowler.name }}</span><b>{{ bowler.wickets }}/{{ bowler.runs }} ({{ bowler.overs }})</b></p>{% endfor %}</div>

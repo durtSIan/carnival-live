@@ -1091,6 +1091,86 @@ def test_final_bowlers_stay_with_the_innings_they_bowled_in():
     assert by_team["Beta"].bowlers[0].name == "A Bowler"
 
 
+def test_two_day_detailed_result_keeps_each_team_innings_separate():
+    detail = {
+        "status": "COMPLETED",
+        "matchType": "Two Day",
+        "teams": [
+            {"id": "w", "displayName": "Waratah Warriors"},
+            {"id": "p", "displayName": "PINT"},
+        ],
+        "matchSummary": {"teams": [
+            {"id": "w", "displayName": "Waratah Warriors", "isWinner": True},
+            {"id": "p", "displayName": "PINT", "isWinner": False},
+        ]},
+        "innings": [
+            {
+                "battingTeamId": "w", "inningsOrder": 1, "runsScored": 439,
+                "numberOfWicketsFallen": 5, "oversBowled": 90,
+                "batting": [
+                    {"playerShortName": "W First", "runsScored": 201, "ballsFaced": 223},
+                    {"playerShortName": "W Second", "runsScored": 122, "ballsFaced": 138},
+                ],
+                "bowling": [
+                    {"playerShortName": "P First Bowler", "wicketsTaken": 2, "runsConceded": 106, "oversBowled": 19},
+                ],
+            },
+            {
+                "battingTeamId": "p", "inningsOrder": 2, "runsScored": 301,
+                "numberOfWicketsFallen": 10, "oversBowled": 80,
+                "batting": [
+                    {"playerShortName": "P First Innings", "runsScored": 84, "ballsFaced": 82},
+                    {"playerShortName": "P First Support", "runsScored": 51, "ballsFaced": 62},
+                ],
+                "bowling": [
+                    {"playerShortName": "W First Bowler", "wicketsTaken": 4, "runsConceded": 43, "oversBowled": 7},
+                ],
+            },
+            {
+                "battingTeamId": "p", "inningsOrder": 3, "runsScored": 196,
+                "numberOfWicketsFallen": 6, "oversBowled": 45,
+                "batting": [
+                    {"playerShortName": "P Second Innings", "runsScored": 73, "ballsFaced": 90},
+                    {"playerShortName": "P Second Support", "runsScored": 42, "ballsFaced": 50},
+                ],
+                "bowling": [
+                    {"playerShortName": "W Second Bowler", "wicketsTaken": 3, "runsConceded": 55, "oversBowled": 12},
+                ],
+            },
+        ],
+    }
+    winner, loser, summaries = PlayCricketPublicSource().parse_final(detail)
+    match = Match(
+        "id", "", "Waratah Warriors", "PINT", "", "Round 1", "Two Day",
+        "COMPLETED", "2026-08-08", "11:00 AM", is_final=True,
+        result_winner=winner, result_loser=loser, performances=summaries,
+        competition_name="A Grade",
+    )
+
+    assert match.result_loser_score == "301 & 6-196"
+    assert [
+        (item.team_name, item.innings_label, item.score)
+        for item in match.completed_innings
+    ] == [
+        ("Waratah Warriors", "1st innings", "5-439"),
+        ("PINT", "1st innings", "301"),
+        ("PINT", "2nd innings", "6-196"),
+    ]
+
+    class FakeService:
+        def matches_for_date(self, *args): return [match]
+
+    body = create_app(FakeService()).test_client().get(
+        "/?date=2026-08-08"
+    ).get_data(as_text=True)
+    assert "PINT <small>1st innings</small>" in body
+    assert "PINT <small>2nd innings</small>" in body
+    assert all(name in body for name in [
+        "P First Innings", "P First Support", "P First Bowler",
+        "P Second Innings", "P Second Support", "W Second Bowler",
+    ])
+
+
 def test_two_day_final_ignores_unplayed_end_of_match_innings():
     detail = {
         "status": "COMPLETED",

@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 import requests
 
 from data_sources.playhq_public import PlayHQPublicEnricher
-from models import Batter, Bowler, InningsSummary, LiveScore, Match, MatchFormat, TeamPerformance
+from models import Batter, Bowler, InningsPerformance, InningsSummary, LiveScore, Match, MatchFormat, TeamPerformance
 from match_settings import CONFIRMED_GRADE_OVER_LIMITS, resolve_innings_parameters
 
 
@@ -301,7 +301,12 @@ class PlayCricketPublicSource:
             for team_id in team_ids
         }
 
-        for innings in played_innings:
+        team_innings_counts: dict[str, int] = {}
+        ordered_innings = sorted(
+            played_innings,
+            key=lambda item: item.get("inningsOrder") or item.get("inningsNumber") or 0,
+        )
+        for innings in ordered_innings:
             batting_id = str(innings.get("battingTeamId") or "")
             if batting_id not in performances:
                 performances[batting_id] = TeamPerformance(names.get(batting_id, ""))
@@ -311,7 +316,7 @@ class PlayCricketPublicSource:
                 key=lambda row: (row.get("runsScored") or 0, -(row.get("ballsFaced") or 9999)),
                 reverse=True,
             )[:2]
-            performances[batting_id].batters = [
+            batters = [
                 Batter(
                     str(row.get("playerShortName") or ""), row.get("runsScored"), row.get("ballsFaced"),
                     not_out=self._is_batter_not_out(row),
@@ -330,7 +335,24 @@ class PlayCricketPublicSource:
             )[:2]
             # Keep bowling figures with the batting innings in which those
             # wickets fell, matching a conventional cricket scorecard.
-            performances[batting_id].bowlers = [self._bowler(row) for row in bowling]
+            bowlers = [self._bowler(row) for row in bowling]
+            performances[batting_id].batters = batters
+            performances[batting_id].bowlers = bowlers
+
+            team_innings_counts[batting_id] = team_innings_counts.get(batting_id, 0) + 1
+            team_innings_number = team_innings_counts[batting_id]
+            innings_label = "1st innings" if team_innings_number == 1 else "2nd innings" if team_innings_number == 2 else f"{team_innings_number}th innings"
+            performances[batting_id].innings.append(
+                InningsPerformance(
+                    team_name=performances[batting_id].team_name,
+                    score=self._score_from_innings(innings),
+                    innings_label=innings_label,
+                    batters=batters,
+                    bowlers=bowlers,
+                    overs=innings.get("oversBowled", ""),
+                    innings_order=int(innings.get("inningsOrder") or innings.get("inningsNumber") or 0),
+                )
+            )
 
         winner_team = next((team for team in summary_teams if team.get("isWinner") is True), None)
         winner = self._team_name(winner_team)
@@ -361,14 +383,17 @@ class PlayCricketPublicSource:
             [item for item in innings if str(item.get("battingTeamId") or "") == team_id],
             key=lambda item: item.get("inningsOrder") or item.get("inningsNumber") or 0,
         )
-        scores = []
-        for item in team_innings:
-            runs = item.get("runsScored")
-            wickets = item.get("numberOfWicketsFallen")
-            if runs is None:
-                continue
-            scores.append(str(runs) if wickets is None or int(wickets or 0) >= 10 else f"{wickets}-{runs}")
+        scores = [PlayCricketPublicSource._score_from_innings(item) for item in team_innings]
+        scores = [score for score in scores if score]
         return " & ".join(scores)
+
+    @staticmethod
+    def _score_from_innings(innings: dict[str, Any]) -> str:
+        runs = innings.get("runsScored")
+        wickets = innings.get("numberOfWicketsFallen")
+        if runs is None:
+            return ""
+        return str(runs) if wickets is None or int(wickets or 0) >= 10 else f"{wickets}-{runs}"
 
     def _winner_result_type(self, detail: dict[str, Any], winner: str) -> str:
         teams = (detail.get("matchSummary") or {}).get("teams") or []

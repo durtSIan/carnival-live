@@ -94,12 +94,24 @@ class LiveScore:
 
 
 @dataclass
+class InningsPerformance:
+    team_name: str
+    score: str = ""
+    innings_label: str = ""
+    batters: list[Batter] = field(default_factory=list)
+    bowlers: list[Bowler] = field(default_factory=list)
+    overs: int | float | str = ""
+    innings_order: int = 0
+
+
+@dataclass
 class TeamPerformance:
     team_name: str
     score: str = ""
     batters: list[Batter] = field(default_factory=list)
     bowlers: list[Bowler] = field(default_factory=list)
     overs: int | float | str = ""
+    innings: list[InningsPerformance] = field(default_factory=list)
 
 
 @dataclass
@@ -268,6 +280,28 @@ class Match:
     @property
     def result_loser_score(self) -> str:
         return self.final_score_for(self.result_loser)
+
+    @property
+    def completed_innings(self) -> list[InningsPerformance]:
+        """Return detailed completed performances as distinct played innings."""
+        innings = [
+            item
+            for performance in self.performances
+            for item in performance.innings
+        ]
+        if innings:
+            return sorted(innings, key=lambda item: item.innings_order)
+        return [
+            InningsPerformance(
+                team_name=performance.team_name,
+                score=performance.score,
+                batters=performance.batters,
+                bowlers=performance.bowlers,
+                overs=performance.overs,
+                innings_order=index,
+            )
+            for index, performance in enumerate(self.performances, start=1)
+        ]
 
     @property
     def grade_order(self) -> int:
