@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0a1320">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Carnival Live">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Help &amp; About · Carnival Live</title>
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+  <link rel="icon" href="{{ url_for('static', filename='icon.svg') }}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='setup.css', v='2') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='help.css') }}">
+  <script defer src="{{ url_for('static', filename='pwa.js') }}"></script>
+</head>
+<body>
+  <main class="setup-shell help-shell">
+    <a class="back" href="{{ url_for('dashboard') }}">← Scores</a>
+    <header>
+      <span class="mark">?</span>
+      <div>
+        <h1>Help &amp; About</h1>
+        <p>How to set up and use Carnival Live.</p>
+      </div>
+    </header>
+
+    <section class="help-card">
+      <h2>Set up your live feed</h2>
+      <p>Select <strong>Edit Feed</strong>, then search for a club, association or competition. Follow a club’s teams or add whole grades and competitions to see their matches together.</p>
+      <p>Your selections are saved in this browser. A different phone, computer or browser can have its own feed.</p>
+    </section>
+
+    <section class="help-card">
+      <h2>Choose a display</h2>
+      <dl>
+        <div><dt>Brief</dt><dd>Match details and score lines only.</dd></div>
+        <div><dt>Standard</dt><dd>Adds current batters, current/recent bowlers and completed team scores.</dd></div>
+        <div><dt>Detailed</dt><dd>Adds leading batting and bowling performances, including separate completed innings.</dd></div>
+      </dl>
+      <p>The selected mode is remembered on this device.</p>
+    </section>
+
+    <section class="help-card">
+      <h2>Live updates</h2>
+      <p>Scores refresh automatically every 30 seconds. Match information depends on the scorer and the public Play Cricket feed, so innings breaks, results and other changes may take a short time to appear.</p>
+    </section>
+
+    <section class="help-card">
+      <h2>Install on your phone</h2>
+      <p><strong>Android:</strong> open Carnival Live in Chrome and choose <em>Install app</em> or <em>Add to Home screen</em>.</p>
+      <p><strong>iPhone:</strong> open Carnival Live in Safari, tap <em>Share</em>, then choose <em>Add to Home Screen</em>.</p>
+    </section>
+
+    <section class="help-card">
+      <h2>If something does not look right</h2>
+      <ul>
+        <li>Reload the page and allow one refresh cycle.</li>
+        <li>Open <strong>Edit Feed</strong> and check your saved grades and clubs.</li>
+        <li>Remember that a match may not show score details until its scorer starts or updates it.</li>
+      </ul>
+    </section>
+
+    <section class="help-card about-card">
+      <h2>About Carnival Live</h2>
+      <p>Carnival Live brings selected cricket matches into one compact, mobile-friendly live view. It is independently developed and uses publicly available match information.</p>
+      <p>Cricket data, competition names and team names remain the property of their respective owners.</p>
+    </section>
+
+    {% include "_copyright.html" %}
+  </main>
+</body>
+</html>

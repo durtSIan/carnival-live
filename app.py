@@ -196,6 +196,10 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
             club_filter=favourites.club_filter(), club_filters=favourites.club_filters(), error=error,
         )
 
+    @app.get("/help")
+    def help_page():
+        return render_template("help.html")
+
     @app.get("/setup/organisation/<organisation_id>")
     def setup_organisation(organisation_id: str):
         name, selected, error = request.args.get("name", "Organisation"), request.args.get("season", ""), ""

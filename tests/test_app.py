@@ -822,6 +822,30 @@ def test_pwa_manifest_metadata_and_service_worker_are_present():
     assert manifest.json["display"] == "standalone"
     assert manifest.json["start_url"] == "/"
 
+
+def test_help_page_and_copyright_are_available_from_main_screens():
+    class FakeService:
+        def matches_for_date(self, *args): return []
+        def matches_for_grades(self, *args): return []
+
+    client = create_app(FakeService()).test_client()
+    dashboard = client.get("/").get_data(as_text=True)
+    setup = client.get("/setup").get_data(as_text=True)
+    help_page = client.get("/help")
+    help_body = help_page.get_data(as_text=True)
+
+    assert help_page.status_code == 200
+    assert 'href="/help"' in dashboard
+    assert "Help &amp; About" in help_body
+    assert all(text in help_body for text in [
+        "Set up your live feed", "Choose a display", "Live updates",
+        "Install on your phone", "If something does not look right",
+    ])
+    copyright_notice = "© 2026 Durtsian. All rights reserved."
+    assert copyright_notice in dashboard
+    assert copyright_notice in setup
+    assert copyright_notice in help_body
+
     worker = client.get("/service-worker.js")
     assert worker.status_code == 200
     assert b"carnival-live-v3" in worker.data

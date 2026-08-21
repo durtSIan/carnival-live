@@ -12,7 +12,7 @@
   <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
   <link rel="icon" href="{{ url_for('static', filename='icon.svg') }}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.svg') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='setup.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='setup.css', v='2') }}">
   <script defer src="{{ url_for('static', filename='pwa.js') }}"></script>
 </head>
 <body>
@@ -166,6 +166,7 @@
       </section>
     {% endif %}
 
+    {% include "_copyright.html" %}
   </main>
 </body>
 </html>
