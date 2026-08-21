@@ -1,1 +1,1 @@
-.setup-link,.help-link{color:var(--cyan);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap}.help-link{display:inline-flex;align-items:center;gap:4px}.help-link b{display:grid;place-items:center;width:18px;height:18px;border:1px solid #2c7180;border-radius:50%;font-size:11px}.setup-link+.pulse{margin-left:0}@media(max-width:480px){.help-link span{display:none}.help-link{gap:0}}
+.setup-link{color:var(--cyan);font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap}.setup-link+.pulse{margin-left:0}

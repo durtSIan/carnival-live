@@ -822,6 +822,12 @@ def test_pwa_manifest_metadata_and_service_worker_are_present():
     assert manifest.json["display"] == "standalone"
     assert manifest.json["start_url"] == "/"
 
+    worker = client.get("/service-worker.js")
+    assert worker.status_code == 200
+    assert b"carnival-live-v3" in worker.data
+    assert b"fetch(request)" in worker.data
+    assert b".catch(() => caches.match(request))" in worker.data
+
 
 def test_help_page_and_copyright_are_available_from_main_screens():
     class FakeService:
@@ -835,23 +841,27 @@ def test_help_page_and_copyright_are_available_from_main_screens():
     help_body = help_page.get_data(as_text=True)
 
     assert help_page.status_code == 200
-    assert 'href="/help"' in dashboard
+    assert 'href="/help"' not in dashboard
+    assert 'href="/help"' in setup
+    assert "Help &amp; About" in setup
     assert "Help &amp; About" in help_body
     assert all(text in help_body for text in [
         "Set up your live feed", "Choose a display", "Live updates",
         "Install on your phone", "If something does not look right",
     ])
     copyright_notice = "© 2026 Durtsian. All rights reserved."
-    assert copyright_notice in dashboard
+    assert "© 2026 Durtsian · All rights reserved" in dashboard
     assert copyright_notice in setup
     assert copyright_notice in help_body
 
-    worker = client.get("/service-worker.js")
-    assert worker.status_code == 200
-    assert b"carnival-live-v3" in worker.data
-    assert b"fetch(request)" in worker.data
-    assert b".catch(() => caches.match(request))" in worker.data
 
+def test_dashboard_footer_keeps_refresh_and_copyright_in_one_row():
+    class FakeService:
+        def matches_for_date(self, *args): return []
+
+    body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
+    assert "<footer><span>Scores refresh every 30 seconds</span>" in body
+    assert '<span class="copyright">© 2026 Durtsian · All rights reserved</span></footer>' in body
 
 def test_match_exposes_flat_source_independent_display_contract():
     live = LiveScore(batting_team="Alpha", score="1-37", overs="9.4", run_rate="3.83", target=80, required_run_rate="4.30", runs_needed=43, balls_remaining=60)

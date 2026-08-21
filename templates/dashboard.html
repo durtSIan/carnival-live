@@ -14,7 +14,7 @@
   <link rel="icon" href="{{ url_for('static', filename='icon.svg') }}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.svg') }}">
   <script>try{const mode=localStorage.getItem("carnivalLive.displayMode");if(["brief","standard","detailed"].includes(mode))document.documentElement.dataset.displayMode=mode}catch(e){}</script>
-  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css', v='3') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css', v='4') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='final.css', v='2') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='chase.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='nav.css', v='2') }}">
@@ -27,7 +27,7 @@
   <script defer src="{{ url_for('static', filename='pwa.js') }}"></script>
 </head>
 <body>
-  <header><span class="mark">CL</span><h1>Carnival Live</h1><label class="display-mode-picker"><span>Display</span><select id="display-mode" aria-label="Display mode"><option value="brief">Brief</option><option value="standard">Standard</option><option value="detailed">Detailed</option></select></label><a class="help-link" href="{{ url_for('help_page') }}" aria-label="Help"><b>?</b><span>Help</span></a><a class="setup-link" href="{{ url_for('setup_search') }}">{% if has_saved_feed %}Edit Feed{% else %}Set up feed{% endif %}</a><span class="pulse"><i></i> LIVE</span></header>
+  <header><span class="mark">CL</span><h1>Carnival Live</h1><label class="display-mode-picker"><span>Display</span><select id="display-mode" aria-label="Display mode"><option value="brief">Brief</option><option value="standard">Standard</option><option value="detailed">Detailed</option></select></label><a class="setup-link" href="{{ url_for('setup_search') }}">{% if has_saved_feed %}Edit Feed{% else %}Set up feed{% endif %}</a><span class="pulse"><i></i> LIVE</span></header>
   <main>
     {% if error %}<div class="notice error">{{ error }}</div>{% endif %}
     {% if not matches and not error %}<div class="notice">No live matches yet. Scores will display when matches start.</div>{% endif %}
@@ -147,6 +147,6 @@
       {% endfor %}
     </section>
   </main>
-  <footer><span>Scores refresh automatically every 30 seconds</span>{% include "_copyright.html" %}</footer>
+  <footer><span>Scores refresh every 30 seconds</span><span class="copyright">© 2026 Durtsian · All rights reserved</span></footer>
 </body>
 </html>

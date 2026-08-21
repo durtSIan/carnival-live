@@ -12,7 +12,7 @@
   <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
   <link rel="icon" href="{{ url_for('static', filename='icon.svg') }}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.svg') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='setup.css', v='2') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='setup.css', v='3') }}">
   <script defer src="{{ url_for('static', filename='pwa.js') }}"></script>
 </head>
 <body>
@@ -60,6 +60,9 @@
         <a class="primary-action" href="{{ url_for('dashboard') }}">View live scores</a>
       {% endif %}
     </section>
+    <div class="feed-help-row">
+      <a class="feed-help-link" href="{{ url_for('help_page') }}"><b>?</b> Help &amp; About</a>
+    </div>
 
     <section class="add-feed">
       <h2>Add to your feed</h2>
