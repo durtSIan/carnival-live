@@ -20,11 +20,11 @@ continues.
       a signed, one-year browser cookie. Display mode remains in local storage.
 - [x] Combine grade-wide selections and club-specific selections additively,
       deduplicating matches that appear through both paths.
-- [ ] Cache match lists by grade and date.
-- [ ] Cache scorecards by match for approximately 20–30 seconds.
-- [ ] Ensure concurrent requests for the same uncached item cause only one
+- [x] Cache match lists by grade for 30 seconds.
+- [x] Cache scorecards by match for approximately 20–30 seconds.
+- [x] Ensure concurrent requests for the same uncached item cause only one
       upstream fetch.
-- [ ] Serve different user feeds by assembling results from the shared cache.
+- [x] Serve different user feeds by assembling results from the shared cache.
 - [ ] Configure and test concurrent web workers.
 
 ### Phase 3 — Production readiness
@@ -39,6 +39,12 @@ continues.
 Architecture principle: cache by grade and match, not by user. Many different
 personal feeds can then reuse the same Play Cricket result without multiplying
 upstream calls.
+
+The current cache is in-process and intentionally disposable. Match lists use a
+30-second TTL, scorecards use a 25-second TTL, and the last successful response
+can be served for up to two minutes during a temporary upstream failure. Move
+this cache to Render Key Value before scaling Carnival Live across multiple
+instances, because separate processes do not share Python memory.
 
 ## Proven public testing endpoints
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import time
+import logging
 from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
@@ -10,6 +11,7 @@ from zoneinfo import ZoneInfo
 import requests
 
 from data_sources.playhq_public import PlayHQPublicEnricher
+from data_sources.response_cache import SharedResponseCache
 from models import Batter, Bowler, InningsPerformance, InningsSummary, LiveScore, Match, MatchFormat, TeamPerformance
 from match_settings import CONFIRMED_GRADE_OVER_LIMITS, resolve_innings_parameters
 
@@ -25,6 +27,7 @@ class PlayCricketPublicSource:
         timeout: int = 30,
         playhq: PlayHQPublicEnricher | None = None,
         grade_over_limits: dict[str, int] | None = None,
+        response_cache: SharedResponseCache | None = None,
     ):
         self.session = session or requests.Session()
         self.timeout = timeout
@@ -33,6 +36,18 @@ class PlayCricketPublicSource:
         self.grade_over_limits = dict(
             CONFIRMED_GRADE_OVER_LIMITS if grade_over_limits is None else grade_over_limits
         )
+        self.response_cache = response_cache or SharedResponseCache(
+            logger=logging.getLogger(__name__)
+        )
+        self.match_list_cache_seconds = float(
+            os.getenv("CARNIVAL_MATCH_LIST_CACHE_SECONDS", "30")
+        )
+        self.scorecard_cache_seconds = float(
+            os.getenv("CARNIVAL_SCORECARD_CACHE_SECONDS", "25")
+        )
+        self.stale_cache_seconds = float(
+            os.getenv("CARNIVAL_STALE_CACHE_SECONDS", "120")
+        )
         self._grade_context: dict[str, tuple[str, str, str]] = {}
         self._grade_details: dict[str, dict[str, Any]] = {}
         self._match_grade_ids: dict[str, str] = {}
@@ -40,22 +55,50 @@ class PlayCricketPublicSource:
         self._recent_bowler_cache: dict[str, tuple[float, dict[int, list[str]]]] = {}
 
     def _get(self, path: str, **params: str) -> dict[str, Any]:
-        response = self.session.get(
-            self.base_url + path,
-            params={"jsconfig": "eccn:true", **params},
-            headers={
-                "accept": "*/*",
-                "origin": "https://play.cricket.com.au",
-                "referer": "https://play.cricket.com.au/",
-                "user-agent": "CarnivalLive/1.0",
-            },
-            timeout=self.timeout,
+        def load() -> dict[str, Any]:
+            response = self.session.get(
+                self.base_url + path,
+                params={"jsconfig": "eccn:true", **params},
+                headers={
+                    "accept": "*/*",
+                    "origin": "https://play.cricket.com.au",
+                    "referer": "https://play.cricket.com.au/",
+                    "user-agent": "CarnivalLive/1.0",
+                },
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+            data = response.json()
+            if not isinstance(data, dict):
+                raise ValueError("Play Cricket returned an unexpected response.")
+            return data
+
+        policy = self._cache_policy(path, params)
+        if policy is None:
+            return load()
+        ttl_seconds, cache_kind = policy
+        key = (cache_kind, path, tuple(sorted(params.items())))
+        return self.response_cache.get_or_load(
+            key,
+            load,
+            ttl_seconds=ttl_seconds,
+            stale_seconds=self.stale_cache_seconds,
         )
-        response.raise_for_status()
-        data = response.json()
-        if not isinstance(data, dict):
-            raise ValueError("Play Cricket returned an unexpected response.")
-        return data
+
+    def _cache_policy(
+        self, path: str, params: dict[str, str]
+    ) -> tuple[float, str] | None:
+        if re.fullmatch(r"/scores/grades/[^/]+/matches", path):
+            return self.match_list_cache_seconds, "match-list"
+        if (
+            re.fullmatch(r"/scores/matches/[^/]+", path)
+            and params.get("responseModifier") == "includeScorecard"
+        ):
+            return self.scorecard_cache_seconds, "scorecard"
+        return None
+
+    def cache_stats(self) -> dict[str, int]:
+        return self.response_cache.snapshot()
 
     def get_matches(self, grade_id: str, timezone_name: str) -> list[Match]:
         data = self._get(f"/scores/grades/{grade_id}/matches")

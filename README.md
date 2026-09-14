@@ -71,6 +71,13 @@ Production deployments must provide a stable `CARNIVAL_SECRET_KEY`. Render
 generates this value from `render.yaml`. HTTPS deployments also set
 `CARNIVAL_SECURE_COOKIES=true`.
 
+Live Play Cricket responses are shared between personal feeds in the running
+web process. Match lists are cached for 30 seconds and scorecards for 25 seconds.
+The optional environment variables `CARNIVAL_MATCH_LIST_CACHE_SECONDS`,
+`CARNIVAL_SCORECARD_CACHE_SECONDS`, and `CARNIVAL_STALE_CACHE_SECONDS` override
+those values. Cache statistics are written to the application log every 100
+cache events.
+
 ## Technology
 
 - Python
