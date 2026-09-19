@@ -685,6 +685,9 @@ def test_completed_matches_render_last_as_single_lines_grouped_only_by_pool():
     assert "AWAITING RESULT" in body
     assert body.index("Pool A - Completed") < alpha_result
     assert body.index("Pool B - Completed") < bravo_result
+    completed_grade_header = body.rindex("<span>Nationals</span>")
+    assert body.index("Morning Alpha") < completed_grade_header
+    assert completed_grade_header < body.index("Pool A - Completed")
     assert "Round 2" not in body
 
 
@@ -720,6 +723,29 @@ def test_completed_matches_without_pools_are_grouped_by_grade():
     assert body.index("A Grade - Completed") < a_result
     assert body.index("B Grade - Completed") < b_result
     assert a_result < body.index("B Grade - Completed")
+
+
+def test_completed_final_retains_grade_header_above_final_heading():
+    completed = Match(
+        "grand-final", "", "Palmerston", "Nightcliff", "", "Grand Final",
+        "Two Day", "COMPLETED", "2026-09-19", "11:00 AM", is_final=True,
+        result_winner="Palmerston", result_loser="Nightcliff",
+        result_text="Palmerston won by 5 wickets",
+        competition_name="A Grade (Gatorade)",
+    )
+
+    class FakeSource:
+        def get_matches(self, *args): return [completed]
+        def add_scorecard(self, match): return match
+
+    body = create_app(MatchService(FakeSource())).test_client().get(
+        "/?date=2026-09-19"
+    ).get_data(as_text=True)
+
+    grade_header = body.index("<span>A Grade</span>")
+    final_header = body.index("Grand Final - Completed")
+    result = body.index('<strong class="completed-team">Palmerston</strong>')
+    assert grade_header < final_header < result
 
 
 def test_previous_innings_score_is_rendered_as_emphasised_value():

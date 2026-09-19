@@ -98,17 +98,29 @@
       </article>
       {% endif %}
       {% endfor %}
+      {% set completed_grade_group = namespace(name=None) %}
       {% set completed_pool_group = namespace(name=None) %}
       {% for match in matches %}
       {% if match.is_completed %}
-      {% set group_name = match.completed_group_name %}
+      {% set group_name = match.display_group_name %}
+      {% if match.grade_label and match.grade_label != completed_grade_group.name %}
+      {% set completed_grade_group.name = match.grade_label %}
+      {% set completed_pool_group.name = None %}
+      {% if group_name %}
+      <div class="grade-divider completed-grade-divider" role="separator" aria-label="{{ match.grade_label }}">
+        <span>{{ match.grade_label }}</span>
+      </div>
+      {% else %}
+      <div class="pool-divider completed-pool-divider" role="separator" aria-label="{{ match.grade_label }} - Completed">
+        <span>{{ match.grade_label }} - Completed</span>
+      </div>
+      {% endif %}
+      {% endif %}
       {% if group_name and group_name != completed_pool_group.name %}
       {% set completed_pool_group.name = group_name %}
-      <div class="pool-divider completed-pool-divider" role="separator" aria-label="{{ group_name }}">
+      <div class="pool-divider completed-pool-divider" role="separator" aria-label="{{ group_name }} - Completed">
         <span>{{ group_name }} - Completed</span>
       </div>
-      {% elif not group_name %}
-      {% set completed_pool_group.name = None %}
       {% endif %}
       <article class="completed-result-card">
         <div class="completed-result-line">
