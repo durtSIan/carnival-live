@@ -881,13 +881,16 @@ def test_help_page_and_copyright_are_available_from_main_screens():
     assert copyright_notice in help_body
 
 
-def test_dashboard_footer_keeps_refresh_and_copyright_in_one_row():
+def test_dashboard_footer_centres_refresh_and_copyright_on_two_lines():
     class FakeService:
         def matches_for_date(self, *args): return []
 
     body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
-    assert "<footer><span>Scores refresh every 30 seconds</span>" in body
-    assert '<span class="copyright">© 2026 Durtsian · All rights reserved</span></footer>' in body
+    assert "<span>Scores refresh every 30 seconds</span>" in body
+    assert '<span class="copyright">© 2026 Durtsian · All rights reserved</span>' in body
+    css = Path("static/footer.css").read_text()
+    assert "flex-direction: column" in css
+    assert "text-align: center" in css
 
 def test_match_exposes_flat_source_independent_display_contract():
     live = LiveScore(batting_team="Alpha", score="1-37", overs="9.4", run_rate="3.83", target=80, required_run_rate="4.30", runs_needed=43, balls_remaining=60)

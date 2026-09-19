@@ -10,6 +10,7 @@ const APP_SHELL = [
   "/static/status.css",
   "/static/compact.css",
   "/static/display-mode.css",
+  "/static/footer.css",
   "/static/display-mode.js",
   "/static/batter-order.js",
   "/static/setup.css",

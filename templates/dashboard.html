@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='status.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='compact.css', v='2') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='display-mode.css', v='5') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='footer.css', v='1') }}">
   <script defer src="{{ url_for('static', filename='display-mode.js') }}"></script>
   <script defer src="{{ url_for('static', filename='batter-order.js') }}"></script>
   <script defer src="{{ url_for('static', filename='pwa.js') }}"></script>
@@ -159,6 +160,9 @@
       {% endfor %}
     </section>
   </main>
-  <footer><span>Scores refresh every 30 seconds</span><span class="copyright">© 2026 Durtsian · All rights reserved</span></footer>
+  <footer>
+    <span>Scores refresh every 30 seconds</span>
+    <span class="copyright">© 2026 Durtsian · All rights reserved</span>
+  </footer>
 </body>
 </html>

@@ -1,0 +1,11 @@
+footer {
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+  white-space: normal;
+}
+
+footer .copyright {
+  text-align: center;
+}
