@@ -411,15 +411,36 @@ class Match:
 
     @property
     def chase_line(self) -> str:
-        """Show a target for limited overs; add chase metrics only for T20."""
+        """Show reliable limited-overs chase context without guessing a quota."""
         if not self.live or self.live.target is None or not self.match_format.is_limited_overs:
             return ""
+        def target_with_score_context() -> str:
+            if self.live.runs is not None:
+                trail = self.live.target - 1 - self.live.runs
+            elif self.live.runs_needed is not None:
+                trail = self.live.runs_needed - 1
+            else:
+                return f"Target {self.live.target}"
+            if trail > 0:
+                return (
+                    f"Target {self.live.target}  |  "
+                    f"{self.live.batting_team} trail by {trail} runs"
+                )
+            if trail == 0:
+                return f"Target {self.live.target}  |  Scores level"
+            return f"Target {self.live.target}  |  Target reached"
         if not self.live.chase_metrics_confident:
-            return f"Target {self.live.target}"
+            return target_with_score_context()
         if self.live.runs_needed is None:
-            return f"Target {self.live.target}"
+            return target_with_score_context()
         if self.live.balls_remaining is None or not self.live.required_run_rate:
-            return f"Target {self.live.target}"
+            return target_with_score_context()
+        if not self.match_format.is_t20:
+            return (
+                f"Target {self.live.target}  |  Require {self.live.runs_needed} runs "
+                f"off {self.live.balls_remaining} balls  |  "
+                f"RRReq={self.live.required_run_rate}"
+            )
         return (
             f"Target {self.live.target}  |  Need {self.live.runs_needed} "
             f"off {self.live.balls_remaining}  |  RRReq={self.live.required_run_rate}"

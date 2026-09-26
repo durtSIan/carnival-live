@@ -574,6 +574,24 @@ class PlayCricketPublicSource:
                     continue
                 if limit > 0:
                     return limit
+        source_format = MatchFormat.from_source(str(detail.get("matchType") or ""))
+        if not source_format.is_limited_overs or source_format.is_t20:
+            return None
+        # Public One-Day scorecards often omit the configured quota. Once an
+        # innings is explicitly marked as completed by overs, its whole-over
+        # total is authoritative for this match. Never infer from an all-out,
+        # declaration or compulsory close because those can finish early.
+        for innings in detail.get("innings") or []:
+            close_type = re.sub(
+                r"[^A-Z]+", " ", str(innings.get("inningsCloseType") or "").upper()
+            ).strip()
+            if "OVER" not in close_type or not any(
+                marker in close_type for marker in ("COMP", "LIMIT")
+            ):
+                continue
+            balls = PlayCricketPublicSource._balls_bowled(innings.get("oversBowled"))
+            if balls > 0 and balls % 6 == 0:
+                return balls // 6
         return None
 
     @staticmethod

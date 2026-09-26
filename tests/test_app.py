@@ -195,11 +195,42 @@ def test_one_day_chase_uses_a_configured_over_limit_when_available():
     assert live.runs_needed == 80 and live.balls_remaining == 120
     assert live.required_run_rate == "4.00"
     match = Match("id", "", "Alpha", "Beta", "", "Round 1", "One Day", "LIVE", "2026-06-20", "1:00 PM", live)
-    assert match.chase_line == "Target 161  |  Need 80 off 120  |  RRReq=4.00"
+    assert match.chase_line == "Target 161  |  Require 80 runs off 120 balls  |  RRReq=4.00"
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
     assert "1st innings" not in body
+
+
+def test_one_day_chase_uses_match_specific_completed_over_count():
+    detail = json.loads((Path(__file__).parents[1] / "blue_mountains_match_with_scorecard.json").read_text())
+    detail["matchType"] = "One Day"
+    first = detail["innings"][-1]
+    first.update(
+        inningsOrder=1, inningsNumber=1, inningsCloseType="Overs Comp.",
+        runsScored=180, oversBowled=40,
+    )
+    second = copy.deepcopy(first)
+    second.update(
+        inningsOrder=2, inningsNumber=2, inningsCloseType="In Progress",
+        runsScored=80, oversBowled=20,
+    )
+    detail["innings"] = [first, second]
+
+    source = PlayCricketPublicSource(playhq=None)
+    source._get = lambda *args, **kwargs: detail
+    match = Match(
+        "one-day", "", "Alpha", "Beta", "", "Round 1", "One Day",
+        "LIVE", "2026-09-26", "10:00 AM",
+    )
+    source.add_scorecard(match)
+
+    assert match.match_format.overs_limit == 40
+    assert match.live.current_over_limit == 40
+    assert (match.live.runs_needed, match.live.balls_remaining) == (101, 120)
+    assert match.chase_line == (
+        "Target 181  |  Require 101 runs off 120 balls  |  RRReq=5.05"
+    )
 
 
 def test_masters_grade_does_not_assume_a_grade_wide_over_limit():
@@ -229,7 +260,7 @@ def test_masters_grade_does_not_assume_a_grade_wide_over_limit():
     assert match.live.target == 221
     assert (match.live.runs_needed, match.live.balls_remaining) == (None, None)
     assert match.live.required_run_rate == ""
-    assert match.chase_line == "Target 221"
+    assert match.chase_line == "Target 221  |  Blue Mountains trail by 120 runs"
 
 
 def test_playhq_public_summary_resolves_authoritative_over_limit():
@@ -306,7 +337,7 @@ def test_playhq_public_over_limit_enables_one_day_required_rate():
     assert match.match_format.overs_limit == 45
     assert (live.current_over_limit, live.over_limit_source) == (45, "playhq_public")
     assert (live.runs_needed, live.balls_remaining, live.required_run_rate) == (126, 150, "5.04")
-    assert match.chase_line == "Target 226  |  Need 126 off 150  |  RRReq=5.04"
+    assert match.chase_line == "Target 226  |  Require 126 runs off 150 balls  |  RRReq=5.04"
 
 
 def test_match_schedule_keeps_play_cricket_local_offset_in_mixed_region_feed():
@@ -441,12 +472,15 @@ def test_target_remains_during_live_end_of_innings_wait():
         "One Day", "LIVE", "2026-07-24", "9:30 AM", live,
     )
 
-    assert match.chase_line == "Target 278"
+    assert match.chase_line == "Target 278  |  Mackay Masters O50 trail by 16 runs"
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/?date=2026-07-24").get_data(as_text=True)
     assert 'class="brief-target">Tar 278' in body
-    assert '<div class="chase-details">Target 278</div>' in body
+    assert (
+        '<div class="chase-details">Target 278  |  '
+        'Mackay Masters O50 trail by 16 runs</div>'
+    ) in body
     assert "INNINGS COMPLETE" in body
 
 
