@@ -183,6 +183,33 @@ def test_second_innings_target_is_previous_total_plus_one():
     assert live.balls_remaining == 108
 
 
+def test_rain_reduced_t20_uses_compulsory_first_innings_close_as_quota():
+    detail = json.loads((Path(__file__).parents[1] / "blue_mountains_match_with_scorecard.json").read_text())
+    detail["matchType"] = "T20"
+    first = detail["innings"][-1]
+    first.update(
+        inningsOrder=1, inningsNumber=1, inningsCloseType="Compulsory Close",
+        runsScored=116, numberOfWicketsFallen=0, oversBowled=13,
+        isDeclared=False,
+    )
+    second = copy.deepcopy(first)
+    second.update(
+        inningsOrder=2, inningsNumber=1, inningsCloseType="In Progress",
+        runsScored=87, numberOfWicketsFallen=2, oversBowled=12,
+    )
+    detail["innings"] = [first, second]
+
+    live = PlayCricketPublicSource().parse_scorecard(detail)
+
+    assert (live.target, live.runs_needed) == (117, 30)
+    assert (live.current_over_limit, live.over_limit_source) == (
+        13, "first_innings_compulsory_close",
+    )
+    assert live.balls_remaining == 6
+    assert live.required_run_rate == "30.00"
+    assert live.chase_metrics_confident is True
+
+
 def test_one_day_chase_uses_a_configured_over_limit_when_available():
     detail = json.loads((Path(__file__).parents[1] / "blue_mountains_match_with_scorecard.json").read_text())
     first = detail["innings"][-1]

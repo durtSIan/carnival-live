@@ -217,6 +217,10 @@ class PlayCricketPublicSource:
         # enough for the whole application to time out. The aggregate
         # scorecard remains the reliable, lightweight live source.
         match.live = self.parse_scorecard(detail, match.match_format)
+        if match.live.current_over_limit:
+            match.match_format = MatchFormat.from_source(
+                match.match_type, match.live.current_over_limit
+            )
         self._enrich_over_limit(match)
         match.toss_winner = self._toss_winner(detail) or match.toss_winner
         match.toss_decision = self._toss_decision(detail, match.toss_winner)
@@ -306,6 +310,17 @@ class PlayCricketPublicSource:
     def _apply_over_limit(cls, match: Match, over_limit: int, source: str) -> None:
         if not match.live or over_limit <= 0:
             return
+        # A completed first innings is match-specific evidence of a rain-
+        # reduced T20.  Do not replace that smaller observed quota with a
+        # nominal 20-over value from another source.  A still-smaller revised
+        # quota remains valid if the second innings is reduced again.
+        if (
+            match.live.over_limit_source == "first_innings_compulsory_close"
+            and match.live.current_over_limit
+            and match.live.current_over_limit < over_limit
+        ):
+            over_limit = match.live.current_over_limit
+            source = match.live.over_limit_source
         match.match_format = MatchFormat.from_source(match.match_type, over_limit)
         match.live.current_over_limit = over_limit
         match.live.over_limit_source = source
@@ -595,6 +610,24 @@ class PlayCricketPublicSource:
         return None
 
     @staticmethod
+    def _reduced_t20_over_limit(
+        ordered_innings: list[dict[str, Any]], current_index: int, nominal_limit: int | None,
+    ) -> int | None:
+        """Infer a rain-reduced T20 quota from a compulsory first-innings close."""
+        if current_index != 1 or not nominal_limit or not ordered_innings:
+            return None
+        first = ordered_innings[0]
+        close_type = re.sub(
+            r"[^A-Z]+", " ", str(first.get("inningsCloseType") or "").upper()
+        ).strip()
+        if "COMPULSORY" not in close_type or bool(first.get("isDeclared")):
+            return None
+        balls = PlayCricketPublicSource._balls_bowled(first.get("oversBowled"))
+        if balls <= 0 or balls % 6 or balls >= nominal_limit * 6:
+            return None
+        return balls // 6
+
+    @staticmethod
     def _is_batter_not_out(row: dict[str, Any]) -> bool:
         dismissal = str(
             row.get("dismissalType") or row.get("dismissalText") or ""
@@ -664,6 +697,15 @@ class PlayCricketPublicSource:
             str(item.get("battingTeamId") or "") == batting_id
             for item in ordered_innings[:current_index + 1]
         )
+        overs_limit = parameters.over_limit
+        over_limit_source = parameters.over_limit_source
+        if match_format.is_t20:
+            reduced_limit = self._reduced_t20_over_limit(
+                ordered_innings, current_index, overs_limit
+            )
+            if reduced_limit is not None:
+                overs_limit = reduced_limit
+                over_limit_source = "first_innings_compulsory_close"
         def ordinal(value: int) -> str:
             suffix = "st" if value == 1 else "nd" if value == 2 else "rd" if value == 3 else "th"
             return f"{value}{suffix} innings"
@@ -682,7 +724,6 @@ class PlayCricketPublicSource:
                 target = opponent_runs - own_runs + 1
         close_type = str(current.get("inningsCloseType") or "").upper()
         game_status = self._game_status(detail, current)
-        overs_limit = parameters.over_limit
         innings_complete = (
             (close_type not in {"", "IN PROGRESS"} and not game_status)
             or (overs_limit is not None and self._decimal_overs(current.get("oversBowled")) >= overs_limit)
@@ -857,7 +898,7 @@ class PlayCricketPublicSource:
             dismissed_batters=[] if innings_complete else (dismissed_batters if (wickets or 0) > 0 else []),
             top_batting=[] if innings_complete else top_batting,
             bowlers=[self._bowler(x) for x in unique], previous_innings=previous_innings,
-            current_over_limit=overs_limit, over_limit_source=parameters.over_limit_source,
+            current_over_limit=overs_limit, over_limit_source=over_limit_source,
             target_source=parameters.target_source or ("calculated" if target is not None else ""),
             chase_metrics_confident=chase_metrics_confident,
         )
