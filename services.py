@@ -81,7 +81,16 @@ class MatchService:
     @staticmethod
     def _normalise_club_name(value: str) -> str:
         words = re.sub(r"[^a-z0-9]+", " ", value.casefold()).split()
-        generic = {"cricket", "club", "cc", "association", "competition", "league", "inc", "incorporated"}
+        # Organisation search results often include administrative suffixes
+        # which are not repeated in fixture team names.  For example, the
+        # organisation "Northern District Junior Cricket Association - Rep
+        # Teams" fields teams named "Northern District U15".  Keep the
+        # distinctive place/club words and discard those structural labels.
+        generic = {
+            "cricket", "club", "cc", "association", "competition", "league",
+            "inc", "incorporated", "junior", "juniors", "rep", "reps",
+            "representative", "representatives", "team", "teams",
+        }
         return " ".join(word for word in words if word not in generic).strip()
 
     @classmethod

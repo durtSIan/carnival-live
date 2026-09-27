@@ -1014,6 +1014,29 @@ def test_multi_grade_club_filter_ignores_cricket_club_suffix():
     assert [match.match_id for match in matches] == ["p-c"]
 
 
+def test_club_filter_ignores_rep_team_organisation_suffix():
+    northern_district = Match(
+        "nd-u15", "", "Northern District U15", "SEJCA U15 Boys", "",
+        "Round 1", "One Day", "LIVE", "2026-09-27", "10:00 AM",
+    )
+    unrelated = Match(
+        "other-u15", "", "Manly Warringah U15", "Parramatta U15 Div 1", "",
+        "Round 1", "One Day", "LIVE", "2026-09-27", "10:00 AM",
+    )
+
+    class FakeSource:
+        def get_matches(self, *_): return [northern_district, unrelated]
+        def add_scorecard(self, match): return match
+
+    matches = MatchService(FakeSource()).matches_for_grades(
+        ["grade-u15"], "2026-09-27", "Australia/Sydney", "",
+        {"grade-u15": "U15 - 1 Weblin Shield"},
+        {"grade-u15": ["Northern District Junior Cricket Association - Rep Teams"]},
+    )
+
+    assert [match.match_id for match in matches] == ["nd-u15"]
+
+
 def test_multi_grade_club_filter_accepts_multiple_clubs():
     palmerston = Match("p-c", "", "Palmerston C White", "Nightcliff C", "", "Round 10", "One Day", "LIVE", "2026-07-04", "1:00 PM")
     pint = Match("pint-c", "", "Darwin C", "PINT C Green", "", "Round 10", "One Day", "LIVE", "2026-07-04", "1:00 PM")
