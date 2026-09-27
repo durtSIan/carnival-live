@@ -134,7 +134,12 @@
         {% if match.final_qualifier %}<span>{{ match.final_qualifier }}</span>{% endif %}
         {% if match.final_margin %}<span>{{ match.final_margin }}</span>{% endif %}
         {% elif match.final_result_line %}
-        <span>{{ match.final_result_line }}</span>
+        {% for team in match.performances %}
+        <strong class="completed-team">{{ team.team_name }}</strong>
+        {% if team.score %}<strong class="completed-score">{{ team.score }}</strong>{% endif %}
+        {% if not loop.last %}<span>v</span>{% endif %}
+        {% endfor %}
+        <span>— {{ match.final_result_line }}</span>
         {% else %}
         <strong class="completed-team">{{ match.home_team }}</strong>
         <span>v</span>

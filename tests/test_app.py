@@ -1012,6 +1012,37 @@ def test_service_keeps_completed_but_hides_upcoming_and_other_dates():
     assert [item.status for item in visible] == ["LIVE", "COMPLETED", "FORFEITED"]
 
 
+def test_abandoned_match_with_play_is_retained_as_a_drawn_result():
+    abandoned = Match(
+        "u14", "", "Inner West Harbour U14", "Northern District U14", "",
+        "Round 1", "T20", "ABANDONED", "2026-09-27", "10:00 AM",
+    )
+
+    class FakeSource:
+        def get_matches(self, *_): return [abandoned]
+        def add_scorecard(self, item):
+            item.is_final = True
+            item.result_text = "Match drawn"
+            item.performances = [
+                TeamPerformance(
+                    team_name="Northern District U14", score="4-50", overs=13.2,
+                ),
+            ]
+            return item
+
+    matches = MatchService(FakeSource()).matches_for_date(
+        "grade-u14", "2026-09-27", "Australia/Sydney",
+    )
+
+    assert matches == [abandoned]
+    body = create_app(MatchService(FakeSource())).test_client().get(
+        "/?grade_id=grade-u14&date=2026-09-27&timezone=Australia/Sydney"
+    ).get_data(as_text=True)
+    assert "Northern District U14" in body
+    assert '<strong class="completed-score">4-50</strong>' in body
+    assert "Match drawn" in body
+
+
 def test_service_keeps_carried_two_day_matches_from_previous_start_date():
     carried_two_day = Match("two-day", "", "Alpha", "Beta", "", "Round 1", "Two Day", "STUMPS", "2026-06-20", "11:00 AM")
     carried_two_day.schedule_dates = ["2026-06-20", "2026-06-27"]

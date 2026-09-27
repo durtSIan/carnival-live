@@ -227,7 +227,7 @@ class PlayCricketPublicSource:
         detail_status = str(detail.get("status") or "").upper()
         match.result_text = str((detail.get("matchSummary") or {}).get("resultText") or "")
         match.is_forfeit = "forfeit" in match.result_text.lower() or detail_status == "FORFEITED"
-        is_final = detail_status in {"COMPLETED", "FORFEITED"} or any(
+        is_final = detail_status in {"COMPLETED", "FORFEITED", "ABANDONED"} or any(
             str(innings.get("inningsCloseType") or "").upper() == "END OF MATCH"
             for innings in detail.get("innings") or []
         )
