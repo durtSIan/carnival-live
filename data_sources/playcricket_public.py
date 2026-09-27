@@ -291,20 +291,23 @@ class PlayCricketPublicSource:
         if not grade_name or not organisation_id:
             return
         try:
-            over_limit = self.playhq.current_over_limit(
-                organisation_id=organisation_id,
-                grade_name=grade_name,
-                home_team=match.home_team,
-                away_team=match.away_team,
-                batting_team=match.live.batting_team,
-                start_date=match.start_date,
+            parameters = dict(
+                organisation_id=organisation_id, grade_name=grade_name,
+                home_team=match.home_team, away_team=match.away_team,
+                batting_team=match.live.batting_team, start_date=match.start_date,
                 timezone_name=timezone_name,
             )
+            if hasattr(self.playhq, "current_innings_parameters"):
+                over_limit, target = self.playhq.current_innings_parameters(**parameters)
+            else:
+                over_limit = self.playhq.current_over_limit(**parameters)
+                target = None
         except (requests.RequestException, ValueError, KeyError):
             return
-        if over_limit is None:
-            return
-        self._apply_over_limit(match, over_limit, "playhq_public")
+        if over_limit is not None:
+            self._apply_over_limit(match, over_limit, "playhq_public")
+        if target is not None:
+            self._apply_target(match, target, "playhq_public")
 
     @classmethod
     def _apply_over_limit(cls, match: Match, over_limit: int, source: str) -> None:
@@ -333,6 +336,32 @@ class PlayCricketPublicSource:
         remaining_balls = max(over_limit * 6 - cls._balls_bowled(match.live.overs), 0)
         runs_needed = max(match.live.target - match.live.runs, 0)
         match.live.runs_needed = runs_needed
+        match.live.balls_remaining = remaining_balls
+        match.live.required_run_rate = (
+            f"{runs_needed / (remaining_balls / 6):.2f}" if remaining_balls else ""
+        )
+        match.live.chase_metrics_confident = remaining_balls > 0
+
+    @classmethod
+    def _apply_target(cls, match: Match, target: int, source: str) -> None:
+        """Apply a scorer-entered target and refresh all chase calculations."""
+        if not match.live or target <= 0:
+            return
+        match.live.target = target
+        match.live.target_source = source
+        if match.live.runs is None:
+            return
+        runs_needed = max(target - match.live.runs, 0)
+        match.live.runs_needed = runs_needed
+        over_limit = match.live.current_over_limit
+        if not over_limit:
+            match.live.balls_remaining = None
+            match.live.required_run_rate = ""
+            match.live.chase_metrics_confident = False
+            return
+        remaining_balls = max(
+            over_limit * 6 - cls._balls_bowled(match.live.overs), 0
+        )
         match.live.balls_remaining = remaining_balls
         match.live.required_run_rate = (
             f"{runs_needed / (remaining_balls / 6):.2f}" if remaining_balls else ""

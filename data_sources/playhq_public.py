@@ -144,12 +144,35 @@ class PlayHQPublicEnricher:
         start_date: str,
         timezone_name: str,
     ) -> int | None:
+        over_limit, _ = self.current_innings_parameters(
+            organisation_id=organisation_id,
+            grade_name=grade_name,
+            home_team=home_team,
+            away_team=away_team,
+            batting_team=batting_team,
+            start_date=start_date,
+            timezone_name=timezone_name,
+        )
+        return over_limit
+
+    def current_innings_parameters(
+        self,
+        *,
+        organisation_id: str,
+        grade_name: str,
+        home_team: str,
+        away_team: str,
+        batting_team: str,
+        start_date: str,
+        timezone_name: str,
+    ) -> tuple[int | None, int | None]:
+        """Return the scorer's current over limit and custom target, if present."""
         grade_id = self._playhq_grade_id(organisation_id, grade_name)
         if not grade_id:
-            return None
+            return None, None
         game_id = self._game_id(grade_id, home_team, away_team, start_date, timezone_name)
         if not game_id:
-            return None
+            return None, None
 
         summary = self._get(f"/v2/games/{game_id}/summary").get("data") or {}
         names = {
@@ -173,9 +196,13 @@ class PlayHQPublicEnricher:
             batting_periods[-1] if batting_periods else None,
         )
         if not selected:
-            return None
-        try:
-            over_limit = int(self._statistic(selected, "OVER_LIMIT"))
-        except (TypeError, ValueError):
-            return None
-        return over_limit if over_limit > 0 else None
+            return None, None
+
+        def positive_statistic(statistic_type: str) -> int | None:
+            try:
+                value = int(self._statistic(selected, statistic_type))
+            except (TypeError, ValueError):
+                return None
+            return value if value > 0 else None
+
+        return positive_statistic("OVER_LIMIT"), positive_statistic("TARGET_SCORE")

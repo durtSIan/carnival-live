@@ -321,6 +321,7 @@ def test_playhq_public_summary_resolves_authoritative_over_limit():
                         "discipline": "BATTING",
                         "statistics": [
                             {"type": "OVER_LIMIT", "value": 45},
+                            {"type": "TARGET_SCORE", "value": 226},
                             {"type": "TOTAL_OVERS", "value": 12.3},
                         ],
                     }],
@@ -349,6 +350,15 @@ def test_playhq_public_summary_resolves_authoritative_over_limit():
         start_date="2026-07-24",
         timezone_name="Australia/Brisbane",
     ) == 45
+    assert enricher.current_innings_parameters(
+        organisation_id="org-id",
+        grade_name="Interstate O50 Quad Series Challenge (Mackay)",
+        home_team="Mackay Masters O50",
+        away_team="NSW O50",
+        batting_team="NSW O50",
+        start_date="2026-07-24",
+        timezone_name="Australia/Brisbane",
+    ) == (45, 226)
 
 
 def test_playhq_public_over_limit_enables_one_day_required_rate():
@@ -365,6 +375,26 @@ def test_playhq_public_over_limit_enables_one_day_required_rate():
     assert (live.current_over_limit, live.over_limit_source) == (45, "playhq_public")
     assert (live.runs_needed, live.balls_remaining, live.required_run_rate) == (126, 150, "5.04")
     assert match.chase_line == "Target 226  |  Require 126 runs off 150 balls  |  RRReq=5.04"
+
+
+def test_playhq_custom_target_replaces_first_innings_calculation():
+    live = LiveScore(
+        batting_team="Northern District U17 White", score="2-30", overs="3",
+        run_rate="10.00", target=125, runs=30,
+        current_over_limit=5, over_limit_source="playhq_public",
+    )
+    match = Match(
+        "id", "", "Fairfield-Liverpool U17 Blue", "Northern District U17 White",
+        "", "Round 1", "T20", "LIVE", "2026-09-27", "10:00 AM", live,
+    )
+
+    PlayCricketPublicSource._apply_target(match, 37, "playhq_public")
+
+    assert (live.target, live.target_source) == (37, "playhq_public")
+    assert (live.runs_needed, live.balls_remaining, live.required_run_rate) == (
+        7, 12, "3.50",
+    )
+    assert match.chase_line == "Target 37  |  Need 7 off 12  |  RRReq=3.50"
 
 
 def test_match_schedule_keeps_play_cricket_local_offset_in_mixed_region_feed():
