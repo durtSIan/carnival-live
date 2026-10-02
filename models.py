@@ -336,6 +336,18 @@ class Match:
         return self.live is not None
 
     @property
+    def is_pre_game(self) -> bool:
+        """The scorer has opened the match but no innings data exists yet."""
+        return bool(
+            not self.is_final
+            and self.status.upper() == "LIVE"
+            and self.live is not None
+            and not self.live.batting_team
+            and not self.live.score
+            and self.live.runs is None
+        )
+
+    @property
     def is_completed(self) -> bool:
         return self.is_final or self.status.upper() in {"COMPLETED", "FORFEITED"}
 

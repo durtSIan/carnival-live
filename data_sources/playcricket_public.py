@@ -225,7 +225,7 @@ class PlayCricketPublicSource:
         match.toss_winner = self._toss_winner(detail) or match.toss_winner
         match.toss_decision = self._toss_decision(detail, match.toss_winner)
         detail_status = str(detail.get("status") or "").upper()
-        match.result_text = str((detail.get("matchSummary") or {}).get("resultText") or "")
+        match.result_text = self._result_text(detail)
         match.is_forfeit = "forfeit" in match.result_text.lower() or detail_status == "FORFEITED"
         is_final = detail_status in {"COMPLETED", "FORFEITED", "ABANDONED"} or any(
             str(innings.get("inningsCloseType") or "").upper() == "END OF MATCH"
@@ -236,6 +236,45 @@ class PlayCricketPublicSource:
             match.result_winner, match.result_loser, match.performances = self.parse_final(detail)
             match.result_type = self._winner_result_type(detail, match.result_winner)
         return match
+
+    @classmethod
+    def _result_text(cls, detail: dict[str, Any]) -> str:
+        """Remove a dormant DLS label when no target or quota was adjusted."""
+        text = str((detail.get("matchSummary") or {}).get("resultText") or "")
+        if "DLS" not in text.upper() or cls._dls_adjusted_result(detail):
+            return text
+        return re.sub(r"\s*\(\s*DLS\s+Method\s*\)\s*$", "", text, flags=re.I).strip()
+
+    @staticmethod
+    def _dls_adjusted_result(detail: dict[str, Any]) -> bool:
+        innings = sorted(
+            detail.get("innings") or [],
+            key=lambda item: item.get("inningsOrder") or item.get("inningsNumber") or 0,
+        )
+        if len(innings) < 2:
+            return True
+        first, second = innings[0], innings[1]
+        first_runs = first.get("runsScored")
+        target_score = second.get("targetScore")
+        first_overs = first.get("targetOvers")
+        second_overs = second.get("targetOvers")
+        # Without explicit comparison fields, retain the source's DLS label.
+        if target_score is None and (first_overs is None or second_overs is None):
+            return True
+        try:
+            if target_score is not None and int(target_score) != int(first_runs) + 1:
+                return True
+        except (TypeError, ValueError):
+            return True
+        try:
+            if (
+                first_overs is not None and second_overs is not None
+                and float(first_overs) != float(second_overs)
+            ):
+                return True
+        except (TypeError, ValueError):
+            return True
+        return False
 
     def _recent_bowlers_by_innings(
         self, match_id: str, detail: dict[str, Any]

@@ -161,6 +161,27 @@ def test_temporary_break_is_status_not_completed_innings():
     assert live.innings_complete is False
 
 
+def test_dormant_dls_label_is_removed_but_revised_target_keeps_it():
+    detail = {
+        "matchSummary": {"resultText": "Western won by 5 wickets (DLS Method)"},
+        "innings": [
+            {
+                "inningsOrder": 1, "runsScored": 182, "targetOvers": 50,
+            },
+            {
+                "inningsOrder": 2, "runsScored": 183, "targetScore": 183,
+                "targetOvers": 50,
+            },
+        ],
+    }
+
+    assert PlayCricketPublicSource._result_text(detail) == "Western won by 5 wickets"
+
+    detail["innings"][1]["targetScore"] = 160
+    detail["innings"][1]["targetOvers"] = 40
+    assert PlayCricketPublicSource._result_text(detail).endswith("(DLS Method)")
+
+
 def test_second_innings_target_is_previous_total_plus_one():
     detail = json.loads((Path(__file__).parents[1] / "blue_mountains_match_with_scorecard.json").read_text())
     detail["matchType"] = "T20"
@@ -921,6 +942,27 @@ def test_display_mode_selector_and_local_persistence_are_present():
     assert 'data-display-mode="brief"' in styles and 'data-display-mode="standard"' in styles
     assert ".brief-target{display:inline;margin-left:7px;color:var(--ink);font-size:14px;font-weight:800}" in styles
     assert ".brief-required{display:inline;margin-left:7px}" in styles
+
+
+def test_pre_game_live_fixture_is_compact_and_not_labelled_live():
+    match = Match(
+        "id", "", "Newcastle Colts", "Central Coast U19 Men Colts", "",
+        "Round 3", "T20", "LIVE", "2026-09-30", "1:30 PM", LiveScore(),
+        competition_name="McDonald's Country Colts",
+    )
+
+    class FakeService:
+        def matches_for_date(self, *args): return [match]
+
+    body = create_app(FakeService()).test_client().get(
+        "/?date=2026-09-30"
+    ).get_data(as_text=True)
+
+    assert match.is_pre_game is True
+    assert "STARTING SOON" in body
+    assert "Awaiting first ball" in body
+    assert 'class="score-line"' not in body
+    assert 'class="card-sections"' not in body
 
 
 def test_pwa_manifest_metadata_and_service_worker_are_present():
