@@ -941,9 +941,15 @@ def test_pwa_manifest_metadata_and_service_worker_are_present():
 
     worker = client.get("/service-worker.js")
     assert worker.status_code == 200
-    assert b"carnival-live-v3" in worker.data
+    assert b"carnival-live-v4" in worker.data
     assert b"fetch(request)" in worker.data
     assert b".catch(() => caches.match(request))" in worker.data
+
+    offline = client.get("/static/offline.html")
+    assert offline.status_code == 200
+    assert b'addEventListener("online"' in offline.data
+    assert b"setInterval(probeConnection, 4000)" in offline.data
+    assert b"window.location.reload()" in offline.data
 
 
 def test_help_page_and_copyright_are_available_from_main_screens():

@@ -17,7 +17,36 @@
   <main>
     <span class="mark">CL</span>
     <h1>You are offline</h1>
-    <p>Carnival Live needs a connection for fresh scores. Reconnect and refresh to keep following the games.</p>
+    <p id="offline-message">Carnival Live needs a connection for fresh scores. This screen will reconnect automatically when coverage returns.</p>
   </main>
+  <script>
+    (function () {
+      const message = document.getElementById("offline-message");
+      let recovering = false;
+
+      function recover() {
+        if (recovering) return;
+        recovering = true;
+        message.textContent = "Connection restored. Returning to live scores…";
+        window.setTimeout(function () {
+          window.location.reload();
+        }, 1500);
+      }
+
+      function probeConnection() {
+        fetch("/service-worker.js?reconnect=" + Date.now(), { cache: "no-store" })
+          .then(function (response) {
+            if (response.ok) recover();
+          })
+          .catch(function () {});
+      }
+
+      window.addEventListener("online", function () {
+        window.setTimeout(probeConnection, 500);
+      });
+      window.setInterval(probeConnection, 4000);
+      if (navigator.onLine) probeConnection();
+    })();
+  </script>
 </body>
 </html>
