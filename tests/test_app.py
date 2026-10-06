@@ -429,8 +429,14 @@ def test_match_schedule_keeps_play_cricket_local_offset_in_mixed_region_feed():
             "startDateTime": "2026-07-26T10:00:00.0000000+10:00",
         }],
         "teams": [
-            {"displayName": "Townsville", "isHome": True},
-            {"displayName": "NSW O50", "isHome": False},
+            {
+                "displayName": "Townsville", "isHome": True,
+                "owningOrganisation": {"name": "Townsville Cricket Club"},
+            },
+            {
+                "displayName": "NSW O50", "isHome": False,
+                "owningOrganisation": {"name": "Cricket NSW Masters"},
+            },
         ],
     }
 
@@ -439,6 +445,8 @@ def test_match_schedule_keeps_play_cricket_local_offset_in_mixed_region_feed():
     assert match.start_date == "2026-07-26"
     assert match.start_time == "10:00 AM"
     assert match.schedule_dates == ["2026-07-26"]
+    assert match.home_organisation == "Townsville Cricket Club"
+    assert match.away_organisation == "Cricket NSW Masters"
 
 
 def test_utc_match_schedule_still_uses_configured_fallback_timezone():
@@ -1171,6 +1179,31 @@ def test_club_filter_ignores_rep_team_organisation_suffix():
     )
 
     assert [match.match_id for match in matches] == ["nd-u15"]
+
+
+def test_club_filter_uses_owning_organisation_when_team_name_is_unrelated():
+    selected = Match(
+        "selected", "", "First XI", "Visitors", "", "Round 1", "One Day",
+        "LIVE", "2026-10-07", "1:00 PM",
+        home_organisation="Example Hills Cricket Club",
+    )
+    unrelated = Match(
+        "unrelated", "", "First XI", "Other Visitors", "", "Round 1", "One Day",
+        "LIVE", "2026-10-07", "1:00 PM",
+        home_organisation="Another Cricket Club",
+    )
+
+    class FakeSource:
+        def get_matches(self, *_): return [selected, unrelated]
+        def add_scorecard(self, match): return match
+
+    matches = MatchService(FakeSource()).matches_for_grades(
+        ["grade"], "2026-10-07", "Australia/Sydney", "",
+        {"grade": "First Grade"},
+        {"grade": ["Example Hills Cricket Club"]},
+    )
+
+    assert [match.match_id for match in matches] == ["selected"]
 
 
 def test_multi_grade_club_filter_accepts_multiple_clubs():

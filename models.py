@@ -138,6 +138,8 @@ class Match:
     toss_decision: str = ""
     schedule_dates: list[str] = field(default_factory=list)
     pool_name: str = ""
+    home_organisation: str = ""
+    away_organisation: str = ""
     match_format: MatchFormat = field(init=False)
 
     def __post_init__(self) -> None:

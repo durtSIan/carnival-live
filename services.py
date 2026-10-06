@@ -49,8 +49,7 @@ class MatchService:
                     club
                     for club in clubs
                     if any(
-                        self._team_matches_club_filter(match.home_team, club)
-                        or self._team_matches_club_filter(match.away_team, club)
+                        self._match_matches_club_filter(match, club)
                         for match in grade_matches
                     )
                 ]
@@ -59,7 +58,7 @@ class MatchService:
                 if not match.competition_name and grade_names:
                     match.competition_name = grade_names.get(grade_id, "")
                 if filter_this_grade and not any(
-                    self._team_matches_club_filter(match.home_team, club) or self._team_matches_club_filter(match.away_team, club)
+                    self._match_matches_club_filter(match, club)
                     for club in clubs_for_grade
                 ):
                     continue
@@ -96,7 +95,24 @@ class MatchService:
     @classmethod
     def _team_matches_club_filter(cls, team_name: str, normalised_club: str) -> bool:
         team = cls._normalise_club_name(team_name)
-        return bool(normalised_club and (normalised_club in team or team in normalised_club))
+        return bool(
+            team
+            and normalised_club
+            and (normalised_club in team or team in normalised_club)
+        )
+
+    @classmethod
+    def _match_matches_club_filter(cls, match: Match, normalised_club: str) -> bool:
+        """Match a followed club against team labels and source ownership."""
+        return any(
+            cls._team_matches_club_filter(value, normalised_club)
+            for value in (
+                match.home_team,
+                match.away_team,
+                match.home_organisation,
+                match.away_organisation,
+            )
+        )
 
     @staticmethod
     def _visible(matches: list[Match], selected_date: str) -> list[Match]:

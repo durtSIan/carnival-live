@@ -587,6 +587,8 @@ class PlayCricketPublicSource:
             result_text=str(raw.get("resultText") or ""),
             is_forfeit="forfeit" in str(raw.get("resultText") or "").lower() or str(raw.get("status") or "").upper() == "FORFEITED",
             schedule_dates=schedule_dates,
+            home_organisation=str((home.get("owningOrganisation") or {}).get("name") or ""),
+            away_organisation=str((away.get("owningOrganisation") or {}).get("name") or ""),
         )
 
     def _team_from_id(self, detail: dict[str, Any], team_id: str) -> str:
