@@ -306,9 +306,13 @@ def test_masters_grade_does_not_assume_a_grade_wide_over_limit():
     assert match.match_format.overs_limit is None
     assert (match.live.current_over_limit, match.live.over_limit_source) == (None, "")
     assert match.live.target == 221
-    assert (match.live.runs_needed, match.live.balls_remaining) == (None, None)
+    assert (match.live.runs_needed, match.live.balls_remaining) == (121, None)
     assert match.live.required_run_rate == ""
     assert match.chase_line == "Target 221  |  Blue Mountains trail by 120 runs"
+    class FakeService:
+        def matches_for_date(self, *args): return [match]
+    body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
+    assert 'class="brief-target">Require 121 runs</small>' in body
 
 
 def test_playhq_public_summary_resolves_authoritative_over_limit():
@@ -562,7 +566,7 @@ def test_target_remains_during_live_end_of_innings_wait():
     class FakeService:
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/?date=2026-07-24").get_data(as_text=True)
-    assert 'class="brief-target">Tar 278' in body
+    assert 'class="brief-target">Require 17 runs' in body
     assert (
         '<div class="chase-details">Target 278  |  '
         'Mackay Masters O50 trail by 16 runs</div>'

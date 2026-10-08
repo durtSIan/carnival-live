@@ -890,14 +890,17 @@ class PlayCricketPublicSource:
         current_runs = int(runs) if runs is not None else None
         decimal_overs = self._decimal_overs(overs)
         required_run_rate = ""
-        runs_needed = None
+        runs_needed = (
+            max(target - int(runs), 0)
+            if target is not None and runs is not None
+            else None
+        )
         remaining_balls = None
         chase_metrics_confident = bool(
             match_format.is_limited_overs and target is not None and overs_limit is not None
         )
         if chase_metrics_confident and runs is not None:
             remaining_balls = max(overs_limit * 6 - self._balls_bowled(overs), 0)
-            runs_needed = max(target - int(runs), 0)
             if remaining_balls > 0:
                 required_run_rate = f"{runs_needed * 6 / remaining_balls:.2f}"
         summary_teams = (detail.get("matchSummary") or {}).get("teams") or []
