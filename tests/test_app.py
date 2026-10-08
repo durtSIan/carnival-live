@@ -950,6 +950,8 @@ def test_display_mode_selector_and_local_persistence_are_present():
     assert 'data-display-mode="brief"' in styles and 'data-display-mode="standard"' in styles
     assert ".brief-target{display:inline;margin-left:7px;color:var(--ink);font-size:14px;font-weight:800}" in styles
     assert ".brief-required{display:inline;margin-left:7px}" in styles
+    assert "width:104px;min-width:104px" in styles
+    assert ".display-mode-picker{display:flex;flex:none" in styles
 
 
 def test_pre_game_live_fixture_is_compact_and_not_labelled_live():
