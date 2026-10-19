@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Carnival Live">
   <defs>
-    <linearGradient id="lime" x1="70" y1="42" x2="448" y2="470" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#c7ff37"/>
-      <stop offset=".58" stop-color="#aaf22b"/>
-      <stop offset="1" stop-color="#7fdc24"/>
+    <linearGradient id="royal-blue" x1="70" y1="42" x2="448" y2="470" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#547cf0"/>
+      <stop offset=".58" stop-color="#4169e1"/>
+      <stop offset="1" stop-color="#2c4fba"/>
     </linearGradient>
     <linearGradient id="panel" x1="140" y1="128" x2="392" y2="384" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#13243a"/>
@@ -13,7 +13,7 @@
       <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#07111f" flood-opacity=".28"/>
     </filter>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#lime)"/>
+  <rect width="512" height="512" rx="112" fill="url(#royal-blue)"/>
   <path d="M102 343c76-91 171-152 289-189" fill="none" stroke="#07111f" stroke-width="30" stroke-linecap="round" opacity=".16"/>
   <circle cx="400" cy="111" r="42" fill="#07111f" opacity=".16"/>
   <path d="M383 78c-8 17-7 45 3 68M419 83c-12 13-20 37-18 64" fill="none" stroke="#07111f" stroke-width="9" stroke-linecap="round" opacity=".34"/>
