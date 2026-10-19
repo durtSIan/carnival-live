@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.svg') }}">
   <script>try{const mode=localStorage.getItem("carnivalLive.displayMode");if(["brief","standard","detailed"].includes(mode))document.documentElement.dataset.displayMode=mode}catch(e){}</script>
   <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css', v='5') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='final.css', v='2') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='final.css', v='3') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='chase.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='nav.css', v='2') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='forfeit.css') }}">
@@ -148,6 +148,7 @@
         <strong class="completed-team">{{ match.away_team }}</strong>
         <span>— {% if match.is_forfeit %}Forfeit{% else %}Completed{% endif %}</span>
         {% endif %}
+        {% if match.toss_winner %}<p class="toss-line completed-toss">(toss {{ match.toss_winner }}{% if match.toss_decision %}, {{ match.toss_decision }}{% endif %})</p>{% endif %}
         </div>
         {% if match.performances and not match.is_forfeit %}
         <div class="completed-detail">
