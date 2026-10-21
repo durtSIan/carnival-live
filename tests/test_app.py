@@ -997,7 +997,7 @@ def test_pwa_manifest_metadata_and_service_worker_are_present():
 
     worker = client.get("/service-worker.js")
     assert worker.status_code == 200
-    assert b"carnival-live-v5" in worker.data
+    assert b"carnival-live-v6" in worker.data
     assert b"fetch(request)" in worker.data
     assert b".catch(() => caches.match(request))" in worker.data
 
