@@ -13,7 +13,7 @@ def test_long_formats_keep_multi_innings_rules(name):
     assert fmt.overs_limit is None
 
 
-@pytest.mark.parametrize("days,label", [(2, "Two Day"), (3, "Three Day"), (4, "Four Day"), (5, "Five Day")])
+@pytest.mark.parametrize("days,label", [(2, "Two Day"), (3, "Two Day +"), (4, "Two Day +"), (5, "Two Day +")])
 def test_scheduled_playing_days_set_label(days, label):
     raw = {"id": "game", "matchType": "Two Day", "status": "LIVE", "teams": [{"displayName": "WA"}, {"displayName": "NSW"}],
            "matchSchedule": [{"matchDay": i, "startDateTime": f"2026-10-{18+i:02}T13:30:00+11:00"} for i in range(1, days + 1)]}
@@ -49,5 +49,5 @@ def test_scorecard_enriches_generic_fixture_duration(monkeypatch):
         {"startDateTime": f"2026-10-{day:02}T11:00:00+11:00"} for day in range(19, 23)]}
     monkeypatch.setattr(source, "_get", lambda *args, **kwargs: detail)
     source.add_scorecard(match)
-    assert match.match_type == "Four Day"
+    assert match.match_type == "Two Day +"
     assert match.match_format.is_multi_day

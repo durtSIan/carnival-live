@@ -569,7 +569,7 @@ class PlayCricketPublicSource:
             for item in raw.get("matchSchedule") or []
             if item.get("startDateTime")
         }
-        return {3: "Three Day", 4: "Four Day", 5: "Five Day"}.get(len(dates), fallback or name)
+        return "Two Day +" if len(dates) > 2 else (fallback or name)
 
     def _map_match(self, raw: dict[str, Any], timezone_name: str) -> Match:
         teams = raw.get("teams") or []
