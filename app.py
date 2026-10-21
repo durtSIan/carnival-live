@@ -5,11 +5,12 @@ import re
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from flask import Flask, redirect, render_template, request, send_from_directory, url_for
+from flask import Flask, g, redirect, render_template, request, send_from_directory, url_for
 
 from data_sources import PlayCricketPublicSource
 from favourites import FavouriteStore, SessionFavouriteStore
 from services import MatchService
+from usage import register_usage
 
 
 DEFAULT_GRADE_ID = "213859e0-488a-40c6-a642-dcf36df09f04"
@@ -138,6 +139,7 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
         SESSION_COOKIE_SAMESITE="Lax",
         SESSION_COOKIE_SECURE=os.getenv("CARNIVAL_SECURE_COOKIES", "").lower() in {"1", "true", "yes"},
     )
+    register_usage(app)
     source = setup_source or PlayCricketPublicSource()
     match_service = service or MatchService(source)
     favourites = favourite_store or SessionFavouriteStore()
@@ -172,6 +174,7 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
             else:
                 matches = match_service.matches_for_date(grade_id, selected_date, timezone_name)
         except Exception as exc:
+            g.usage_source_error = True
             app.logger.exception("Could not load live cricket data")
             matches, error = [], None
         return render_template(
@@ -187,6 +190,7 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
         elif len(query) >= 3:
             try: results = source.search_organisations(query)
             except Exception:
+                g.usage_source_error = True
                 app.logger.exception("Play Cricket organisation search failed")
                 error = "Search is temporarily unavailable. Please try again shortly."
         favourite_items = sorted_favourite_items(favourites.all())
@@ -212,6 +216,7 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
             grades = sorted(source.get_organisation_grades(organisation_id, selected), key=grade_setup_order) if selected else []
             club_team_grades = club_team_grade_options(source.get_organisation_teams(organisation_id, selected)) if selected and not grades and hasattr(source, "get_organisation_teams") else []
         except Exception:
+            g.usage_source_error = True
             app.logger.exception("Could not load organisation seasons/grades")
             seasons, grades, club_team_grades, error = [], [], [], "Could not load seasons and grades for this organisation."
         favourite_items = sorted_favourite_items(favourites.all())

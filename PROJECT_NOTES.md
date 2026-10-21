@@ -46,6 +46,19 @@ can be served for up to two minutes during a temporary upstream failure. Move
 this cache to Render Key Value before scaling Carnival Live across multiple
 instances, because separate processes do not share Python memory.
 
+## Usage monitoring implementation (21 October 2026)
+
+The private `/admin/usage` page now supports active devices, daily peak and
+distinct devices, server response times, and page/feed failures. Heartbeats
+count visible scores pages, deduplicate browsers across tabs, and expire after
+two minutes. No personal feed data or IP addresses are stored by this monitor.
+
+Activation is still required on Render: set `CARNIVAL_ADMIN_PASSWORD`, configure
+`CARNIVAL_USAGE_DB` on persistent storage, and verify counts survive a redeploy.
+The login username is `admin`. See README.md for the exact setup steps. The
+implementation uses SQLite on one service instance; adding more instances will
+require a shared database as well as a shared score-cache review.
+
 ## Proven public testing endpoints
 
 Grade match list:

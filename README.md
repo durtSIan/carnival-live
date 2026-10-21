@@ -78,7 +78,61 @@ The optional environment variables `CARNIVAL_MATCH_LIST_CACHE_SECONDS`,
 those values. Cache statistics are written to the application log every 100
 cache events.
 
-## Technology
+## Private usage monitoring
+
+Monitoring is disabled until BOTH `CARNIVAL_ADMIN_PASSWORD` and
+`CARNIVAL_USAGE_DB` are set in the environment. Never commit the password.
+The existing `CARNIVAL_SECRET_KEY` must stay stable between deployments.
+
+For the Render **carnival-live web service** (not the short-link static site):
+
+1. Use a paid web instance that supports a persistent disk. The free service's
+   filesystem does not preserve a SQLite database through redeploys or replacement.
+2. Add a persistent disk mounted at `/var/data`.
+3. Set `CARNIVAL_USAGE_DB=/var/data/carnival-usage.sqlite3`.
+4. Set `CARNIVAL_ADMIN_PASSWORD` to a strong, unique administrator password.
+5. Optionally set `CARNIVAL_USAGE_TIMEZONE=Australia/Sydney` (the default).
+   This is independent of the cricket fixture display timezone.
+6. Redeploy and open `https://carnival-live.onrender.com/admin/usage`.
+   The browser login username is `admin`; use the password from step 4.
+   Always access the page over HTTPS. No link to this page is shown to viewers.
+7. Open a scores page, then refresh the private usage page: one device should
+   appear. Check again after a redeploy to verify storage persistence.
+
+For local testing, use an absolute writable database path outside the repository
+and the same two environment variables. Database files are excluded from Git.
+Removing the password disables monitoring and the heartbeat script.
+
+The scores page sends a small heartbeat roughly once a minute while visible.
+A random browser-local identifier is hashed with a server secret and the local
+date before storage. The monitor records no IP addresses, user agent strings,
+names, feed selections or URLs. Hosting access logs are separate from this
+monitor. Multiple tabs are deduplicated; separate browsers, private sessions
+and devices can count separately. Blocked browser storage or JavaScript will
+undercount. Activity reports are estimates, not a count of people.
+
+Active devices checked in within two minutes today. Peak and unique counts use
+the configured reporting timezone. Daily hashed identifiers are retained for
+today and yesterday, with older rows removed on subsequent heartbeats; aggregate
+daily totals are retained for 90 days. The page shows the latest 14 days.
+Nothing from before activation can be counted retrospectively.
+
+Page health covers scores and setup requests, not assets or monitoring requests.
+It reports server response time and counts HTTP 5xx or caught feed failures.
+Cached stale scores or missing fields can still look like a successful response.
+Database failures are logged without breaking the scores page. If configured
+storage cannot open at startup, monitoring stays disabled and the private page
+reports storage unavailable after authentication.
+
+SQLite supports concurrent workers on **one instance sharing that disk**. This
+is not a multi-instance analytics backend. Render disks restrict scaling; use a
+shared database before adding instances. The existing score cache is still
+process-local, so increasing worker counts needs a separate caching review.
+
+Run monitoring checks with `python -m pytest tests/test_usage.py -q` and
+`node tests/test_usage_client.js`.
+
+## Technology stack
 
 - Python
 - Flask

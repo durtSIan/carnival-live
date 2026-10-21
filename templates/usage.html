@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta http-equiv="refresh" content="60">
+  <title>Private usage · Carnival Live</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='usage.css') }}">
+</head>
+<body><main>
+  <a href="/">← Scores</a>
+  <h1>Carnival Live usage</h1>
+  <p>{{ stats.day }} · {{ stats.timezone }} · Refreshes every minute</p>
+  <section class="metrics" aria-label="Today's usage">
+    <article><strong>{{ stats.active }}</strong><span>Active devices now</span></article>
+    <article><strong>{{ stats.peak }}</strong><span>Today's peak together</span></article>
+    <article><strong>{{ stats.unique }}</strong><span>Devices today</span></article>
+    <article><strong>{{ stats.requests }}</strong><span>Page requests today</span></article>
+    <article><strong>{{ stats.average_ms }} ms</strong><span>Average server response</span></article>
+    <article><strong>{{ stats.max_ms }} ms</strong><span>Slowest server response</span></article>
+    <article><strong>{{ stats.errors }}</strong><span>Page errors / feed failures</span></article>
+  </section>
+  <p>Active means a visible scores page checked in within two minutes. Multiple tabs in one browser count once; different devices or browsers count separately. Backgrounded phones drop out. These are estimates, not a count of people.</p>
+  <p>Response figures cover scores and setup requests, including automatic refreshes. They measure server time, not mobile download time. Errors include server failures and reported feed failures; they cannot detect every stale or incomplete upstream score.</p>
+  <h2>Recent daily totals</h2>
+  <table><thead><tr><th>Date</th><th>Peak</th><th>Devices</th><th>Requests</th><th>Errors</th></tr></thead>
+  <tbody>{% for day, peak, devices, requests, errors in stats.history %}<tr><td>{{ day }}</td><td>{{ peak }}</td><td>{{ devices }}</td><td>{{ requests }}</td><td>{{ errors }}</td></tr>{% endfor %}</tbody></table>
+  <p>No names, email addresses, IP addresses, feed selections or browsing paths are stored by this monitor. Daily browser hashes are removed after two days; aggregate statistics are retained for 90 days.</p>
+</main></body></html>

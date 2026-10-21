@@ -10,6 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="Carnival Live">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Carnival Live</title>
+  {% if usage_enabled %}<script defer src="{{ url_for('static', filename='usage.js', v='1') }}"></script>{% endif %}
   <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
   <link rel="icon" href="{{ url_for('static', filename='icon.svg', v='green-2') }}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.png', v='green-2') }}">
