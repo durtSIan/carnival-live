@@ -208,6 +208,7 @@ class PlayCricketPublicSource:
         )
         explicit_limit = self._explicit_overs_limit(detail)
         grade_limit = self.grade_over_limits.get(self._match_grade_ids.get(match.match_id, ""))
+        match.match_type = self._scheduled_match_type(detail, match.match_type)
         match.match_format = MatchFormat.from_source(
             match.match_type or str(detail.get("matchType") or ""),
             explicit_limit or grade_limit,
@@ -554,6 +555,22 @@ class PlayCricketPublicSource:
             return parsed.astimezone(ZoneInfo(fallback_timezone))
         return parsed
 
+    @staticmethod
+    def _scheduled_match_type(raw: dict[str, Any], fallback: str = "") -> str:
+        name = str(raw.get("matchType") or fallback).strip()
+        compact = re.sub(r"[^A-Z0-9]", "", name.upper())
+        # The public feed can call all multi-day cricket "Two Day". Its list
+        # of scheduled playing dates distinguishes longer games reliably.
+        # Preserve explicit formats and never infer days from elapsed time.
+        if compact not in {"TWODAY", "2DAY", "MULTIDAY", "TEST", "TESTMATCH"}:
+            return name
+        dates = {
+            str(item.get("startDateTime") or "")[:10]
+            for item in raw.get("matchSchedule") or []
+            if item.get("startDateTime")
+        }
+        return {3: "Three Day", 4: "Four Day", 5: "Five Day"}.get(len(dates), fallback or name)
+
     def _map_match(self, raw: dict[str, Any], timezone_name: str) -> Match:
         teams = raw.get("teams") or []
         home = next((x for x in teams if x.get("isHome") is True), teams[0] if teams else {})
@@ -579,7 +596,7 @@ class PlayCricketPublicSource:
             away_team=away_name,
             toss_winner=next((self._team_name(x) for x in teams if x.get("wonToss") is True), ""),
             round_name=str((raw.get("round") or {}).get("name") or ""),
-            match_type=str(raw.get("matchType") or ""),
+            match_type=self._scheduled_match_type(raw),
             status=str(raw.get("status") or ""),
             start_date=local.date().isoformat() if local else "",
             start_time=local.strftime("%I:%M %p").lstrip("0") if local else "",

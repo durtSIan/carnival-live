@@ -30,7 +30,8 @@ class MatchFormat:
     def from_source(cls, match_type: str, overs_limit: int | None = None) -> "MatchFormat":
         name = str(match_type or "").strip()
         compact = re.sub(r"[^A-Z0-9]", "", name.upper())
-        if compact in {"TWODAY", "2DAY", "MULTIDAY", "TEST"} or "TWODAY" in compact:
+        if (compact in {"MULTIDAY", "TEST", "TESTMATCH", "FIRSTCLASS"}
+                or re.fullmatch(r"(?:TWO|THREE|FOUR|FIVE|[2-5])DAY(?:MATCH)?", compact)):
             return cls(name, "multi_day", None)
         t_match = re.fullmatch(r"T(\d+)", compact)
         inferred = int(t_match.group(1)) if t_match else {"TWENTY20": 20, "ODI": 50}.get(compact)
