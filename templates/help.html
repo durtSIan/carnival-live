@@ -74,6 +74,7 @@
       <p>Cricket data, competition names and team names remain the property of their respective owners.</p>
     </section>
 
+    {% if feedback_enabled %}<section class="help-card"><h2>Having trouble?</h2><p>Carnival Live is still being developed. Spotted something wrong? <a href="{{ url_for('feedback') }}">Report a problem</a> to Ian. Reports are not monitored live.</p></section>{% endif %}
     {% include "_copyright.html" %}
   </main>
 </body>

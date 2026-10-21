@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en"><head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Private feedback · Carnival Live</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='feedback.css') }}">
+</head><body><main>
+  <nav><a href="{{ url_for('usage_admin') }}">Usage statistics</a> · <a href="{{ url_for('dashboard') }}">Scores</a></nav>
+  <h1>Feedback inbox</h1>
+  <p>Latest 100 reports · {{ timezone }} · Reports kept for 90 days. Refresh to check for new reports. No email notifications are sent.</p>
+  {% for report in reports %}
+  <article class="report">
+    <h2>{{ report.created }}</h2>
+    <p class="message">{{ report.message }}</p>
+    {% if report.match_url %}<p><strong>Match link:</strong> {{ report.match_url }}</p>{% endif %}
+    {% if report.email %}<p><strong>Reply email:</strong> {{ report.email }}</p>{% endif %}
+  </article>
+  {% else %}<p>No reports yet.</p>{% endfor %}
+</main></body></html>

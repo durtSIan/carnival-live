@@ -79,6 +79,17 @@ class UsageStore:
                     max_ms=round(maximum), history=history)
 
 
+def admin_auth(password):
+    if not password:
+        return Response("Administrator access is not configured.", 503)
+    auth = request.authorization
+    if not auth or auth.username != "admin" or not secrets.compare_digest(
+            (auth.password or "").encode(), password.encode()):
+        return Response("Administrator login required.", 401,
+                        {"WWW-Authenticate": 'Basic realm="Carnival Live admin", charset="UTF-8"'})
+    return None
+
+
 def register_usage(app):
     password = os.getenv("CARNIVAL_ADMIN_PASSWORD", "")
     path = os.getenv("CARNIVAL_USAGE_DB", "")
@@ -100,7 +111,7 @@ def register_usage(app):
 
     @app.after_request
     def finish_usage_timer(response):
-        if request.path.startswith("/admin/usage") or request.path == "/usage/heartbeat":
+        if request.path.startswith("/admin/") or request.path in {"/usage/heartbeat", "/feedback"}:
             response.headers["Cache-Control"] = "no-store"
         if store and (request.path == "/" or request.path.startswith("/setup")):
             try:
@@ -132,13 +143,9 @@ def register_usage(app):
 
     @app.get("/admin/usage")
     def usage_admin():
-        if not password:
-            return "Usage monitoring is not configured.", 503
-        auth = request.authorization
-        if not auth or auth.username != "admin" or not secrets.compare_digest(
-                (auth.password or "").encode(), password.encode()):
-            return Response("Administrator login required.", 401,
-                            {"WWW-Authenticate": 'Basic realm="Carnival Live usage", charset="UTF-8"'})
+        denied = admin_auth(password)
+        if denied is not None:
+            return denied
         if store is None:
             return "Usage storage is unavailable. Check CARNIVAL_USAGE_DB and the service logs.", 503
         try:

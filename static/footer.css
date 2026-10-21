@@ -9,3 +9,6 @@ footer {
 footer .copyright {
   text-align: center;
 }
+
+footer .feedback-note {font-size:12px;line-height:1.5;margin-bottom:8px;max-width:520px}
+footer .feedback-note a {color:var(--cyan);white-space:nowrap}

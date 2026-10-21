@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en"><head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Report a problem · Carnival Live</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='feedback.css') }}">
+</head><body><main>
+  <a href="{{ url_for('dashboard') }}">← Scores</a>
+  <h1>Report a problem</h1>
+  {% if unavailable %}
+  <p>Problem reporting is not available just yet. Please try again later.</p>
+  {% elif sent %}
+  <h2>Thank you—your report has been saved.</h2>
+  <p>Ian can read it in the private feedback inbox. Reports are not monitored live.</p>
+  <a href="{{ url_for('dashboard') }}">Return to scores</a>
+  {% else %}
+  <p>Carnival Live is still being developed. Having trouble or spotted something wrong? Please let me know.</p>
+  <p>Reports go to Ian's private feedback inbox. It is not monitored live. If you would like a reply, leave your email address.</p>
+  {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+  <form method="post" action="{{ url_for('feedback') }}">
+    <input type="hidden" name="token" value="{{ token }}">
+    <div class="trap" aria-hidden="true"><label>Leave blank <input name="website" tabindex="-1" autocomplete="off"></label></div>
+    <label for="message">What went wrong?</label>
+    <p class="hint" id="message-hint">Tell us what you expected and what happened. Include the teams or grade if relevant. Please avoid sensitive personal information.</p>
+    <textarea id="message" name="message" rows="7" minlength="10" maxlength="4000" required aria-describedby="message-hint">{{ values.message }}</textarea>
+    <label for="match_url">Match link (optional)</label>
+    <input id="match_url" name="match_url" type="url" maxlength="1000" placeholder="https://play.cricket.com.au/match/…" value="{{ values.match_url }}">
+    <label for="email">Your email for a reply (optional)</label>
+    <input id="email" name="email" type="email" maxlength="254" autocomplete="email" value="{{ values.email }}">
+    <p class="hint">Your message and any contact details are visible only to the administrator and are kept for up to 90 days. We do not attach your saved feed or usage identifier.</p>
+    <button type="submit">Send report</button>
+  </form>
+  {% endif %}
+</main></body></html>

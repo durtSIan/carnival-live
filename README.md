@@ -132,7 +132,32 @@ process-local, so increasing worker counts needs a separate caching review.
 Run monitoring checks with `python -m pytest tests/test_usage.py -q` and
 `node tests/test_usage_client.js`.
 
-## Technology stack
+## Problem reports and private feedback
+
+Once monitoring storage is configured, the scores-page footer and Help & About
+show **Report a problem**. There are no popups. The form accepts a 10–4,000
+character message, optional reply email and optional match URL. It explicitly
+states that the inbox is not monitored live. Submissions are stored in the same
+persistent database configured by `CARNIVAL_USAGE_DB`; nothing is sent by email.
+
+Open `/admin/feedback` or follow **Feedback inbox** on the private usage page.
+Use the same `admin` username and `CARNIVAL_ADMIN_PASSWORD`. The inbox shows the
+newest 100 reports. Read the optional email address there to reply separately.
+Submitted text is escaped and match links are displayed as text, not fetched.
+
+Forms use a session-bound CSRF token, duplicate-submission protection, a hidden
+spam field, length limits, and a one-report-per-minute browser limit. A global
+500-reports-per-24-hours cap bounds automated submissions. No IP address or
+usage-monitor identifier is attached. A separate hashed feedback sender token
+supports throttling. Reports, including optional contact details, are removed
+after 90 days when the inbox is opened or another report is saved. Do not put
+sensitive personal information in reports.
+
+If storage is not configured, report links are hidden and `/feedback` explains
+that reporting is unavailable. Failed saves never show the success message:
+the form retains the entered text so it can be retried.
+
+## Technology
 
 - Python
 - Flask

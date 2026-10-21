@@ -59,6 +59,15 @@ The login username is `admin`. See README.md for the exact setup steps. The
 implementation uses SQLite on one service instance; adding more instances will
 require a shared database as well as a shared score-cache review.
 
+## Problem-report feedback (21 October 2026)
+
+Implemented a quiet report link in the scores footer and Help & About, a form
+with optional reply email and match URL, and `/admin/feedback` using the same
+administrator login and persistent database as usage monitoring. No popups or
+email notifications. Links only appear once storage is configured. Reports are
+retained for 90 days and the private inbox displays the latest 100. Render
+activation remains pending the password and persistent-disk configuration.
+
 ## Proven public testing endpoints
 
 Grade match list:

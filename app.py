@@ -11,6 +11,7 @@ from data_sources import PlayCricketPublicSource
 from favourites import FavouriteStore, SessionFavouriteStore
 from services import MatchService
 from usage import register_usage
+from feedback import register_feedback
 
 
 DEFAULT_GRADE_ID = "213859e0-488a-40c6-a642-dcf36df09f04"
@@ -140,6 +141,7 @@ def create_app(service: MatchService | None = None, setup_source=None, favourite
         SESSION_COOKIE_SECURE=os.getenv("CARNIVAL_SECURE_COOKIES", "").lower() in {"1", "true", "yes"},
     )
     register_usage(app)
+    register_feedback(app)
     source = setup_source or PlayCricketPublicSource()
     match_service = service or MatchService(source)
     favourites = favourite_store or SessionFavouriteStore()
