@@ -1534,7 +1534,7 @@ def test_setup_search_season_grade_and_favourite_flow(tmp_path):
     setup = client.get("/setup").get_data(as_text=True)
     assert "Remove" in setup and "View live scores" in setup
     assert "Set up your live feed" in setup
-    assert "Your live feed" in setup and "Add to your feed" in setup
+    assert "Your Current Live Feed Selections" in setup and "Add to your feed" in setup
     assert "Saved grades" in setup
     assert "All matches" in setup
     assert "Advanced: enter grade URL or ID" not in setup
@@ -1619,7 +1619,7 @@ def test_setup_summary_shows_club_filter_without_saved_grades(tmp_path):
     store = FavouriteStore(tmp_path / "favourites.json")
     store.add_club_filter("Darwin Cricket Club")
     body = create_app(FakeService(), favourite_store=store).test_client().get("/setup").get_data(as_text=True)
-    assert "Your live feed" in body
+    assert "Your Current Live Feed Selections" in body
     assert "Clubs / teams" in body and "Darwin Cricket Club" in body
     assert "No clubs, competitions or grades saved yet" not in body
 
@@ -1874,6 +1874,30 @@ def test_dashboard_uses_all_saved_favourites_when_no_grade_is_requested(tmp_path
         def matches_for_date(self, *args):
             raise AssertionError("single-grade dashboard should not be used")
     assert create_app(FakeService(), favourite_store=store).test_client().get("/").status_code == 200
+
+
+def test_browser_feed_includes_state_competition_after_ten_other_grades(monkeypatch):
+    monkeypatch.delenv("CARNIVAL_GRADE_ID", raising=False)
+    shield = "d83892f9-21ae-48c4-a8fa-419e6e0c2322"
+    other_ids = [f"00000000-0000-0000-0000-{i:012x}" for i in range(12)]
+    class Service:
+        def matches_for_grades(self, grade_ids, date, timezone, club, grade_names, grade_clubs):
+            assert len(grade_ids) == 13
+            assert set(grade_ids) == set(other_ids + [shield])
+            assert grade_names[shield] == "Sheffield Shield"
+            assert grade_clubs[shield] is None
+            return [Match("shield-match", "", "Western Australia", "New South Wales", "", "Round 2",
+                          "Two Day +", "STUMPS", "2026-10-19", "1:30 PM", competition_name="Sheffield Shield")]
+    client = create_app(Service()).test_client()
+    for index, grade_id in enumerate(other_ids):
+        assert client.post("/setup/favourite", data={"grade_id": grade_id, "grade_name": f"U{10+index} Grade"}).status_code == 302
+    client.post("/setup/favourite", data={"grade_id": shield, "grade_name": "Sheffield Shield", "organisation_name": "Cricket Australia State Competitions"})
+    setup = client.get("/setup")
+    assert "13 grade selections" in setup.text
+    assert "Cricket Australia State Competitions" in setup.text
+    dashboard = client.get("/?date=2026-10-22")
+    assert dashboard.status_code == 200
+    assert "Western Australia" in dashboard.text and "New South Wales" in dashboard.text
 
 
 def test_favourite_grade_selection_ignores_duplicates_and_bad_ids():

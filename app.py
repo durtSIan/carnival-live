@@ -97,7 +97,7 @@ def favourite_grade_selection(items: list[dict[str, str]]) -> tuple[list[str], d
             continue
         grade_ids.append(grade_id)
         grade_names[grade_id] = str(item.get("grade_name") or grade_id)
-    return grade_ids[:10], grade_names
+    return grade_ids, grade_names
 
 def favourite_grade_scopes(items: list[dict[str, str]]) -> dict[str, list[str] | None]:
     """Map explicit scopes; omit legacy grades so old club filtering survives."""
