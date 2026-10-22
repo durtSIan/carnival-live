@@ -12,7 +12,7 @@
   <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
   <link rel="icon" href="{{ url_for('static', filename='icon.svg', v='green-2') }}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.png', v='green-2') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='setup.css', v='3') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='setup.css', v='4') }}">
   <script defer src="{{ url_for('static', filename='pwa.js') }}"></script>
 </head>
 <body>
@@ -28,7 +28,7 @@
 
     <section class="feed-summary">
       <div class="feed-overview">
-        <h2>Your live feed</h2>
+        <h2>Your Current Live Feed Selections</h2>
         {% if favourites or club_filters %}
           <p>{{ favourites|length }} grade selection{% if favourites|length != 1 %}s{% endif %}{% if favourite_organisations %} · {{ favourite_organisations|length }} competition{% if favourite_organisations|length != 1 %}s{% endif %}{% endif %}{% if club_filters %} · {{ club_filters|length }} followed club{% if club_filters|length != 1 %}s{% endif %}{% endif %}</p>
         {% else %}
