@@ -209,6 +209,11 @@ class PlayCricketPublicSource:
         explicit_limit = self._explicit_overs_limit(detail)
         grade_limit = self.grade_over_limits.get(self._match_grade_ids.get(match.match_id, ""))
         match.match_type = self._scheduled_match_type(detail, match.match_type)
+        if detail.get("matchSchedule"):
+            # Detail can supply the full schedule when the fixture list did not.
+            detail_dates = self._schedule_dates(detail, os.getenv("CARNIVAL_TIMEZONE", "Australia/Darwin"))
+            if len(set(detail_dates)) > len(set(match.schedule_dates)):
+                match.schedule_dates = detail_dates
         match.match_format = MatchFormat.from_source(
             match.match_type or str(detail.get("matchType") or ""),
             explicit_limit or grade_limit,
@@ -569,7 +574,17 @@ class PlayCricketPublicSource:
             for item in raw.get("matchSchedule") or []
             if item.get("startDateTime")
         }
-        return "Two Day +" if len(dates) > 2 else (fallback or name)
+        labels = {2: "Two Day", 3: "Three Day", 4: "Four Day", 5: "Five Day"}
+        return labels.get(len(dates), f"{len(dates)} Day") if len(dates) > 2 else (fallback or name)
+
+    @classmethod
+    def _schedule_dates(cls, raw: dict[str, Any], timezone_name: str) -> list[str]:
+        dates = []
+        for item in raw.get("matchSchedule") or []:
+            value = str(item.get("startDateTime") or "")
+            if value:
+                dates.append(cls._schedule_datetime(value, timezone_name).date().isoformat())
+        return sorted(set(dates))
 
     def _map_match(self, raw: dict[str, Any], timezone_name: str) -> Match:
         teams = raw.get("teams") or []
@@ -578,14 +593,7 @@ class PlayCricketPublicSource:
         schedule = raw.get("matchSchedule") or []
         start = (schedule[0] if schedule else {}).get("startDateTime") or ""
         local = self._schedule_datetime(start, timezone_name) if start else None
-        schedule_dates = []
-        for item in schedule:
-            value = str(item.get("startDateTime") or "")
-            if not value:
-                continue
-            schedule_dates.append(
-                self._schedule_datetime(value, timezone_name).date().isoformat()
-            )
+        schedule_dates = self._schedule_dates(raw, timezone_name)
         match_id = str(raw.get("id") or "")
         home_name, away_name = self._team_name(home), self._team_name(away)
         slug = re.sub(r"[^a-z0-9]+", "-", f"{home_name}-{away_name}".lower()).strip("-")

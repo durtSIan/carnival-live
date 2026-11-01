@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
 import re
 
 
@@ -329,6 +329,28 @@ class Match:
 
     @property
     def display_date(self) -> str:
+        if self.match_format.is_multi_day:
+            dates = []
+            for value in self.schedule_dates:
+                try:
+                    dates.append(date.fromisoformat(value))
+                except ValueError:
+                    continue
+            dates = sorted(set(dates))
+            if len(dates) > 1:
+                first, last = dates[0], dates[-1]
+                consecutive = all(right - left == timedelta(days=1) for left, right in zip(dates, dates[1:]))
+                if first.year != last.year:
+                    if consecutive:
+                        return f"{first:%d %b %y}–{last:%d %b %y}"
+                    return ", ".join(f"{item:%d %b %y}" for item in dates)
+                if first.month == last.month:
+                    if consecutive:
+                        return f"{first:%d}–{last:%d %b}"
+                    return f"{', '.join(f'{item:%d}' for item in dates[:-1])} & {last:%d %b}"
+                if consecutive:
+                    return f"{first:%d %b}–{last:%d %b}"
+                return " & ".join(f"{item:%d %b}" for item in dates)
         try:
             return date.fromisoformat(self.start_date).strftime("%d-%b-%y")
         except ValueError:
