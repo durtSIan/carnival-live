@@ -342,14 +342,14 @@ class Match:
                 consecutive = all(right - left == timedelta(days=1) for left, right in zip(dates, dates[1:]))
                 if first.year != last.year:
                     if consecutive:
-                        return f"{first:%d %b %y}–{last:%d %b %y}"
+                        return f"{first:%d %b %y} – {last:%d %b %y}"
                     return ", ".join(f"{item:%d %b %y}" for item in dates)
                 if first.month == last.month:
                     if consecutive:
-                        return f"{first:%d}–{last:%d %b}"
+                        return f"{first:%d} – {last:%d %b}"
                     return f"{', '.join(f'{item:%d}' for item in dates[:-1])} & {last:%d %b}"
                 if consecutive:
-                    return f"{first:%d %b}–{last:%d %b}"
+                    return f"{first:%d %b} – {last:%d %b}"
                 return " & ".join(f"{item:%d %b}" for item in dates)
         try:
             return date.fromisoformat(self.start_date).strftime("%d-%b-%y")
