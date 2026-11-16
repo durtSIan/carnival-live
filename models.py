@@ -114,6 +114,13 @@ class TeamPerformance:
     overs: int | float | str = ""
     innings: list[InningsPerformance] = field(default_factory=list)
 
+    @property
+    def legal_balls(self) -> int | None:
+        match = re.fullmatch(r"(\d+)(?:\.([0-5]))?", str(self.overs))
+        if not match:
+            return None
+        return int(match[1]) * 6 + int(match[2] or 0)
+
 
 @dataclass
 class Match:
@@ -266,15 +273,18 @@ class Match:
 
     def final_score_for(self, team_name: str) -> str:
         """Return a completed-match score without exposing source layout details."""
+        performance = self.final_performance_for(team_name)
+        return performance.score if performance else ""
+
+    def final_performance_for(self, team_name: str) -> TeamPerformance | None:
         wanted = team_name.strip().casefold()
-        performance = next(
+        return next(
             (
                 item for item in self.performances
                 if item.team_name.strip().casefold() == wanted
             ),
             None,
         )
-        return performance.score if performance else ""
 
     @property
     def result_winner_score(self) -> str:

@@ -1105,7 +1105,7 @@ def test_abandoned_match_with_play_is_retained_as_a_drawn_result():
         "/?grade_id=grade-u14&date=2026-09-27&timezone=Australia/Sydney"
     ).get_data(as_text=True)
     assert "Northern District U14" in body
-    assert '<strong class="completed-score">4-50</strong>' in body
+    assert '4-50 <small>(13.2 ov, 80 legal balls)</small>' in body
     assert "Match drawn" in body
 
 
@@ -1327,8 +1327,8 @@ def test_completed_result_supports_brief_standard_and_detailed_content():
     body = create_app(FakeService()).test_client().get("/?date=2026-06-19").get_data(as_text=True)
     assert '<strong class="completed-team">Alpha</strong>' in body
     assert '<strong class="completed-team">Beta</strong>' in body
-    assert '<strong class="completed-score">2-100</strong>' in body
-    assert '<strong class="completed-score">8-90</strong>' in body
+    assert '<strong class="completed-score completed-limited-score">2-100 <small>(20 ov, 120 legal balls)</small>' in body
+    assert '<strong class="completed-score completed-limited-score">8-90 <small>(20 ov, 120 legal balls)</small>' in body
     assert "<span>def</span>" in body and "<span>by 10 runs</span>" in body
     assert "outright" not in body
     assert all(name in body for name in ["A One", "A Bowl", "B One", "B Bowl"])
@@ -1337,6 +1337,7 @@ def test_completed_result_supports_brief_standard_and_detailed_content():
 
     display_css = (Path(__file__).parents[1] / "static" / "display-mode.css").read_text()
     assert ".brief-target,.brief-required,.completed-score,.completed-detail{display:none}" in display_css
+    assert 'html[data-display-mode="brief"] .completed-limited-score{display:inline}' in display_css
     assert 'html[data-display-mode="standard"] .completed-score' in display_css
     assert 'html[data-display-mode="detailed"] .completed-detail' in display_css
 

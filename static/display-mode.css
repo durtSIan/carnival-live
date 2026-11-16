@@ -19,6 +19,8 @@ html[data-display-mode="brief"] .final-stats{display:none}
 html[data-display-mode="brief"] .chase-details,
 html[data-display-mode="brief"] .score-badges{display:none}
 .brief-target,.brief-required,.completed-score,.completed-detail{display:none}
+html[data-display-mode="brief"] .completed-limited-score{display:inline}
+.completed-limited-score small{font-size:.9em;font-weight:500;color:var(--muted)}
 html[data-display-mode="brief"] .brief-target{display:inline;margin-left:7px;color:var(--ink);font-size:14px;font-weight:800}
 html[data-display-mode="brief"] .brief-required{display:inline;margin-left:7px}
 html[data-display-mode="standard"] .completed-score,
