@@ -31,7 +31,7 @@
 <body>
   {% macro completed_score(team, limited_overs) -%}
     {% if team and team.score %}
-    <strong class="completed-score{% if limited_overs %} completed-limited-score{% endif %}">{{ team.score }}{% if limited_overs and team.legal_balls is not none %} <small>({{ team.overs }} ov, {{ team.legal_balls }} legal ball{% if team.legal_balls != 1 %}s{% endif %})</small>{% endif %}</strong>
+    <strong class="completed-score{% if limited_overs %} completed-limited-score{% endif %}">{{ team.score }}{% if limited_overs and team.overs not in (none, '') %} <small>({{ team.overs }})</small>{% endif %}</strong>
     {% endif %}
   {%- endmacro %}
   {% set display_modes = [ ('brief', 'Brief', 'Team scores only'), ('standard', 'Standard', 'Current batters and bowlers'), ('detailed', 'Detailed', 'Batters, bowlers and high achievers') ] %}

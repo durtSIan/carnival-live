@@ -114,13 +114,6 @@ class TeamPerformance:
     overs: int | float | str = ""
     innings: list[InningsPerformance] = field(default_factory=list)
 
-    @property
-    def legal_balls(self) -> int | None:
-        match = re.fullmatch(r"(\d+)(?:\.([0-5]))?", str(self.overs))
-        if not match:
-            return None
-        return int(match[1]) * 6 + int(match[2] or 0)
-
 
 @dataclass
 class Match:
