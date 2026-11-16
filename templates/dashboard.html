@@ -22,14 +22,36 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='forfeit.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='status.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='compact.css', v='2') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='display-mode.css', v='6') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='display-mode.css', v='7') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='footer.css', v='2') }}">
-  <script defer src="{{ url_for('static', filename='display-mode.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='display-mode.js', v='2') }}"></script>
   <script defer src="{{ url_for('static', filename='batter-order.js') }}"></script>
   <script defer src="{{ url_for('static', filename='pwa.js') }}"></script>
 </head>
 <body>
-  <header><span class="mark">CL</span><h1>Carnival Live</h1><label class="display-mode-picker"><span>Display</span><select id="display-mode" aria-label="Display mode"><option value="brief">Brief</option><option value="standard">Standard</option><option value="detailed">Detailed</option></select></label><a class="setup-link" href="{{ url_for('setup_search') }}">{% if has_saved_feed %}Edit Feed{% else %}Set up feed{% endif %}</a><span class="pulse"><i></i> LIVE</span></header>
+  {% set display_modes = [ ('brief', 'Brief', 'Team scores only'), ('standard', 'Standard', 'Current batters and bowlers'), ('detailed', 'Detailed', 'Batters, bowlers and high achievers') ] %}
+  <header>
+    <span class="mark">CL</span><h1>Carnival Live</h1>
+    <div class="display-mode-picker">
+      <span class="display-mode-label">Display</span>
+      <select id="display-mode" aria-label="Display mode">
+        {% for value, label, description in display_modes %}<option value="{{ value }}"{% if value == 'standard' %} selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+      <button type="button" id="display-mode-trigger" aria-haspopup="dialog" aria-controls="display-mode-dialog" aria-label="Display mode: Standard" hidden>Standard</button>
+    </div>
+    <a class="setup-link" href="{{ url_for('setup_search') }}">{% if has_saved_feed %}Edit Feed{% else %}Set up feed{% endif %}</a><span class="pulse"><i></i> LIVE</span>
+  </header>
+  <dialog id="display-mode-dialog" class="display-mode-dialog" aria-labelledby="display-mode-title">
+    <div class="display-mode-dialog-head">
+      <h2 id="display-mode-title">Display mode</h2>
+      <form method="dialog"><button type="submit" aria-label="Close display options">×</button></form>
+    </div>
+    {% for value, label, description in display_modes %}
+    <button type="button" class="display-mode-choice" data-mode="{{ value }}" aria-pressed="{{ 'true' if value == 'standard' else 'false' }}">
+      <strong>{{ label }}</strong><span>{{ description }}</span>
+    </button>
+    {% endfor %}
+  </dialog>
   <main>
     {% if error %}<div class="notice error">{{ error }}</div>{% endif %}
     {% if not matches and not error %}<div class="notice">No live matches yet. Scores will display when matches start.</div>{% endif %}

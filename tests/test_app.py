@@ -595,7 +595,8 @@ def test_dashboard_hides_internal_fields():
     client = create_app(FakeService()).test_client()
     body = client.get("/?date=2026-06-19").get_data(as_text=True)
     assert "Alpha" in body and "1-37" in body
-    assert "Current batters" not in body and "Current / recent bowlers" not in body
+    score_cards = body.split("<main>", 1)[1]
+    assert "Current batters" not in score_cards and "Current / recent bowlers" not in score_cards
     assert "secret-id" not in body and "https://secret.test" not in body
 
 
@@ -942,6 +943,9 @@ def test_display_mode_selector_and_local_persistence_are_present():
         def matches_for_date(self, *args): return [match]
     body = create_app(FakeService()).test_client().get("/").get_data(as_text=True)
     assert all(f'value="{mode}"' in body for mode in ("brief", "standard", "detailed"))
+    assert "Team scores only" in body
+    assert "Current batters and bowlers" in body
+    assert "Batters, bowlers and high achievers" in body
     assert "current-player-section" in body and "best-section" in body
     assert "batter-order.js" in body and "data-batter-order-key" in body
     assert 'data-batter-name="Current One"' in body
