@@ -34,7 +34,7 @@
     <strong class="completed-score{% if limited_overs %} completed-limited-score{% endif %}">{{ team.score }}{% if limited_overs and team.overs not in (none, '') %} <small>({{ team.overs }})</small>{% endif %}</strong>
     {% endif %}
   {%- endmacro %}
-  {% set display_modes = [ ('brief', 'Brief', 'Team scores only'), ('standard', 'Standard', 'Current batters and bowlers'), ('detailed', 'Detailed', 'Batters, bowlers and high achievers') ] %}
+  {% set display_modes = [ ('brief', 'Brief', 'Team scores only'), ('standard', 'Standard', 'Current batters and bowlers'), ('detailed', 'Detailed', 'Batters, bowlers and top performers') ] %}
   <header>
     <span class="mark">CL</span><h1>Carnival Live</h1>
     <div class="display-mode-picker">

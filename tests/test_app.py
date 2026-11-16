@@ -945,7 +945,7 @@ def test_display_mode_selector_and_local_persistence_are_present():
     assert all(f'value="{mode}"' in body for mode in ("brief", "standard", "detailed"))
     assert "Team scores only" in body
     assert "Current batters and bowlers" in body
-    assert "Batters, bowlers and high achievers" in body
+    assert "Batters, bowlers and top performers" in body
     assert "current-player-section" in body and "best-section" in body
     assert "batter-order.js" in body and "data-batter-order-key" in body
     assert 'data-batter-name="Current One"' in body
