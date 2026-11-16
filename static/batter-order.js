@@ -1,7 +1,11 @@
 (() => {
   const storagePrefix = "carnivalLive.batterSlots:";
 
-  document.querySelectorAll(".batter-list[data-batter-order-key]").forEach((list) => {
+  function orderBatters() {
+    document.querySelectorAll(".batter-list[data-batter-order-key]").forEach(orderList);
+  }
+
+  function orderList(list) {
     const rows = [...list.querySelectorAll("[data-batter-name]")];
     if (!rows.length) return;
 
@@ -36,5 +40,8 @@
     try {
       sessionStorage.setItem(storageKey, JSON.stringify(slots));
     } catch (error) {}
-  });
+  }
+
+  orderBatters();
+  document.addEventListener("carnival:scores-updated", orderBatters);
 })();

@@ -1,4 +1,4 @@
-const CACHE_NAME = "carnival-live-v6";
+const CACHE_NAME = "carnival-live-v7";
 const APP_SHELL = [
   "/static/offline.html",
   "/static/icon.svg",

@@ -44,6 +44,9 @@
       window.addEventListener("online", function () {
         window.setTimeout(probeConnection, 500);
       });
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "visible") window.setTimeout(probeConnection, 500);
+      });
       window.setInterval(probeConnection, 4000);
       if (navigator.onLine) probeConnection();
     })();

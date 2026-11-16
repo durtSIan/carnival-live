@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="30">
   <meta name="theme-color" content="#0a1320">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,12 +19,13 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='chase.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='nav.css', v='2') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='forfeit.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='status.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='status.css', v='2') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='compact.css', v='2') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='display-mode.css', v='8') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='footer.css', v='2') }}">
   <script defer src="{{ url_for('static', filename='display-mode.js', v='2') }}"></script>
-  <script defer src="{{ url_for('static', filename='batter-order.js') }}"></script>
+  <script defer src="{{ url_for('static', filename='batter-order.js', v='2') }}"></script>
+  <script defer src="{{ url_for('static', filename='score-refresh.js', v='1') }}"></script>
   <script defer src="{{ url_for('static', filename='pwa.js') }}"></script>
 </head>
 <body>
@@ -58,8 +58,10 @@
     {% endfor %}
   </dialog>
   <main>
+    <p id="score-connection" class="score-connection" role="status" hidden></p>
+    <div id="score-feed"{% if error is none %} data-refresh-failed{% endif %}>
     {% if error %}<div class="notice error">{{ error }}</div>{% endif %}
-    {% if not matches and not error %}<div class="notice">No live matches yet. Scores will display when matches start.</div>{% endif %}
+    {% if not matches and error == '' %}<div class="notice">No live matches yet. Scores will display when matches start.</div>{% endif %}
     <section class="match-grid">
       {% set grade_group = namespace(name=None) %}
       {% set pool_group = namespace(key=None) %}
@@ -195,6 +197,7 @@
       {% endif %}
       {% endfor %}
     </section>
+    </div>
   </main>
   <footer>
     {% if feedback_enabled %}<span class="feedback-note">Carnival Live is still being developed. Having trouble? <a href="{{ url_for('feedback') }}">Report a problem</a></span>{% endif %}
