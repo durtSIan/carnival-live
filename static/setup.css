@@ -145,7 +145,8 @@ button:disabled {
 .add-feed h2 { margin: 0 0 8px; color: var(--ink); font-size: 18px; letter-spacing: 0; text-transform: none; }
 .add-feed ~ .feed-summary { margin-top: 24px; }
 .search-form > div { display: grid; gap: 10px; }
-.search-form input { border-color: #667b95; }
+.search-form input { border: 2px solid #5596a5; }
+.search-form input::placeholder { color: var(--muted); opacity: 1; }
 .search-form button { min-height: 48px; font: inherit; font-weight: 800; }
 .search-form :focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 .input-help { display: block; margin: 7px 0 16px; color: var(--muted); font-size: 12px; }

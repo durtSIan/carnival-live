@@ -12,7 +12,7 @@
   <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
   <link rel="icon" href="{{ url_for('static', filename='icon.svg', v='green-2') }}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.png', v='green-2') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='setup.css', v='5') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='setup.css', v='6') }}">
   <script defer src="{{ url_for('static', filename='pwa.js') }}"></script>
 </head>
 <body>
@@ -33,7 +33,7 @@
         <label for="q">Club, association or competition</label>
         <small id="search-help" class="input-help">Enter between 3 and 20 characters for search.</small>
         <div>
-          <input id="q" name="q" type="search" value="{{ query }}" required minlength="3" maxlength="20" aria-describedby="search-help" placeholder="e.g. Darwin Cricket">
+          <input id="q" name="q" type="search" value="{{ query }}" required minlength="3" maxlength="20" aria-describedby="search-help" placeholder="Enter search criteria here">
           <button type="submit">Search cricket</button>
         </div>
       </form>
