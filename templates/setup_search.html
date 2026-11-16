@@ -12,7 +12,7 @@
   <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
   <link rel="icon" href="{{ url_for('static', filename='icon.svg', v='green-2') }}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.png', v='green-2') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='setup.css', v='6') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='setup.css', v='7') }}">
   <script defer src="{{ url_for('static', filename='pwa.js') }}"></script>
 </head>
 <body>
@@ -30,10 +30,9 @@
       <h2 id="feed-search-heading">Add to your feed</h2>
       <p class="hint">Enter a club, association or competition name, then tap <strong>Search cricket</strong>.</p>
       <form class="search-form" method="get" role="search" aria-labelledby="feed-search-heading">
-        <label for="q">Club, association or competition</label>
-        <small id="search-help" class="input-help">Enter between 3 and 20 characters for search.</small>
         <div>
-          <input id="q" name="q" type="search" value="{{ query }}" required minlength="3" maxlength="20" aria-describedby="search-help" placeholder="Enter search criteria here">
+          <input id="q" name="q" type="search" value="{{ query }}" required minlength="3" maxlength="20" aria-label="Club, association or competition" aria-describedby="search-help" placeholder="Club, Association or Comp...">
+          <small id="search-help" class="input-help">Enter between 3 and 20 characters.</small>
           <button type="submit">Search cricket</button>
         </div>
       </form>
