@@ -12,7 +12,7 @@
   <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
   <link rel="icon" href="{{ url_for('static', filename='icon.svg', v='green-2') }}" type="image/svg+xml">
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.png', v='green-2') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='setup.css', v='4') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='setup.css', v='5') }}">
   <script defer src="{{ url_for('static', filename='pwa.js') }}"></script>
 </head>
 <body>
@@ -26,53 +26,15 @@
       </div>
     </header>
 
-    <section class="feed-summary">
-      <div class="feed-overview">
-        <h2>Your Current Live Feed Selections</h2>
-        {% if favourites or club_filters %}
-          <p>{{ favourites|length }} grade selection{% if favourites|length != 1 %}s{% endif %}{% if favourite_organisations %} · {{ favourite_organisations|length }} competition{% if favourite_organisations|length != 1 %}s{% endif %}{% endif %}{% if club_filters %} · {{ club_filters|length }} followed club{% if club_filters|length != 1 %}s{% endif %}{% endif %}</p>
-        {% else %}
-          <p>No clubs, competitions or grades saved yet. Search below to build your feed.</p>
-        {% endif %}
-
-        {% if club_filters or favourite_organisations %}
-          <div class="feed-selections">
-            {% if club_filters %}
-              <div class="feed-selection">
-                <span>Clubs / teams</span>
-                <div class="feed-chips">
-                  {% for name in club_filters %}<b>{{ name }}</b>{% endfor %}
-                </div>
-              </div>
-            {% endif %}
-            {% if favourite_organisations %}
-              <div class="feed-selection">
-                <span>Competitions</span>
-                <div class="feed-chips">
-                  {% for name in favourite_organisations %}<b>{{ name }}</b>{% endfor %}
-                </div>
-              </div>
-            {% endif %}
-          </div>
-        {% endif %}
-      </div>
-      {% if favourites %}
-        <a class="primary-action" href="{{ url_for('dashboard') }}">View live scores</a>
-      {% endif %}
-    </section>
-    <div class="feed-help-row">
-      <a class="feed-help-link" href="{{ url_for('help_page') }}"><b>?</b> Help &amp; About</a>
-    </div>
-
-    <section class="add-feed">
-      <h2>Add to your feed</h2>
-      <p class="hint">Search a club to follow its teams, or search an association/competition to choose grades.</p>
-      <form class="search-form" method="get">
+    <section class="add-feed" aria-labelledby="feed-search-heading">
+      <h2 id="feed-search-heading">Add to your feed</h2>
+      <p class="hint">Enter a club, association or competition name, then tap <strong>Search cricket</strong>.</p>
+      <form class="search-form" method="get" role="search" aria-labelledby="feed-search-heading">
         <label for="q">Club, association or competition</label>
         <small id="search-help" class="input-help">Enter between 3 and 20 characters for search.</small>
         <div>
-          <input id="q" name="q" value="{{ query }}" minlength="3" maxlength="20" aria-describedby="search-help" placeholder="e.g. Darwin Cricket">
-          <button>Search</button>
+          <input id="q" name="q" type="search" value="{{ query }}" required minlength="3" maxlength="20" aria-describedby="search-help" placeholder="e.g. Darwin Cricket">
+          <button type="submit">Search cricket</button>
         </div>
       </form>
     </section>
@@ -111,6 +73,44 @@
         </div>
       </section>
     {% endif %}
+
+    <section class="feed-summary">
+      <div class="feed-overview">
+        <h2>Your Current Live Feed Selections</h2>
+        {% if favourites or club_filters %}
+          <p>{{ favourites|length }} grade selection{% if favourites|length != 1 %}s{% endif %}{% if favourite_organisations %} · {{ favourite_organisations|length }} competition{% if favourite_organisations|length != 1 %}s{% endif %}{% endif %}{% if club_filters %} · {{ club_filters|length }} followed club{% if club_filters|length != 1 %}s{% endif %}{% endif %}</p>
+        {% else %}
+          <p>No clubs, competitions or grades saved yet. Use the search above to build your feed.</p>
+        {% endif %}
+
+        {% if club_filters or favourite_organisations %}
+          <div class="feed-selections">
+            {% if club_filters %}
+              <div class="feed-selection">
+                <span>Clubs / teams</span>
+                <div class="feed-chips">
+                  {% for name in club_filters %}<b>{{ name }}</b>{% endfor %}
+                </div>
+              </div>
+            {% endif %}
+            {% if favourite_organisations %}
+              <div class="feed-selection">
+                <span>Competitions</span>
+                <div class="feed-chips">
+                  {% for name in favourite_organisations %}<b>{{ name }}</b>{% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+      {% if favourites %}
+        <a class="primary-action" href="{{ url_for('dashboard') }}">View live scores</a>
+      {% endif %}
+    </section>
+    <div class="feed-help-row">
+      <a class="feed-help-link" href="{{ url_for('help_page') }}"><b>?</b> Help &amp; About</a>
+    </div>
 
     {% if club_filters %}
       <section>
