@@ -154,7 +154,6 @@ button:disabled {
 section { margin-top: 28px; }
 h2 { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
 .hint { margin: -12px 0 12px; color: var(--muted); font-size: 13px; line-height: 1.4; }
-.add-feed .hint { margin: 0 0 14px; }
 .feed-filter-form {
   display: grid;
   gap: 8px;
